@@ -1,0 +1,83 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# LibGDX
+## Java
+hs_err_pid*
+replay_pid*
+
+## Gradle
+.gradle/
+
+# Build outputs
+*.jar
+*.war
+*.ear
+*.class
+
+# Log files
+*.log
+
+# Package Files
+*.dmg
+*.pkg
+*.msi
+*.exe
+*.deb
+*.rpm
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Native libraries
+*.dll
+*.so
+*.dylib
