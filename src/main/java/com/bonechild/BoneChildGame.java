@@ -77,6 +77,9 @@ public class BoneChildGame extends ApplicationAdapter {
         // Set delta time for animations
         renderer.setDeltaTime(delta);
         
+        // Render background first
+        renderer.renderBackground();
+        
         // Render game entities
         renderer.renderPlayer(worldManager.getPlayer());
         renderer.renderMobs(worldManager.getMobs());

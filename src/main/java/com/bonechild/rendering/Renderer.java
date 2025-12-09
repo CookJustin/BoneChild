@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.bonechild.world.Mob;
 import com.bonechild.world.Player;
+import com.bonechild.world.TileMap;
 
 /**
  * Handles rendering of all game objects
@@ -17,6 +18,7 @@ public class Renderer {
     private OrthographicCamera camera;
     private Assets assets;
     private float deltaTime;
+    private TileMap tileMap;
     
     public Renderer(OrthographicCamera camera, Assets assets) {
         this.camera = camera;
@@ -24,6 +26,11 @@ public class Renderer {
         this.batch = new SpriteBatch();
         this.shapeRenderer = new ShapeRenderer();
         this.deltaTime = 0;
+        
+        // Create tile map when tileset is loaded
+        if (assets.getTilesetTexture() != null) {
+            this.tileMap = new TileMap(assets.getTilesetTexture(), 32);
+        }
     }
     
     /**
@@ -31,6 +38,22 @@ public class Renderer {
      */
     public void setDeltaTime(float delta) {
         this.deltaTime = delta;
+    }
+    
+    /**
+     * Render the tile map background
+     */
+    public void renderBackground() {
+        if (tileMap == null) return;
+        
+        // Get viewport dimensions
+        float viewportWidth = camera.viewportWidth;
+        float viewportHeight = camera.viewportHeight;
+        float camX = camera.position.x - viewportWidth / 2;
+        float camY = camera.position.y - viewportHeight / 2;
+        
+        // Render the visible portion of the tile map
+        tileMap.render(batch, camX, camY, viewportWidth, viewportHeight);
     }
     
     /**
@@ -105,22 +128,25 @@ public class Renderer {
     public void renderMobs(Array<Mob> mobs) {
         if (mobs == null || mobs.size == 0) return;
         
+        // Use the walk animation for all mobs (they're always chasing)
+        Animation mobAnimation = assets.getWalkAnimation();
+        mobAnimation.update(deltaTime);
+        
         batch.begin();
         
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                // For now, render mobs as red squares
-                batch.end();
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(Color.RED);
-                shapeRenderer.rect(
+                // Get current frame
+                var frame = mobAnimation.getCurrentFrame();
+                
+                // Draw the animated sprite (mobs use skeleton sprite)
+                batch.draw(
+                    frame,
                     mob.getPosition().x,
                     mob.getPosition().y,
                     mob.getWidth(),
                     mob.getHeight()
                 );
-                shapeRenderer.end();
-                batch.begin();
             }
         }
         

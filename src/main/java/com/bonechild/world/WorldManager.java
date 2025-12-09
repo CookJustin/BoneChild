@@ -1,8 +1,9 @@
 package com.bonechild.world;
 
+import java.util.Random;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
-import java.util.Random;
 
 /**
  * Manages all entities in the game world

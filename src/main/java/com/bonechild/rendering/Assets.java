@@ -1,6 +1,7 @@
 package com.bonechild.rendering;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
@@ -10,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 public class Assets {
     // Textures
     private Texture skeletonSpriteSheet;
+    private Texture tilesetTexture;
     
     // Animations (9 frames per row based on the sprite sheet)
     private Animation idleAnimation;
@@ -39,6 +41,9 @@ public class Assets {
         
         // Load textures
         try {
+            tilesetTexture = new Texture(Gdx.files.internal("assets/SkeletonGraveyardTileset.png"));
+            Gdx.app.log("Assets", "Loaded tileset texture");
+            
             skeletonSpriteSheet = new Texture(Gdx.files.internal("assets/SkeletonSpriteSheet.png"));
             Gdx.app.log("Assets", "Loaded skeleton sprite sheet");
             
@@ -60,9 +65,12 @@ public class Assets {
             Gdx.app.error("Assets", "Failed to load skeleton sprite sheet: " + e.getMessage());
         }
         
-        // Load fonts
+        // Load fonts - use built-in with improved settings
         font = new BitmapFont();
-        font.getData().setScale(1.5f);
+        font.getData().setScale(2.0f);
+        font.setColor(Color.WHITE);
+        font.setUseIntegerPositions(false); // Smoother rendering
+        font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         
         loaded = true;
         Gdx.app.log("Assets", "All assets loaded successfully");
@@ -76,6 +84,10 @@ public class Assets {
         
         Gdx.app.log("Assets", "Disposing assets...");
         
+        if (tilesetTexture != null) {
+            tilesetTexture.dispose();
+        }
+        
         if (skeletonSpriteSheet != null) {
             skeletonSpriteSheet.dispose();
         }
@@ -88,6 +100,7 @@ public class Assets {
     }
     
     // Getters
+    public Texture getTilesetTexture() { return tilesetTexture; }
     public Texture getSkeletonSpriteSheet() { return skeletonSpriteSheet; }
     public Animation getIdleAnimation() { return idleAnimation; }
     public Animation getWalkAnimation() { return walkAnimation; }
