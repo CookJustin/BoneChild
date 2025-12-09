@@ -11,7 +11,7 @@ public class Main {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         
         // Window configuration
-        config.setTitle("BoneChild - Vampire Survivors Style Game");
+        config.setTitle("BoneChild");
         config.setWindowedMode(1280, 720);
         config.setResizable(true);
         

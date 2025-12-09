@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <name>BoneChild</name>
-    <description>A Vampire Survivors-style game built with LibGDX</description>
+    <description>A top-down survival action game built with LibGDX</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -1,7 +1,7 @@
 # BoneChild Project Structure
 
 ## Overview
-BoneChild is now structured as a complete Vampire Survivors-style game with proper package organization and separation of concerns.
+BoneChild is now structured as a complete survival action game with proper package organization and separation of concerns.
 
 ## Package Structure
 

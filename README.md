@@ -1,10 +1,10 @@
 # BoneChild
 
-A Vampire Survivors-style game built with LibGDX and packaged with jpackage.
+A top-down survival action game built with LibGDX and packaged with jpackage.
 
 ## 🎮 About
 
-BoneChild is a top-down survival game inspired by Vampire Survivors. Fight off waves of enemies, collect experience, level up, and upgrade your abilities to survive as long as possible!
+BoneChild is a fast-paced top-down survival game. Fight off waves of enemies, collect experience, level up, and upgrade your abilities to survive as long as possible!
 
 ## 🛠️ Technology Stack
 

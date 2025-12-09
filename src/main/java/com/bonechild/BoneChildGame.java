@@ -13,7 +13,7 @@ import com.bonechild.world.WorldManager;
 
 /**
  * Main game class for BoneChild
- * This is a Vampire Survivors-style game built with LibGDX
+ * A top-down survival action game built with LibGDX
  */
 public class BoneChildGame extends ApplicationAdapter {
     private OrthographicCamera camera;
