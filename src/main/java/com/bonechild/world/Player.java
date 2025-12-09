@@ -11,6 +11,12 @@ public class Player extends LivingEntity {
     private float experienceToNextLevel;
     private int gold;
     
+    // Power-up levels
+    private int speedLevel = 0;
+    private int strengthLevel = 0;
+    private int grabLevel = 0;
+    private boolean leveledUpThisFrame = false;
+    
     // Animation state
     public enum AnimationState {
         IDLE, WALKING, ATTACKING
@@ -181,7 +187,45 @@ public class Player extends LivingEntity {
         // Heal player on level up
         heal(maxHealth * 0.2f);
         
+        leveledUpThisFrame = true;
         Gdx.app.log("Player", "Level up! Now level " + level);
+    }
+    
+    /**
+     * Apply a power-up upgrade
+     */
+    public void applyPowerUp(String powerUpType) {
+        switch(powerUpType) {
+            case "SPEED":
+                speedLevel++;
+                speed += 50f; // Increase speed by 50 each time
+                Gdx.app.log("Player", "Speed upgraded! Level: " + speedLevel + ", Speed: " + speed);
+                break;
+            case "STRENGTH":
+                strengthLevel++;
+                attackDamage += 10f; // Increase damage by 10 each time
+                Gdx.app.log("Player", "Strength upgraded! Level: " + strengthLevel + ", Damage: " + attackDamage);
+                break;
+            case "GRAB":
+                grabLevel++;
+                // Grab increases pickup pull distance and speed (handled in Pickup class)
+                Gdx.app.log("Player", "Grab upgraded! Level: " + grabLevel);
+                break;
+        }
+    }
+    
+    /**
+     * Check if player leveled up this frame
+     */
+    public boolean didLevelUpThisFrame() {
+        return leveledUpThisFrame;
+    }
+    
+    /**
+     * Reset the level-up flag after checking
+     */
+    public void clearLevelUpFlag() {
+        leveledUpThisFrame = false;
     }
     
     @Override
@@ -196,6 +240,10 @@ public class Player extends LivingEntity {
     public float getExperienceToNextLevel() { return experienceToNextLevel; }
     public float getExperiencePercentage() { return experience / experienceToNextLevel; }
     public int getGold() { return gold; }
+    public int getSpeedLevel() { return speedLevel; }
+    public int getStrengthLevel() { return strengthLevel; }
+    public int getGrabLevel() { return grabLevel; }
+    public float getAttackDamage() { return attackDamage; }
     
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }

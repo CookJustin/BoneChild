@@ -106,9 +106,8 @@ public class MenuScreen {
             }
         }
         
-        // Allow keyboard shortcuts
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ENTER) ||
-            Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
+        // Allow keyboard shortcut (ENTER only, no SPACE)
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ENTER)) {
             if (callback != null) {
                 callback.onStartGame();
             }

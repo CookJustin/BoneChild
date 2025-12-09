@@ -84,10 +84,10 @@ public class SettingsScreen {
         
         // Keybind setup
         this.keybindLabels = new String[]{
-            "Move Up", "Move Down", "Move Left", "Move Right", "Attack"
+            "Move Up", "Move Down", "Move Left", "Move Right", "Attack", "Character Stats"
         };
         this.currentKeybinds = new int[]{
-            Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D, Input.Keys.SPACE
+            Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D, Input.Keys.SPACE, Input.Keys.C
         };
         this.keybindButtons = new Rectangle[currentKeybinds.length];
         

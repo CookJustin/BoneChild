@@ -50,8 +50,12 @@ public class Pickup extends Entity {
         float dy = player.getPosition().y - position.y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
         
+        // Adjust pull distance and speed based on grab level
+        float adjustedPullDistance = magneticPullDistance + (player.getGrabLevel() * 30f); // +30 per grab level
+        float adjustedPullSpeed = magneticPullSpeed + (player.getGrabLevel() * 50f); // +50 per grab level
+        
         // Only pull if within magnetic distance and not yet collected
-        if (distance < magneticPullDistance && distance > collectRadius) {
+        if (distance < adjustedPullDistance && distance > collectRadius) {
             // Only pull if player is getting closer (moving toward the pickup)
             // Calculate player's velocity component toward this pickup
             float playerVelX = player.getVelocity().x;
@@ -67,8 +71,8 @@ public class Pickup extends Entity {
                 float dirY = dy / distance;
                 
                 // Move toward player
-                position.x += dirX * magneticPullSpeed * delta;
-                position.y += dirY * magneticPullSpeed * delta;
+                position.x += dirX * adjustedPullSpeed * delta;
+                position.y += dirY * adjustedPullSpeed * delta;
             }
         }
     }
