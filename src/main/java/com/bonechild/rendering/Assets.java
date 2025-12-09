@@ -1,6 +1,8 @@
 package com.bonechild.rendering;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -20,6 +22,13 @@ public class Assets {
     
     // Fonts
     private BitmapFont font;
+    
+    // Audio
+    private Music backgroundMusic;
+    private Sound attackSound;
+    private Sound hitSound;
+    private Sound levelUpSound;
+    private Sound deathSound;
     
     private boolean loaded = false;
     
@@ -72,8 +81,74 @@ public class Assets {
         font.setUseIntegerPositions(false); // Smoother rendering
         font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         
+        // Load audio (optional - will use placeholders if files don't exist)
+        loadAudio();
+        
         loaded = true;
         Gdx.app.log("Assets", "All assets loaded successfully");
+    }
+    
+    /**
+     * Load audio files (background music and sound effects)
+     */
+    private void loadAudio() {
+        try {
+            // Try to load background music - "7th realm.mp3"
+            if (Gdx.files.internal("assets/audio/7th realm.mp3").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/7th realm.mp3"));
+                backgroundMusic.setLooping(true);
+                backgroundMusic.setVolume(0.5f);
+                Gdx.app.log("Assets", "Loaded background music: 7th realm.mp3");
+            } else if (Gdx.files.internal("assets/audio/background.ogg").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/background.ogg"));
+                backgroundMusic.setLooping(true);
+                backgroundMusic.setVolume(0.5f);
+                Gdx.app.log("Assets", "Loaded background music: background.ogg");
+            } else if (Gdx.files.internal("assets/audio/background.mp3").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/background.mp3"));
+                backgroundMusic.setLooping(true);
+                backgroundMusic.setVolume(0.5f);
+                Gdx.app.log("Assets", "Loaded background music: background.mp3");
+            } else {
+                Gdx.app.log("Assets", "No background music found (place '7th realm.mp3' in assets/audio/)");
+            }
+            
+            // Try to load sound effects
+            if (Gdx.files.internal("assets/audio/attack.ogg").exists()) {
+                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.ogg"));
+                Gdx.app.log("Assets", "Loaded attack sound");
+            } else if (Gdx.files.internal("assets/audio/attack.wav").exists()) {
+                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.wav"));
+                Gdx.app.log("Assets", "Loaded attack sound");
+            }
+            
+            if (Gdx.files.internal("assets/audio/hit.ogg").exists()) {
+                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.ogg"));
+                Gdx.app.log("Assets", "Loaded hit sound");
+            } else if (Gdx.files.internal("assets/audio/hit.wav").exists()) {
+                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.wav"));
+                Gdx.app.log("Assets", "Loaded hit sound");
+            }
+            
+            if (Gdx.files.internal("assets/audio/levelup.ogg").exists()) {
+                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.ogg"));
+                Gdx.app.log("Assets", "Loaded level up sound");
+            } else if (Gdx.files.internal("assets/audio/levelup.wav").exists()) {
+                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.wav"));
+                Gdx.app.log("Assets", "Loaded level up sound");
+            }
+            
+            if (Gdx.files.internal("assets/audio/death.ogg").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.ogg"));
+                Gdx.app.log("Assets", "Loaded death sound");
+            } else if (Gdx.files.internal("assets/audio/death.wav").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.wav"));
+                Gdx.app.log("Assets", "Loaded death sound");
+            }
+            
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Error loading audio: " + e.getMessage());
+        }
     }
     
     /**
@@ -96,6 +171,27 @@ public class Assets {
             font.dispose();
         }
         
+        // Dispose audio
+        if (backgroundMusic != null) {
+            backgroundMusic.dispose();
+        }
+        
+        if (attackSound != null) {
+            attackSound.dispose();
+        }
+        
+        if (hitSound != null) {
+            hitSound.dispose();
+        }
+        
+        if (levelUpSound != null) {
+            levelUpSound.dispose();
+        }
+        
+        if (deathSound != null) {
+            deathSound.dispose();
+        }
+        
         loaded = false;
     }
     
@@ -107,4 +203,29 @@ public class Assets {
     public Animation getAttackAnimation() { return attackAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
+    
+    // Audio getters
+    public Music getBackgroundMusic() { return backgroundMusic; }
+    public Sound getAttackSound() { return attackSound; }
+    public Sound getHitSound() { return hitSound; }
+    public Sound getLevelUpSound() { return levelUpSound; }
+    public Sound getDeathSound() { return deathSound; }
+    
+    /**
+     * Play a sound effect if it's loaded
+     */
+    public void playSound(Sound sound) {
+        if (sound != null) {
+            sound.play(0.6f); // 60% volume
+        }
+    }
+    
+    /**
+     * Play a sound effect with custom volume
+     */
+    public void playSound(Sound sound, float volume) {
+        if (sound != null) {
+            sound.play(volume);
+        }
+    }
 }

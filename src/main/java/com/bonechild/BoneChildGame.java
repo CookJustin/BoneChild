@@ -53,6 +53,12 @@ public class BoneChildGame extends ApplicationAdapter {
         gameUI = new GameUI(assets, worldManager.getPlayer(), worldManager);
         inventoryUI = new InventoryUI(assets);
         
+        // Start background music
+        if (assets.getBackgroundMusic() != null) {
+            assets.getBackgroundMusic().play();
+            Gdx.app.log("BoneChild", "Background music started");
+        }
+        
         Gdx.app.log("BoneChild", "Game initialized successfully!");
         Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit, I for inventory");
     }
