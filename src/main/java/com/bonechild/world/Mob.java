@@ -53,7 +53,7 @@ public class Mob extends LivingEntity {
     @Override
     protected void onDeath() {
         Gdx.app.log("Mob", "Mob died!");
-        // TODO: Drop experience
+        // Pickups are spawned in WorldManager instead
     }
     
     public float getDamage() { return damage; }

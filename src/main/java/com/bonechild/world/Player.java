@@ -9,6 +9,7 @@ public class Player extends LivingEntity {
     private int level;
     private float experience;
     private float experienceToNextLevel;
+    private int gold;
     
     // Animation state
     public enum AnimationState {
@@ -31,6 +32,7 @@ public class Player extends LivingEntity {
         this.level = 1;
         this.experience = 0;
         this.experienceToNextLevel = 100;
+        this.gold = 0;
         this.currentState = AnimationState.IDLE;
         this.previousState = AnimationState.IDLE;
         this.facingRight = true;
@@ -161,6 +163,14 @@ public class Player extends LivingEntity {
     }
     
     /**
+     * Add gold to player
+     */
+    public void addGold(int amount) {
+        gold += amount;
+        Gdx.app.log("Player", "Gold collected! Total: " + gold);
+    }
+    
+    /**
      * Level up the player
      */
     private void levelUp() {
@@ -185,6 +195,7 @@ public class Player extends LivingEntity {
     public float getExperience() { return experience; }
     public float getExperienceToNextLevel() { return experienceToNextLevel; }
     public float getExperiencePercentage() { return experience / experienceToNextLevel; }
+    public int getGold() { return gold; }
     
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }

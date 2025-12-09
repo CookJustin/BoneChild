@@ -97,6 +97,7 @@ public class GameUI {
         drawLevelOrb();
         drawHealthBar();
         drawExpBar();
+        drawGoldCounter();
     }
     
     private void drawLevelOrb() {
@@ -290,6 +291,45 @@ public class GameUI {
         // Draw main text
         font.setColor(Color.WHITE);
         font.draw(batch, expText, textX, textY);
+        batch.end();
+    }
+    
+    private void drawGoldCounter() {
+        float x = Gdx.graphics.getWidth() - 200;
+        float y = 30;
+        float boxWidth = 180;
+        float boxHeight = 50;
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        // Box background
+        shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 0.95f);
+        shapeRenderer.rect(x, y, boxWidth, boxHeight);
+        
+        // Gold accent border (top)
+        shapeRenderer.setColor(1f, 0.85f, 0f, 0.9f);
+        shapeRenderer.rect(x, y + boxHeight - 3, boxWidth, 3);
+        
+        // Gold coin icon
+        shapeRenderer.setColor(1f, 0.85f, 0f, 1f);
+        shapeRenderer.circle(x + 25, y + boxHeight / 2, 12, 16);
+        
+        shapeRenderer.end();
+        
+        // Gold text
+        batch.begin();
+        String goldText = "Gold: " + player.getGold();
+        glyphLayout.setText(font, goldText);
+        float textX = x + 50;
+        float textY = y + boxHeight / 2 + glyphLayout.height / 2 + 2;
+        
+        // Shadow
+        font.setColor(0, 0, 0, 0.9f);
+        font.draw(batch, goldText, textX + 1, textY - 1);
+        
+        // Main text
+        font.setColor(1f, 0.85f, 0f, 1f);
+        font.draw(batch, goldText, textX, textY);
         batch.end();
     }
     

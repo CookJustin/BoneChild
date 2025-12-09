@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.Array;
 import com.bonechild.world.Mob;
 import com.bonechild.world.Player;
 import com.bonechild.world.TileMap;
+import com.bonechild.world.Pickup;
 
 /**
  * Handles rendering of all game objects
@@ -164,6 +165,66 @@ public class Renderer {
                 );
             }
         }
+    }
+    
+    /**
+     * Render all pickups (coins and XP orbs)
+     */
+    public void renderPickups(Array<Pickup> pickups) {
+        if (pickups == null || pickups.size == 0) return;
+        
+        for (Pickup pickup : pickups) {
+            if (pickup.isActive() && !pickup.isCollected()) {
+                renderPickup(pickup);
+            }
+        }
+    }
+    
+    /**
+     * Render a single pickup item
+     */
+    private void renderPickup(Pickup pickup) {
+        float x = pickup.getPosition().x;
+        float y = pickup.getPosition().y;
+        float width = pickup.getWidth();
+        float height = pickup.getHeight();
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        if (pickup.getType() == Pickup.PickupType.GOLD_COIN) {
+            // Draw gold coin with glow
+            // Outer glow
+            shapeRenderer.setColor(1f, 0.8f, 0f, 0.2f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+            
+            // Main coin (gold/yellow)
+            shapeRenderer.setColor(1f, 0.85f, 0f, 1f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+            
+            // Highlight
+            shapeRenderer.setColor(1f, 1f, 0.5f, 0.6f);
+            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.2f, 12);
+            
+        } else if (pickup.getType() == Pickup.PickupType.XP_ORB) {
+            // Draw XP orb with blue glow
+            // Outer glow
+            shapeRenderer.setColor(0f, 0.5f, 1f, 0.3f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+            
+            // Main orb (blue)
+            shapeRenderer.setColor(0.2f, 0.6f, 1f, 1f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+            
+            // Inner bright core
+            shapeRenderer.setColor(0.5f, 0.8f, 1f, 0.8f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
+            
+            // Highlight
+            shapeRenderer.setColor(0.8f, 1f, 1f, 0.7f);
+            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+        }
+        
+        shapeRenderer.end();
     }
     
     /**

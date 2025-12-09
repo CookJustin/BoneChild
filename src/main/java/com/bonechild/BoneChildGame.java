@@ -12,13 +12,14 @@ import com.bonechild.ui.InventoryUI;
 import com.bonechild.ui.MenuScreen;
 import com.bonechild.ui.SettingsScreen;
 import com.bonechild.ui.PauseMenu;
+import com.bonechild.ui.GameOverScreen;
 import com.bonechild.world.WorldManager;
 
 /**
  * Main game class for BoneChild Game
  * A top-down survival action game built with LibGDX
  */
-public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback {
+public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback, GameOverScreen.GameOverCallback {
     private OrthographicCamera camera;
     
     // Game systems
@@ -31,6 +32,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     private MenuScreen menuScreen;
     private SettingsScreen settingsScreen;
     private PauseMenu pauseMenu;
+    private GameOverScreen gameOverScreen;
     private GameUI gameUI;
     private InventoryUI inventoryUI;
     
@@ -84,6 +86,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             gameUI = new GameUI(assets, worldManager.getPlayer(), worldManager);
             inventoryUI = new InventoryUI(assets);
             pauseMenu = new PauseMenu(assets, this);
+            gameOverScreen = new GameOverScreen(assets, this);
             
             // Start background music
             if (assets.getBackgroundMusic() != null) {
@@ -152,12 +155,20 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     }
     
     /**
-     * Called when player clicks "Exit to Menu" in pause menu
+     * Called when player clicks "Exit to Menu" in pause menu or game over screen
      */
+    @Override
     public void onExitToMenu() {
-        // Hide pause menu first
+        Gdx.app.log("BoneChild", "Exiting to main menu...");
+        
+        // Hide pause menu if visible
         if (pauseMenu != null) {
             pauseMenu.hide();
+        }
+        
+        // Hide game over screen if visible
+        if (gameOverScreen != null) {
+            gameOverScreen.hide();
         }
         
         gamePaused = false;
@@ -177,8 +188,28 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         if (menuScreen != null) {
             menuScreen.show();
         }
+    }
+    
+    /**
+     * Called when player clicks "Play Again" on game over screen
+     */
+    @Override
+    public void onPlayAgain() {
+        Gdx.app.log("BoneChild", "Restarting game...");
+        gameStarted = false;
         
-        Gdx.app.log("BoneChild", "Exiting to main menu");
+        // Hide game over screen
+        if (gameOverScreen != null) {
+            gameOverScreen.hide();
+        }
+        
+        // Cleanup game resources
+        if (assets.getBackgroundMusic() != null) {
+            assets.getBackgroundMusic().stop();
+        }
+        
+        // Restart game
+        onStartGame();
     }
     
     @Override
@@ -235,6 +266,33 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         handleInput();
         update(delta);
         
+        // Check if player died and show game over screen
+        if (worldManager.getPlayer().isDead()) {
+            // Show game over screen with final stats (only once)
+            if (!gameOverScreen.isVisible()) {
+                gameOverScreen.setStats(
+                    worldManager.getCurrentWave(),
+                    worldManager.getPlayer().getGold(),
+                    worldManager.getPlayer().getLevel()
+                );
+                gameOverScreen.show();
+            }
+            
+            // Render game in background
+            renderer.updateCamera();
+            renderer.setDeltaTime(0);
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            renderer.renderPickups(worldManager.getPickups());
+            gameUI.render();
+            
+            // Update and render game over screen on top
+            gameOverScreen.update(delta);
+            gameOverScreen.render();
+            return;
+        }
+        
         // Update camera
         renderer.updateCamera();
         
@@ -247,6 +305,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         // Render game entities
         renderer.renderPlayer(worldManager.getPlayer());
         renderer.renderMobs(worldManager.getMobs());
+        renderer.renderPickups(worldManager.getPickups());
         
         // Render UI
         gameUI.render();
@@ -316,6 +375,16 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             if (inventoryUI != null) {
                 inventoryUI.dispose();
             }
+            if (pauseMenu != null) {
+                pauseMenu.dispose();
+            }
+            if (gameOverScreen != null) {
+                gameOverScreen.dispose();
+            }
+        }
+        
+        if (settingsScreen != null) {
+            settingsScreen.dispose();
         }
         
         if (assets != null) {
