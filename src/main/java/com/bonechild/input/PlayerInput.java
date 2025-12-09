@@ -10,6 +10,7 @@ import com.bonechild.world.Player;
  */
 public class PlayerInput {
     private Player player;
+    private boolean wasSpacePressed = false;
     
     public PlayerInput(Player player) {
         this.player = player;
@@ -47,11 +48,20 @@ public class PlayerInput {
         
         player.setVelocity(movement.x, movement.y);
         
-        // Attack on space bar
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        // Attack on space bar - handle press and release
+        boolean spaceCurrentlyPressed = Gdx.input.isKeyPressed(Input.Keys.SPACE);
+        
+        if (spaceCurrentlyPressed && !wasSpacePressed) {
+            // Space was just pressed
             player.attack();
             Gdx.app.log("PlayerInput", "Attack triggered!");
+        } else if (!spaceCurrentlyPressed && wasSpacePressed) {
+            // Space was just released
+            player.stopAttack();
+            Gdx.app.log("PlayerInput", "Attack stopped!");
         }
+        
+        wasSpacePressed = spaceCurrentlyPressed;
     }
     
     /**

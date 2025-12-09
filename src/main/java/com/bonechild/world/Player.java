@@ -24,6 +24,7 @@ public class Player extends LivingEntity {
     private float attackRange;
     private float attackCooldown;
     private float timeSinceLastAttack;
+    private boolean isAttacking; // Track if actively attacking
     
     public Player(float x, float y) {
         super(x, y, 64, 64, 100f, 200f); // Changed size to 64x64 for sprite
@@ -39,6 +40,7 @@ public class Player extends LivingEntity {
         this.attackRange = 80f; // Attack range in pixels
         this.attackCooldown = 0.5f; // Can attack twice per second
         this.timeSinceLastAttack = 0;
+        this.isAttacking = false;
     }
     
     @Override
@@ -49,21 +51,25 @@ public class Player extends LivingEntity {
         // Update attack cooldown
         timeSinceLastAttack += delta;
         
-        // Determine animation state based on velocity
+        // Update facing direction based on movement (when moving)
         if (velocity.len() > 0) {
-            currentState = AnimationState.WALKING;
-            
-            // Update facing direction based on movement
             if (velocity.x > 0) {
                 facingRight = true;
             } else if (velocity.x < 0) {
                 facingRight = false;
             }
+        }
+        
+        // Determine animation state based on velocity and attack status
+        if (isAttacking) {
+            // Stay in attacking state while actively attacking
+            currentState = AnimationState.ATTACKING;
+        } else if (velocity.len() > 0) {
+            // Walking state takes priority when not attacking
+            currentState = AnimationState.WALKING;
         } else {
-            // Only go back to idle if not attacking
-            if (currentState != AnimationState.ATTACKING) {
-                currentState = AnimationState.IDLE;
-            }
+            // Only idle when not moving and not attacking
+            currentState = AnimationState.IDLE;
         }
         
         // Apply velocity
@@ -87,10 +93,17 @@ public class Player extends LivingEntity {
             return;
         }
         
-        currentState = AnimationState.ATTACKING;
+        isAttacking = true;
         timeSinceLastAttack = 0;
         
         Gdx.app.log("Player", "Player attacked! Damage: " + attackDamage + " Range: " + attackRange);
+    }
+    
+    /**
+     * Stop attacking
+     */
+    public void stopAttack() {
+        isAttacking = false;
     }
     
     /**
@@ -121,6 +134,13 @@ public class Player extends LivingEntity {
      */
     public boolean canAttack() {
         return timeSinceLastAttack >= attackCooldown;
+    }
+    
+    /**
+     * Check if currently attacking
+     */
+    public boolean isCurrentlyAttacking() {
+        return isAttacking;
     }
     
     /**
