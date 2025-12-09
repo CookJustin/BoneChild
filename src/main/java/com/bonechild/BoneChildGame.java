@@ -12,7 +12,7 @@ import com.bonechild.ui.InventoryUI;
 import com.bonechild.world.WorldManager;
 
 /**
- * Main game class for BoneChild
+ * Main game class for BoneChild Game
  * A top-down survival action game built with LibGDX
  */
 public class BoneChildGame extends ApplicationAdapter {
