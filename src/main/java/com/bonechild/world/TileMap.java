@@ -47,27 +47,27 @@ public class TileMap {
         this.mapHeight = height;
         this.map = new int[height][width];
         
-        // Fill with grass tiles - using only tiles that exist in the tileset
-        // Assuming first 2 rows exist (indices 0-15 for a tileset with 8 columns)
+        // Fill with grass tiles - using tile 0 (top-left, most plain) as border
+        // and use other tiles sparsely in the interior
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                // Default grass tile (first tile in tileset)
-                int tile = 0;
+                int tile;
                 
-                // Add variety using tiles from first couple rows
-                double rand = Math.random();
-                
-                if (rand < 0.7) {
-                    // Base grass variations (70% of tiles)
-                    tile = (int)(Math.random() * Math.min(4, tilesetColumns)); // Use first few tiles
-                } else if (rand < 0.85) {
-                    // Decorative elements (15% of tiles) - second row
-                    tile = tilesetColumns + (int)(Math.random() * Math.min(4, tilesetColumns));
+                // Use tile 0 (top-left, most plain) for borders
+                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+                    tile = 0; // Border tile (plain)
                 } else {
-                    // Rare decorations (15% of tiles) - use specific tiles if available
-                    if (tilesetColumns * tilesetRows > 8) {
-                        tile = (int)(Math.random() * Math.min(8, tilesetColumns * 2));
+                    // Interior: mostly tile 0 with sparse decorative elements
+                    double rand = Math.random();
+                    
+                    if (rand < 0.85) {
+                        // Base tile for majority (85%)
+                        tile = 0;
+                    } else if (rand < 0.95) {
+                        // Sparse decorative elements from row 1 (10%)
+                        tile = tilesetColumns + (int)(Math.random() * Math.min(3, tilesetColumns));
                     } else {
+                        // Rare special tiles (5%)
                         tile = (int)(Math.random() * Math.min(4, tilesetColumns));
                     }
                 }

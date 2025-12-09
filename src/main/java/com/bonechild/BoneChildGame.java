@@ -9,13 +9,16 @@ import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
 import com.bonechild.ui.GameUI;
 import com.bonechild.ui.InventoryUI;
+import com.bonechild.ui.MenuScreen;
+import com.bonechild.ui.SettingsScreen;
+import com.bonechild.ui.PauseMenu;
 import com.bonechild.world.WorldManager;
 
 /**
  * Main game class for BoneChild Game
  * A top-down survival action game built with LibGDX
  */
-public class BoneChildGame extends ApplicationAdapter {
+public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback {
     private OrthographicCamera camera;
     
     // Game systems
@@ -25,8 +28,15 @@ public class BoneChildGame extends ApplicationAdapter {
     private PlayerInput playerInput;
     
     // UI
+    private MenuScreen menuScreen;
+    private SettingsScreen settingsScreen;
+    private PauseMenu pauseMenu;
     private GameUI gameUI;
     private InventoryUI inventoryUI;
+    
+    // Game state
+    private boolean gameStarted = false;
+    private boolean gamePaused = false;
     
     @Override
     public void create() {
@@ -40,27 +50,135 @@ public class BoneChildGame extends ApplicationAdapter {
         assets = new Assets();
         assets.load();
         
-        // Create world manager (creates player)
-        worldManager = new WorldManager();
-        
-        // Create renderer
-        renderer = new Renderer(camera, assets);
-        
-        // Create input handler
-        playerInput = new PlayerInput(worldManager.getPlayer());
-        
-        // Create UI
-        gameUI = new GameUI(assets, worldManager.getPlayer(), worldManager);
-        inventoryUI = new InventoryUI(assets);
-        
-        // Start background music
-        if (assets.getBackgroundMusic() != null) {
-            assets.getBackgroundMusic().play();
-            Gdx.app.log("BoneChild", "Background music started");
-        }
+        // Create menu screen (shown first)
+        menuScreen = new MenuScreen(assets, this);
         
         Gdx.app.log("BoneChild", "Game initialized successfully!");
-        Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit, I for inventory");
+        Gdx.app.log("BoneChild", "Showing menu screen...");
+    }
+    
+    /**
+     * Called when player clicks "Start Game" in menu
+     */
+    @Override
+    public void onStartGame() {
+        if (!gameStarted) {
+            Gdx.app.log("BoneChild", "Starting game...");
+            
+            // Create world manager (creates player)
+            worldManager = new WorldManager();
+            
+            // Create renderer
+            renderer = new Renderer(camera, assets);
+            
+            // Create input handler
+            playerInput = new PlayerInput(worldManager.getPlayer());
+            
+            // Apply saved keybinds from settings screen if they exist
+            if (settingsScreen != null) {
+                playerInput.setKeybinds(settingsScreen.getKeybinds());
+                Gdx.app.log("BoneChild", "Applied saved keybinds");
+            }
+            
+            // Create UI
+            gameUI = new GameUI(assets, worldManager.getPlayer(), worldManager);
+            inventoryUI = new InventoryUI(assets);
+            pauseMenu = new PauseMenu(assets, this);
+            
+            // Start background music
+            if (assets.getBackgroundMusic() != null) {
+                assets.getBackgroundMusic().play();
+                Gdx.app.log("BoneChild", "Background music started");
+            }
+            
+            gameStarted = true;
+            Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit, I for inventory");
+        }
+    }
+    
+    /**
+     * Called when player clicks "Settings" in menu
+     */
+    @Override
+    public void onSettings() {
+        if (settingsScreen == null) {
+            settingsScreen = new SettingsScreen(assets, this, null);
+        }
+        settingsScreen.show();
+    }
+    
+    /**
+     * Called when player returns from settings
+     */
+    @Override
+    public void onBack() {
+        if (settingsScreen != null && settingsScreen.isVisible()) {
+            settingsScreen.hide();
+            // Apply the new keybinds to player input if game has started
+            if (gameStarted && playerInput != null) {
+                playerInput.setKeybinds(settingsScreen.getKeybinds());
+                Gdx.app.log("BoneChild", "Keybinds updated");
+            } else if (!gameStarted) {
+                // If game hasn't started, keybinds will be applied when game starts
+                Gdx.app.log("BoneChild", "Keybinds saved (will be applied when game starts)");
+            }
+        }
+    }
+    
+    /**
+     * Called when player clicks "Exit Game" in menu
+     */
+    @Override
+    public void onExit() {
+        Gdx.app.exit();
+    }
+    
+    /**
+     * Called when player clicks "Resume" in pause menu
+     */
+    public void onResume() {
+        gamePaused = false;
+        Gdx.app.log("BoneChild", "Game resumed");
+    }
+    
+    /**
+     * Called when player clicks "Settings" in pause menu
+     */
+    public void onPauseSettings() {
+        if (settingsScreen == null) {
+            settingsScreen = new SettingsScreen(assets, this, playerInput);
+        }
+        settingsScreen.show();
+    }
+    
+    /**
+     * Called when player clicks "Exit to Menu" in pause menu
+     */
+    public void onExitToMenu() {
+        // Hide pause menu first
+        if (pauseMenu != null) {
+            pauseMenu.hide();
+        }
+        
+        gamePaused = false;
+        gameStarted = false;
+        
+        // Hide settings if open
+        if (settingsScreen != null && settingsScreen.isVisible()) {
+            settingsScreen.hide();
+        }
+        
+        // Cleanup game resources
+        if (assets.getBackgroundMusic() != null) {
+            assets.getBackgroundMusic().stop();
+        }
+        
+        // Make sure menu is visible
+        if (menuScreen != null) {
+            menuScreen.show();
+        }
+        
+        Gdx.app.log("BoneChild", "Exiting to main menu");
     }
     
     @Override
@@ -71,10 +189,50 @@ public class BoneChildGame extends ApplicationAdapter {
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         
-        // Handle input
-        handleInput();
+        // Show menu if game hasn't started
+        if (!gameStarted) {
+            // Only update menu if settings screen is NOT visible
+            if (settingsScreen == null || !settingsScreen.isVisible()) {
+                menuScreen.update(delta);
+            }
+            
+            menuScreen.render();
+            
+            // If settings screen is visible, update and render it on top
+            if (settingsScreen != null && settingsScreen.isVisible()) {
+                settingsScreen.update(delta);
+                settingsScreen.render();
+            }
+            return;
+        }
         
-        // Update game logic
+        // Game is running - handle pause menu first
+        if (gamePaused) {
+            // Render game in background (paused state)
+            renderer.updateCamera();
+            renderer.setDeltaTime(0); // No animation updates while paused
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            gameUI.render();
+            
+            // Update and render pause menu
+            if (settingsScreen == null || !settingsScreen.isVisible()) {
+                pauseMenu.update(delta);
+            }
+            
+            pauseMenu.render();
+            
+            // If settings screen is visible, update and render it on top
+            if (settingsScreen != null && settingsScreen.isVisible()) {
+                settingsScreen.update(delta);
+                settingsScreen.render();
+            }
+            return;
+        }
+        
+        // Game is running and not paused
+        handleInput();
         update(delta);
         
         // Update camera
@@ -96,9 +254,12 @@ public class BoneChildGame extends ApplicationAdapter {
     }
     
     private void handleInput() {
-        // Exit on ESC
+        // Pause on ESC
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-            Gdx.app.exit();
+            gamePaused = true;
+            pauseMenu.show();
+            Gdx.app.log("BoneChild", "Game paused");
+            return;
         }
         
         // Toggle inventory with I
@@ -122,25 +283,43 @@ public class BoneChildGame extends ApplicationAdapter {
     @Override
     public void resize(int width, int height) {
         camera.setToOrtho(false, width, height);
-        gameUI.resize(width, height);
-        inventoryUI.resize(width, height);
+        
+        if (menuScreen != null) {
+            menuScreen.resize(width, height);
+        }
+        
+        if (gameStarted) {
+            if (gameUI != null) {
+                gameUI.resize(width, height);
+            }
+            if (inventoryUI != null) {
+                inventoryUI.resize(width, height);
+            }
+        }
     }
     
     @Override
     public void dispose() {
         Gdx.app.log("BoneChild", "Disposing game resources...");
         
-        if (renderer != null) {
-            renderer.dispose();
+        if (menuScreen != null) {
+            menuScreen.dispose();
         }
+        
+        if (gameStarted) {
+            if (renderer != null) {
+                renderer.dispose();
+            }
+            if (gameUI != null) {
+                gameUI.dispose();
+            }
+            if (inventoryUI != null) {
+                inventoryUI.dispose();
+            }
+        }
+        
         if (assets != null) {
             assets.dispose();
-        }
-        if (gameUI != null) {
-            gameUI.dispose();
-        }
-        if (inventoryUI != null) {
-            inventoryUI.dispose();
         }
         
         Gdx.app.log("BoneChild", "Game disposed successfully!");

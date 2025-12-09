@@ -10,10 +10,22 @@ import com.bonechild.world.Player;
  */
 public class PlayerInput {
     private Player player;
-    private boolean wasSpacePressed = false;
+    
+    // Keybinds
+    private int keyMoveUp;
+    private int keyMoveDown;
+    private int keyMoveLeft;
+    private int keyMoveRight;
+    private int keyAttack;
     
     public PlayerInput(Player player) {
         this.player = player;
+        // Default keybinds
+        this.keyMoveUp = Input.Keys.W;
+        this.keyMoveDown = Input.Keys.S;
+        this.keyMoveLeft = Input.Keys.A;
+        this.keyMoveRight = Input.Keys.D;
+        this.keyAttack = Input.Keys.SPACE;
     }
     
     /**
@@ -26,17 +38,17 @@ public class PlayerInput {
         
         Vector2 movement = new Vector2(0, 0);
         
-        // WASD movement
-        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
+        // WASD movement (using keybinds)
+        if (Gdx.input.isKeyPressed(keyMoveUp) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
             movement.y += 1;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+        if (Gdx.input.isKeyPressed(keyMoveDown) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             movement.y -= 1;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+        if (Gdx.input.isKeyPressed(keyMoveLeft) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             movement.x -= 1;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+        if (Gdx.input.isKeyPressed(keyMoveRight) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             movement.x += 1;
         }
         
@@ -48,27 +60,23 @@ public class PlayerInput {
         
         player.setVelocity(movement.x, movement.y);
         
-        // Attack on space bar - handle press and release
-        boolean spaceCurrentlyPressed = Gdx.input.isKeyPressed(Input.Keys.SPACE);
-        
-        if (spaceCurrentlyPressed && !wasSpacePressed) {
-            // Space was just pressed
+        // Attack on keybind (press)
+        if (Gdx.input.isKeyJustPressed(keyAttack)) {
             player.attack();
             Gdx.app.log("PlayerInput", "Attack triggered!");
-        } else if (!spaceCurrentlyPressed && wasSpacePressed) {
-            // Space was just released
-            player.stopAttack();
-            Gdx.app.log("PlayerInput", "Attack stopped!");
         }
         
-        wasSpacePressed = spaceCurrentlyPressed;
+        // Stop attack on keybind (release)
+        if (!Gdx.input.isKeyPressed(keyAttack)) {
+            player.stopAttack();
+        }
     }
     
     /**
      * Check for action inputs (shooting, abilities, etc.)
      */
     public boolean isActionPressed() {
-        return Gdx.input.isKeyPressed(Input.Keys.SPACE) || 
+        return Gdx.input.isKeyPressed(keyAttack) || 
                Gdx.input.isButtonPressed(Input.Buttons.LEFT);
     }
     
@@ -78,6 +86,20 @@ public class PlayerInput {
     public boolean isPausePressed() {
         return Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) ||
                Gdx.input.isKeyJustPressed(Input.Keys.P);
+    }
+    
+    /**
+     * Update keybinds from settings
+     */
+    public void setKeybinds(int[] keybinds) {
+        if (keybinds == null || keybinds.length < 5) {
+            return;
+        }
+        this.keyMoveUp = keybinds[0];
+        this.keyMoveDown = keybinds[1];
+        this.keyMoveLeft = keybinds[2];
+        this.keyMoveRight = keybinds[3];
+        this.keyAttack = keybinds[4];
     }
     
     public void setPlayer(Player player) {

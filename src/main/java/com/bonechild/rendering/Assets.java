@@ -59,15 +59,15 @@ public class Assets {
             // Create animations
             // Row 0: Idle animation
             idleAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 0, 
-                                         FRAME_WIDTH, FRAME_HEIGHT, 0.1f, true);
+                                         FRAME_WIDTH, FRAME_HEIGHT, 0.15f, true);
             
             // Row 1: Walk animation
             walkAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 1, 
-                                         FRAME_WIDTH, FRAME_HEIGHT, 0.08f, true);
+                                         FRAME_WIDTH, FRAME_HEIGHT, 0.12f, true);
             
             // Row 2: Attack animation
             attackAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 2, 
-                                           FRAME_WIDTH, FRAME_HEIGHT, 0.06f, false);
+                                           FRAME_WIDTH, FRAME_HEIGHT, 0.10f, false);
             
             Gdx.app.log("Assets", "Created player animations (Idle, Walk, Attack)");
         } catch (Exception e) {

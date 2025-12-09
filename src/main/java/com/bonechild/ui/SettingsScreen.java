@@ -1,0 +1,447 @@
+package com.bonechild.ui;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
+import com.bonechild.input.PlayerInput;
+import com.bonechild.rendering.Assets;
+
+/**
+ * Settings screen for BoneChild with submenu system
+ */
+public class SettingsScreen {
+    private final SpriteBatch batch;
+    private final ShapeRenderer shapeRenderer;
+    private final BitmapFont font;
+    private final BitmapFont titleFont;
+    private final GlyphLayout glyphLayout;
+    
+    // Menu states
+    private enum MenuState {
+        MAIN, VOLUME, KEYBINDS
+    }
+    
+    private MenuState currentState = MenuState.MAIN;
+    
+    // Main menu buttons
+    private Rectangle volumeButton;
+    private Rectangle keybindsButton;
+    private Rectangle backButton;
+    private float buttonWidth = 250f;
+    private float buttonHeight = 50f;
+    
+    // Volume controls
+    private Rectangle musicVolumeSlider;
+    private Rectangle sfxVolumeSlider;
+    private float musicVolume;
+    private float sfxVolume;
+    private boolean draggingMusicSlider;
+    private boolean draggingSFXSlider;
+    
+    // Keybind controls
+    private Rectangle[] keybindButtons;
+    private String[] keybindLabels;
+    private int[] currentKeybinds;
+    private int rebindingIndex = -1;
+    private float rebindWaitTime = 0;
+    private float ignoreInputTimer = 0;
+    
+    private boolean isVisible;
+    private SettingsCallback callback;
+    private Assets assets;
+    
+    public interface SettingsCallback {
+        void onBack();
+    }
+    
+    public SettingsScreen(Assets assets, SettingsCallback callback, PlayerInput playerInput) {
+        this.batch = new SpriteBatch();
+        this.shapeRenderer = new ShapeRenderer();
+        this.font = assets.getFont();
+        this.glyphLayout = new GlyphLayout();
+        this.callback = callback;
+        this.assets = assets;
+        this.isVisible = false;
+        
+        // Create title font
+        this.titleFont = new BitmapFont();
+        this.titleFont.getData().setScale(2.0f);
+        this.titleFont.setColor(Color.WHITE);
+        this.titleFont.setUseIntegerPositions(false);
+        this.titleFont.getRegion().getTexture().setFilter(
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
+        );
+        
+        // Audio setup
+        this.musicVolume = assets.getBackgroundMusic() != null ? assets.getBackgroundMusic().getVolume() : 0.5f;
+        this.sfxVolume = 0.6f;
+        
+        // Keybind setup
+        this.keybindLabels = new String[]{
+            "Move Up", "Move Down", "Move Left", "Move Right", "Attack"
+        };
+        this.currentKeybinds = new int[]{
+            Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D, Input.Keys.SPACE
+        };
+        this.keybindButtons = new Rectangle[currentKeybinds.length];
+        
+        setupUI();
+    }
+    
+    private void setupUI() {
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        float centerX = screenWidth / 2f - buttonWidth / 2f;
+        
+        // Back button (top left)
+        backButton = new Rectangle(20, screenHeight - 70, 150f, 40f);
+        
+        // Main menu buttons
+        float mainMenuY = screenHeight / 2f + 50f;
+        volumeButton = new Rectangle(centerX, mainMenuY, buttonWidth, buttonHeight);
+        keybindsButton = new Rectangle(centerX, mainMenuY - buttonHeight - 20f, buttonWidth, buttonHeight);
+        
+        // Volume sliders (with more spacing for text above)
+        float sliderX = screenWidth / 2f - 150f;
+        float sliderY = screenHeight / 2f - 30f;
+        musicVolumeSlider = new Rectangle(sliderX, sliderY, 300f, 20f);
+        sfxVolumeSlider = new Rectangle(sliderX, sliderY - 80f, 300f, 20f);
+        
+        // Keybind buttons (with more spacing between them)
+        float keybindX = screenWidth / 2f - 150f;
+        float keybindY = screenHeight / 2f + 30f;
+        for (int i = 0; i < keybindButtons.length; i++) {
+            keybindButtons[i] = new Rectangle(keybindX, keybindY - (i * 65f), 300f, 45f);
+        }
+    }
+    
+    /**
+     * Handle settings input
+     */
+    public void update(float delta) {
+        if (!isVisible) return;
+        
+        // Decrease ignore input timer
+        if (ignoreInputTimer > 0) {
+            ignoreInputTimer -= delta;
+            return;
+        }
+        
+        // Handle rebinding
+        if (rebindingIndex >= 0) {
+            rebindWaitTime += delta;
+            if (rebindWaitTime > 0.2f) {
+                handleRebind();
+            }
+            return;
+        }
+        
+        // Handle slider dragging
+        if (draggingMusicSlider || draggingSFXSlider) {
+            if (Gdx.input.isButtonPressed(com.badlogic.gdx.Input.Buttons.LEFT)) {
+                float mouseX = Gdx.input.getX();
+                
+                if (draggingMusicSlider) {
+                    float sliderProgress = (mouseX - musicVolumeSlider.x) / musicVolumeSlider.width;
+                    musicVolume = Math.max(0, Math.min(1, sliderProgress));
+                    if (assets.getBackgroundMusic() != null) {
+                        assets.getBackgroundMusic().setVolume(musicVolume);
+                    }
+                }
+                
+                if (draggingSFXSlider) {
+                    float sliderProgress = (mouseX - sfxVolumeSlider.x) / sfxVolumeSlider.width;
+                    sfxVolume = Math.max(0, Math.min(1, sliderProgress));
+                }
+            } else {
+                draggingMusicSlider = false;
+                draggingSFXSlider = false;
+            }
+            return;
+        }
+        
+        // Handle mouse clicks
+        if (Gdx.input.justTouched()) {
+            float mouseX = Gdx.input.getX();
+            float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+            
+            // Check back button
+            if (backButton.contains(mouseX, mouseY)) {
+                if (currentState == MenuState.MAIN) {
+                    if (callback != null) {
+                        callback.onBack();
+                    }
+                    isVisible = false;
+                } else {
+                    currentState = MenuState.MAIN;
+                }
+                return;
+            }
+            
+            if (currentState == MenuState.MAIN) {
+                if (volumeButton.contains(mouseX, mouseY)) {
+                    currentState = MenuState.VOLUME;
+                    return;
+                }
+                if (keybindsButton.contains(mouseX, mouseY)) {
+                    currentState = MenuState.KEYBINDS;
+                    return;
+                }
+            } else if (currentState == MenuState.VOLUME) {
+                if (musicVolumeSlider.contains(mouseX, mouseY)) {
+                    draggingMusicSlider = true;
+                    return;
+                }
+                if (sfxVolumeSlider.contains(mouseX, mouseY)) {
+                    draggingSFXSlider = true;
+                    return;
+                }
+            } else if (currentState == MenuState.KEYBINDS) {
+                for (int i = 0; i < keybindButtons.length; i++) {
+                    if (keybindButtons[i].contains(mouseX, mouseY)) {
+                        rebindingIndex = i;
+                        rebindWaitTime = 0;
+                        Gdx.app.log("Settings", "Press a key to rebind: " + keybindLabels[i]);
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // ESC to go back
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            if (currentState == MenuState.MAIN) {
+                if (callback != null) {
+                    callback.onBack();
+                }
+                isVisible = false;
+            } else {
+                currentState = MenuState.MAIN;
+            }
+        }
+    }
+    
+    /**
+     * Handle key rebinding
+     */
+    private void handleRebind() {
+        for (int keyCode = 0; keyCode < 256; keyCode++) {
+            if (Gdx.input.isKeyPressed(keyCode)) {
+                if (keyCode == Input.Keys.ESCAPE) {
+                    rebindingIndex = -1;
+                    return;
+                }
+                
+                if (rebindWaitTime > 0.3f) {
+                    currentKeybinds[rebindingIndex] = keyCode;
+                    Gdx.app.log("Settings", "Keybind updated: " + keybindLabels[rebindingIndex] + " -> " + getKeyName(keyCode));
+                    rebindingIndex = -1;
+                    rebindWaitTime = 0;
+                    return;
+                }
+            }
+        }
+    }
+    
+    private String getKeyName(int keyCode) {
+        return Input.Keys.toString(keyCode);
+    }
+    
+    /**
+     * Render the settings screen
+     */
+    public void render() {
+        if (!isVisible) return;
+        
+        // Draw overlay
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.7f);
+        shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        shapeRenderer.end();
+        
+        batch.begin();
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        
+        // Draw title
+        String title = "SETTINGS";
+        glyphLayout.setText(titleFont, title);
+        float titleX = screenWidth / 2f - glyphLayout.width / 2f;
+        float titleY = screenHeight - 100f;
+        titleFont.setColor(1f, 0.2f, 0.2f, 1f);
+        titleFont.draw(batch, title, titleX, titleY);
+        batch.end();
+        
+        // Draw back button
+        drawButton(backButton, "BACK");
+        
+        // Draw current state
+        if (currentState == MenuState.MAIN) {
+            drawButton(volumeButton, "VOLUME");
+            drawButton(keybindsButton, "KEYBINDS");
+        } else if (currentState == MenuState.VOLUME) {
+            drawVolumeMenu();
+        } else if (currentState == MenuState.KEYBINDS) {
+            drawKeybindsMenu();
+        }
+    }
+    
+    private void drawVolumeMenu() {
+        batch.begin();
+        font.setColor(0.9f, 0.9f, 0.9f, 1f);
+        font.draw(batch, "Music: " + String.format("%.0f%%", musicVolume * 100), 
+                 musicVolumeSlider.x, musicVolumeSlider.y + 50f);
+        font.draw(batch, "SFX: " + String.format("%.0f%%", sfxVolume * 100), 
+                 sfxVolumeSlider.x, sfxVolumeSlider.y + 50f);
+        batch.end();
+        
+        drawSlider(musicVolumeSlider, musicVolume);
+        drawSlider(sfxVolumeSlider, sfxVolume);
+    }
+    
+    private void drawSlider(Rectangle slider, float value) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 0.9f);
+        shapeRenderer.rect(slider.x, slider.y, slider.width, slider.height);
+        
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 0.9f);
+        shapeRenderer.rect(slider.x, slider.y, slider.width * value, slider.height);
+        
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.end();
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.rect(slider.x, slider.y, slider.width, slider.height);
+        shapeRenderer.end();
+    }
+    
+    private void drawKeybindsMenu() {
+        for (int i = 0; i < keybindButtons.length; i++) {
+            String buttonText;
+            if (rebindingIndex == i) {
+                buttonText = "PRESS A KEY...";
+            } else {
+                buttonText = keybindLabels[i] + ": " + getKeyName(currentKeybinds[i]);
+            }
+            drawKeybindButton(keybindButtons[i], buttonText, rebindingIndex == i);
+        }
+    }
+    
+    private void drawKeybindButton(Rectangle button, String text, boolean isRebinding) {
+        float mouseX = Gdx.input.getX();
+        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        boolean hovered = button.contains(mouseX, mouseY);
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        if (isRebinding) {
+            shapeRenderer.setColor(1f, 0.5f, 0.2f, 0.9f);
+        } else if (hovered) {
+            shapeRenderer.setColor(1f, 0.3f, 0.3f, 0.9f);
+        } else {
+            shapeRenderer.setColor(0.4f, 0.1f, 0.1f, 0.8f);
+        }
+        shapeRenderer.rect(button.x, button.y, button.width, button.height);
+        
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.end();
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.rect(button.x, button.y, button.width, button.height);
+        shapeRenderer.end();
+        
+        batch.begin();
+        glyphLayout.setText(font, text);
+        float textX = button.x + button.width / 2f - glyphLayout.width / 2f;
+        float textY = button.y + button.height / 2f + glyphLayout.height / 2f;
+        
+        if (isRebinding || hovered) {
+            font.setColor(Color.WHITE);
+        } else {
+            font.setColor(0.9f, 0.9f, 0.9f, 1f);
+        }
+        font.draw(batch, text, textX, textY);
+        batch.end();
+    }
+    
+    private void drawButton(Rectangle button, String text) {
+        float mouseX = Gdx.input.getX();
+        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        boolean hovered = button.contains(mouseX, mouseY);
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        if (hovered) {
+            shapeRenderer.setColor(1f, 0.3f, 0.3f, 0.9f);
+        } else {
+            shapeRenderer.setColor(0.4f, 0.1f, 0.1f, 0.8f);
+        }
+        shapeRenderer.rect(button.x, button.y, button.width, button.height);
+        
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.end();
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+        shapeRenderer.rect(button.x, button.y, button.width, button.height);
+        shapeRenderer.end();
+        
+        batch.begin();
+        glyphLayout.setText(font, text);
+        float textX = button.x + button.width / 2f - glyphLayout.width / 2f;
+        float textY = button.y + button.height / 2f + glyphLayout.height / 2f;
+        
+        if (hovered) {
+            font.setColor(Color.WHITE);
+        } else {
+            font.setColor(0.9f, 0.9f, 0.9f, 1f);
+        }
+        font.draw(batch, text, textX, textY);
+        batch.end();
+    }
+    
+    public void resize(int width, int height) {
+        setupUI();
+    }
+    
+    public void dispose() {
+        if (batch != null) batch.dispose();
+        if (shapeRenderer != null) shapeRenderer.dispose();
+        if (titleFont != null) titleFont.dispose();
+    }
+    
+    public boolean isVisible() {
+        return isVisible;
+    }
+    
+    public void show() {
+        isVisible = true;
+        currentState = MenuState.MAIN;
+        ignoreInputTimer = 0.1f;
+    }
+    
+    public void hide() {
+        isVisible = false;
+    }
+    
+    public int[] getKeybinds() {
+        return currentKeybinds;
+    }
+    
+    public float getMusicVolume() {
+        return musicVolume;
+    }
+    
+    public float getSFXVolume() {
+        return sfxVolume;
+    }
+}
