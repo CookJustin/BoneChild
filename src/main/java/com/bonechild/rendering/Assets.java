@@ -125,12 +125,20 @@ public class Assets {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
         
-        // Load fonts - use built-in with improved settings
+        // Load fonts - create a larger, crisper font
         font = new BitmapFont();
-        font.getData().setScale(2.0f);
+        font.getData().setScale(2.5f); // Larger scale for better readability
         font.setColor(Color.WHITE);
-        font.setUseIntegerPositions(false); // Smoother rendering
-        font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        font.getData().markupEnabled = true; // Enable colored text
+        
+        // Get the font texture and set it to use nearest neighbor filtering for crisp text
+        font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        font.setUseIntegerPositions(true); // Snap to pixels for crisp rendering
+        
+        // Adjust line height for better spacing
+        font.getData().lineHeight *= 1.1f;
+        
+        Gdx.app.log("Assets", "Font loaded with crisp rendering (scale 2.5x)");
         
         // Load audio (optional - will use placeholders if files don't exist)
         loadAudio();

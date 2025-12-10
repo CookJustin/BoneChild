@@ -136,12 +136,15 @@ public class Renderer {
             64   // Sprite height (still 64)
         );
         
+        // Reset batch color to default white to prevent color tinting issues
+        batch.setColor(Color.WHITE);
+        
         batch.end();
         
         // Draw health bar above player (unless dead)
         if (!player.isDead()) {
             drawHealthBar(
-                player.getPosition().x,
+                player.getPosition().x - 16,  // Center the 64px bar over the 32px sprite
                 player.getPosition().y + 64 + 5,
                 64,
                 5,
@@ -297,19 +300,69 @@ public class Renderer {
     }
     
     /**
-     * Draw a health bar
+     * Draw a health bar with fancy design
      */
     private void drawHealthBar(float x, float y, float width, float height, float percentage) {
+        float borderWidth = 1f;
+        float padding = 1f;
+        
+        // Ensure ShapeRenderer is using proper blending
+        shapeRenderer.setAutoShapeType(true);
+        
+        // Draw shadow (offset slightly down and right for depth)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.4f);
+        shapeRenderer.rect(x + 1, y - 1, width, height);
+        shapeRenderer.end();
         
-        // Background (red)
-        shapeRenderer.setColor(Color.RED);
+        // Draw outer border (dark)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 1f);
         shapeRenderer.rect(x, y, width, height);
+        shapeRenderer.end();
         
-        // Foreground (green)
-        shapeRenderer.setColor(Color.GREEN);
-        shapeRenderer.rect(x, y, width * percentage, height);
+        // Draw inner background (very dark red)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.3f, 0f, 0f, 1f);
+        shapeRenderer.rect(x + borderWidth, y + borderWidth, 
+                          width - borderWidth * 2, height - borderWidth * 2);
+        shapeRenderer.end();
         
+        // Draw health fill with color gradient based on percentage
+        if (percentage > 0) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            
+            // Color changes from green -> yellow -> red as health decreases
+            if (percentage > 0.6f) {
+                // Green (high health) - bright and vibrant
+                shapeRenderer.setColor(0.2f, 1.0f, 0.2f, 1f);
+            } else if (percentage > 0.3f) {
+                // Yellow (medium health)
+                shapeRenderer.setColor(1.0f, 1.0f, 0.2f, 1f);
+            } else {
+                // Red (low health)
+                shapeRenderer.setColor(1.0f, 0.2f, 0.2f, 1f);
+            }
+            
+            float fillWidth = (width - borderWidth * 2 - padding * 2) * percentage;
+            shapeRenderer.rect(x + borderWidth + padding, y + borderWidth + padding, 
+                              fillWidth, height - borderWidth * 2 - padding * 2);
+            shapeRenderer.end();
+            
+            // Draw highlight on top of health bar for shine effect
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(1f, 1f, 1f, 0.3f);
+            shapeRenderer.rect(x + borderWidth + padding, 
+                              y + height - borderWidth - padding - 1, 
+                              fillWidth, 1);
+            shapeRenderer.end();
+        }
+        
+        // Draw inner border highlight (lighter edge on top for 3D effect)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 0.8f);
+        shapeRenderer.rect(x + borderWidth, y + borderWidth, 
+                          width - borderWidth * 2, height - borderWidth * 2);
         shapeRenderer.end();
     }
     

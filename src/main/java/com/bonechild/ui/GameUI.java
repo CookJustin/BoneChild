@@ -175,122 +175,268 @@ public class GameUI {
     }
     
     private void drawHealthBar() {
-        float barWidth = 400;
-        float barHeight = 32;
+        float barWidth = 420;
+        float barHeight = 36;
         float x = Gdx.graphics.getWidth() / 2f - barWidth / 2f;
-        float y = 30;
+        float y = 35;
         float borderWidth = 3;
+        float innerPadding = 2;
         
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         
-        // Outer border (dark)
-        shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 0.9f);
+        // Drop shadow for depth
+        shapeRenderer.setColor(0f, 0f, 0f, 0.6f);
+        shapeRenderer.rect(x + 3, y - 3, barWidth, barHeight);
+        
+        // Outer metallic border (dark steel)
+        shapeRenderer.setColor(0.15f, 0.15f, 0.18f, 1f);
         shapeRenderer.rect(x - borderWidth, y - borderWidth, 
                           barWidth + borderWidth * 2, barHeight + borderWidth * 2);
         
-        // Background
-        shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 0.95f);
+        // Inner border (lighter metallic edge for 3D effect)
+        shapeRenderer.setColor(0.4f, 0.4f, 0.45f, 1f);
+        shapeRenderer.rect(x - borderWidth + 1, y + barHeight + borderWidth - 2, 
+                          barWidth + borderWidth * 2 - 2, 1);
+        
+        // Dark inner background with subtle vignette
+        shapeRenderer.setColor(0.08f, 0.08f, 0.1f, 1f);
         shapeRenderer.rect(x, y, barWidth, barHeight);
         
-        // Health bar with gradient effect (simulated with layered rects)
+        // Background texture pattern (vertical lines)
+        shapeRenderer.setColor(0.12f, 0.12f, 0.14f, 0.5f);
+        for (int i = 0; i < barWidth; i += 4) {
+            shapeRenderer.rect(x + i, y, 1, barHeight);
+        }
+        
+        // Health bar with advanced gradient and glow
         float healthPct = player.getHealthPercentage();
-        float healthWidth = barWidth * healthPct;
+        float healthWidth = (barWidth - innerPadding * 2) * healthPct;
         
         if (healthWidth > 0) {
-            Color healthColor = healthPct > 0.6f ? new Color(0.2f, 0.8f, 0.2f, 1f) : 
-                               healthPct > 0.3f ? new Color(0.9f, 0.9f, 0.2f, 1f) : 
-                               new Color(0.9f, 0.2f, 0.2f, 1f);
+            // Determine color based on health percentage
+            Color healthColor, glowColor;
+            if (healthPct > 0.6f) {
+                // High health - vibrant green
+                healthColor = new Color(0.15f, 0.85f, 0.15f, 1f);
+                glowColor = new Color(0.3f, 1f, 0.3f, 0.6f);
+            } else if (healthPct > 0.3f) {
+                // Medium health - bright yellow/orange
+                healthColor = new Color(0.95f, 0.85f, 0.15f, 1f);
+                glowColor = new Color(1f, 0.95f, 0.4f, 0.6f);
+            } else {
+                // Low health - intense red with pulse
+                healthColor = new Color(0.95f, 0.15f, 0.15f, 1f);
+                glowColor = new Color(1f, 0.3f, 0.3f, 0.7f);
+            }
             
-            // Main health bar
+            // Glow underneath (slightly wider for effect)
+            shapeRenderer.setColor(glowColor.r, glowColor.g, glowColor.b, 0.4f);
+            shapeRenderer.rect(x + innerPadding - 2, y + innerPadding - 1, 
+                              healthWidth + 4, barHeight - innerPadding * 2 + 2);
+            
+            // Main health bar - bottom section (darker)
+            Color darkHealth = healthColor.cpy().lerp(Color.BLACK, 0.4f);
+            shapeRenderer.setColor(darkHealth);
+            shapeRenderer.rect(x + innerPadding, y + innerPadding, 
+                              healthWidth, (barHeight - innerPadding * 2) * 0.5f);
+            
+            // Main health bar - top section (brighter)
             shapeRenderer.setColor(healthColor);
-            shapeRenderer.rect(x, y, healthWidth, barHeight);
+            shapeRenderer.rect(x + innerPadding, y + innerPadding + (barHeight - innerPadding * 2) * 0.5f, 
+                              healthWidth, (barHeight - innerPadding * 2) * 0.5f);
             
-            // Lighter top gradient
-            Color lightColor = healthColor.cpy().lerp(Color.WHITE, 0.3f);
-            shapeRenderer.setColor(lightColor.r, lightColor.g, lightColor.b, 0.4f);
-            shapeRenderer.rect(x, y + barHeight * 0.6f, healthWidth, barHeight * 0.4f);
+            // Top highlight gradient for glass effect
+            Color highlightColor = healthColor.cpy().lerp(Color.WHITE, 0.6f);
+            shapeRenderer.setColor(highlightColor.r, highlightColor.g, highlightColor.b, 0.5f);
+            shapeRenderer.rect(x + innerPadding, y + barHeight - innerPadding - 6, 
+                              healthWidth, 4);
             
-            // Darker bottom edge
-            Color darkColor = healthColor.cpy().lerp(Color.BLACK, 0.3f);
-            shapeRenderer.setColor(darkColor.r, darkColor.g, darkColor.b, 0.6f);
-            shapeRenderer.rect(x, y, healthWidth, barHeight * 0.15f);
+            // Bright top edge shine
+            shapeRenderer.setColor(1f, 1f, 1f, 0.7f);
+            shapeRenderer.rect(x + innerPadding, y + barHeight - innerPadding - 2, 
+                              healthWidth, 1);
+            
+            // Vertical highlight strips for dynamic effect
+            shapeRenderer.setColor(1f, 1f, 1f, 0.15f);
+            for (int i = 0; i < healthWidth; i += 20) {
+                shapeRenderer.rect(x + innerPadding + i, y + innerPadding, 
+                                  2, barHeight - innerPadding * 2);
+            }
         }
+        
+        // Frame overlay for glass panel effect
+        shapeRenderer.setColor(0.3f, 0.3f, 0.35f, 0.3f);
+        shapeRenderer.rect(x, y, barWidth, 1); // Bottom edge
+        shapeRenderer.rect(x, y, 1, barHeight); // Left edge
+        shapeRenderer.rect(x + barWidth - 1, y, 1, barHeight); // Right edge
         
         shapeRenderer.end();
         
-        // Draw health text inside bar
+        // Draw health text with enhanced styling
         batch.begin();
-        String healthText = String.format("%.0f / %.0f HP", 
+        String healthText = String.format("%.0f / %.0f", 
             player.getCurrentHealth(), player.getMaxHealth());
+        
+        // Scale font slightly for health bar
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.9f);
+        
         glyphLayout.setText(font, healthText);
         float textX = x + barWidth / 2f - glyphLayout.width / 2f;
         float textY = y + barHeight / 2f + glyphLayout.height / 2f + 2;
         
-        // Draw shadow for readability (double shadow for more depth)
+        // Triple shadow for strong depth
         font.setColor(0, 0, 0, 0.9f);
+        font.draw(batch, healthText, textX + 3, textY - 3);
+        font.setColor(0, 0, 0, 0.7f);
         font.draw(batch, healthText, textX + 2, textY - 2);
+        font.setColor(0, 0, 0, 0.5f);
         font.draw(batch, healthText, textX + 1, textY - 1);
         
-        // Draw main text
-        font.setColor(Color.WHITE);
+        // Main text with subtle outline glow
+        font.setColor(1f, 1f, 1f, 1f);
         font.draw(batch, healthText, textX, textY);
+        
+        // Restore font scale
+        font.getData().setScale(originalScale);
+        
+        // HP label
+        font.getData().setScale(originalScale * 0.6f);
+        String hpLabel = "HP";
+        glyphLayout.setText(font, hpLabel);
+        float labelX = x + barWidth / 2f - glyphLayout.width / 2f;
+        float labelY = y + barHeight + 18;
+        
+        // Shadow
+        font.setColor(0, 0, 0, 0.8f);
+        font.draw(batch, hpLabel, labelX + 1, labelY - 1);
+        
+        // Label
+        font.setColor(0.85f, 0.85f, 0.9f, 1f);
+        font.draw(batch, hpLabel, labelX, labelY);
+        
+        font.getData().setScale(originalScale);
         batch.end();
     }
     
     private void drawExpBar() {
-        float barWidth = 400;
-        float barHeight = 20;
+        float barWidth = 420;
+        float barHeight = 24;
         float x = Gdx.graphics.getWidth() / 2f - barWidth / 2f;
-        float y = 70;
+        float y = 78;
         float borderWidth = 2;
+        float innerPadding = 2;
         
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         
-        // Outer border
-        shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 0.9f);
+        // Drop shadow
+        shapeRenderer.setColor(0f, 0f, 0f, 0.5f);
+        shapeRenderer.rect(x + 2, y - 2, barWidth, barHeight);
+        
+        // Outer metallic border
+        shapeRenderer.setColor(0.15f, 0.15f, 0.18f, 1f);
         shapeRenderer.rect(x - borderWidth, y - borderWidth, 
                           barWidth + borderWidth * 2, barHeight + borderWidth * 2);
         
-        // Background
-        shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 0.95f);
+        // Inner border highlight (top edge for 3D)
+        shapeRenderer.setColor(0.4f, 0.4f, 0.45f, 1f);
+        shapeRenderer.rect(x - borderWidth + 1, y + barHeight + borderWidth - 2, 
+                          barWidth + borderWidth * 2 - 2, 1);
+        
+        // Dark background
+        shapeRenderer.setColor(0.08f, 0.08f, 0.1f, 1f);
         shapeRenderer.rect(x, y, barWidth, barHeight);
         
-        // Experience bar with gradient
+        // Background pattern (diagonal lines for texture)
+        shapeRenderer.setColor(0.12f, 0.12f, 0.14f, 0.4f);
+        for (int i = 0; i < barWidth; i += 6) {
+            shapeRenderer.rect(x + i, y, 2, barHeight);
+        }
+        
+        // Experience bar with golden glow
         float expPct = player.getExperiencePercentage();
-        float expWidth = barWidth * expPct;
+        float expWidth = (barWidth - innerPadding * 2) * expPct;
         
         if (expWidth > 0) {
-            // Main XP bar (gold/yellow)
-            shapeRenderer.setColor(0.85f, 0.7f, 0.1f, 1f);
-            shapeRenderer.rect(x, y, expWidth, barHeight);
+            // Golden glow underneath
+            shapeRenderer.setColor(1f, 0.9f, 0.3f, 0.4f);
+            shapeRenderer.rect(x + innerPadding - 2, y + innerPadding - 1, 
+                              expWidth + 4, barHeight - innerPadding * 2 + 2);
             
-            // Lighter top gradient
-            shapeRenderer.setColor(1f, 0.9f, 0.4f, 0.5f);
-            shapeRenderer.rect(x, y + barHeight * 0.6f, expWidth, barHeight * 0.4f);
+            // Bottom darker gold
+            shapeRenderer.setColor(0.65f, 0.5f, 0.08f, 1f);
+            shapeRenderer.rect(x + innerPadding, y + innerPadding, 
+                              expWidth, (barHeight - innerPadding * 2) * 0.4f);
             
-            // Darker bottom
-            shapeRenderer.setColor(0.6f, 0.5f, 0.05f, 0.6f);
-            shapeRenderer.rect(x, y, expWidth, barHeight * 0.2f);
+            // Middle bright gold
+            shapeRenderer.setColor(0.95f, 0.8f, 0.15f, 1f);
+            shapeRenderer.rect(x + innerPadding, y + innerPadding + (barHeight - innerPadding * 2) * 0.4f, 
+                              expWidth, (barHeight - innerPadding * 2) * 0.4f);
+            
+            // Top highlight (bright yellow-white)
+            shapeRenderer.setColor(1f, 0.95f, 0.5f, 0.7f);
+            shapeRenderer.rect(x + innerPadding, y + barHeight - innerPadding - 4, 
+                              expWidth, 3);
+            
+            // Top edge shine
+            shapeRenderer.setColor(1f, 1f, 0.8f, 0.8f);
+            shapeRenderer.rect(x + innerPadding, y + barHeight - innerPadding - 1, 
+                              expWidth, 1);
+            
+            // Vertical light rays
+            shapeRenderer.setColor(1f, 1f, 1f, 0.2f);
+            for (int i = 0; i < expWidth; i += 15) {
+                shapeRenderer.rect(x + innerPadding + i, y + innerPadding, 
+                                  1, barHeight - innerPadding * 2);
+            }
         }
+        
+        // Glass panel frame overlay
+        shapeRenderer.setColor(0.3f, 0.3f, 0.35f, 0.25f);
+        shapeRenderer.rect(x, y, barWidth, 1);
+        shapeRenderer.rect(x, y, 1, barHeight);
+        shapeRenderer.rect(x + barWidth - 1, y, 1, barHeight);
         
         shapeRenderer.end();
         
-        // Draw XP text inside bar
+        // Draw XP text with enhanced styling
         batch.begin();
-        String expText = String.format("%.0f / %.0f XP", 
+        String expText = String.format("%.0f / %.0f", 
             player.getExperience(), player.getExperienceToNextLevel());
+        
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.75f);
+        
         glyphLayout.setText(font, expText);
         float textX = x + barWidth / 2f - glyphLayout.width / 2f;
         float textY = y + barHeight / 2f + glyphLayout.height / 2f + 1;
         
-        // Draw shadow for readability
+        // Triple shadow for depth
         font.setColor(0, 0, 0, 0.9f);
         font.draw(batch, expText, textX + 2, textY - 2);
+        font.setColor(0, 0, 0, 0.6f);
         font.draw(batch, expText, textX + 1, textY - 1);
         
-        // Draw main text
-        font.setColor(Color.WHITE);
+        // Main text
+        font.setColor(1f, 1f, 1f, 1f);
         font.draw(batch, expText, textX, textY);
+        
+        // XP label
+        font.getData().setScale(originalScale * 0.55f);
+        String xpLabel = "EXPERIENCE";
+        glyphLayout.setText(font, xpLabel);
+        float labelX = x + barWidth / 2f - glyphLayout.width / 2f;
+        float labelY = y + barHeight + 14;
+        
+        // Shadow
+        font.setColor(0, 0, 0, 0.8f);
+        font.draw(batch, xpLabel, labelX + 1, labelY - 1);
+        
+        // Label in gold
+        font.setColor(1f, 0.85f, 0.3f, 1f);
+        font.draw(batch, xpLabel, labelX, labelY);
+        
+        font.getData().setScale(originalScale);
         batch.end();
     }
     

@@ -24,7 +24,7 @@ public class PauseMenu {
     private Rectangle resumeButton;
     private Rectangle settingsButton;
     private Rectangle exitButton;
-    private float buttonWidth = 250f;
+    private float buttonWidth = 300f; // Increased from 250f to fit "EXIT TO MENU" text
     private float buttonHeight = 50f;
     
     private boolean isVisible;
