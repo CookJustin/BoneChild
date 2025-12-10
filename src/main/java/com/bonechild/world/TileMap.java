@@ -35,41 +35,43 @@ public class TileMap {
             }
         }
         
-        // Create a default procedural map
-        generateMap(50, 50); // 50x50 tiles
+        // Create a default procedural map - sized to match the screen
+        // At 16px per tile: 80 tiles wide = 1280px, 45 tiles high = 720px
+        generateMap(80, 45); // Matches typical 1280x720 screen
     }
     
     /**
-     * Generate a procedural graveyard map
+     * Generate a procedural dungeon map with specified tiles
      */
     private void generateMap(int width, int height) {
         this.mapWidth = width;
         this.mapHeight = height;
         this.map = new int[height][width];
         
-        // Fill with grass tiles - using tile 0 (top-left, most plain) as border
-        // and use other tiles sparsely in the interior
+        // Define tile indices based on (column, row) positions
+        // Border tiles: tile_1_0, tile_3_0, tile_2_0
+        int[] borderTiles = {1, 3, 2}; // column positions in row 0
+        
+        // Interior tiles: tile_2_1, tile_2_2, tile_1_1, tile_3_1
+        int[] interiorTiles = {
+            tilesetColumns * 1 + 2,  // tile_2_1 (col 2, row 1)
+            tilesetColumns * 2 + 2,  // tile_2_2 (col 2, row 2)
+            tilesetColumns * 1 + 1,  // tile_1_1 (col 1, row 1)
+            tilesetColumns * 1 + 3   // tile_3_1 (col 3, row 1)
+        };
+        
+        // Fill the map
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int tile;
                 
-                // Use tile 0 (top-left, most plain) for borders
+                // Use border tiles for the edges
                 if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                    tile = 0; // Border tile (plain)
+                    // Randomly pick from border tiles for variety
+                    tile = borderTiles[(int)(Math.random() * borderTiles.length)];
                 } else {
-                    // Interior: mostly tile 0 with sparse decorative elements
-                    double rand = Math.random();
-                    
-                    if (rand < 0.85) {
-                        // Base tile for majority (85%)
-                        tile = 0;
-                    } else if (rand < 0.95) {
-                        // Sparse decorative elements from row 1 (10%)
-                        tile = tilesetColumns + (int)(Math.random() * Math.min(3, tilesetColumns));
-                    } else {
-                        // Rare special tiles (5%)
-                        tile = (int)(Math.random() * Math.min(4, tilesetColumns));
-                    }
+                    // Interior: randomly pick from interior tiles
+                    tile = interiorTiles[(int)(Math.random() * interiorTiles.length)];
                 }
                 
                 map[y][x] = tile;

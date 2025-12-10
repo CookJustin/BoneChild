@@ -26,6 +26,7 @@ public class Player extends LivingEntity {
     private AnimationState previousState;
     private boolean facingRight;
     private float hurtAnimationTimer = 0f;
+    private boolean isPlayingHurtAnimation = false;
     private static final float HURT_ANIMATION_DURATION = 0.25f; // 5 frames * 0.05s
     
     // Attack properties
@@ -59,21 +60,24 @@ public class Player extends LivingEntity {
         // Update attack cooldown
         timeSinceLastAttack += delta;
         
-        // If dead, stay in dead state
-        if (isDead() && currentState != AnimationState.DEAD) {
-            currentState = AnimationState.DEAD;
+        // If dead, stay in dead state and stop all movement
+        if (isDead()) {
+            if (currentState != AnimationState.DEAD) {
+                currentState = AnimationState.DEAD;
+                // Stop all movement when dead
+                velocity.x = 0;
+                velocity.y = 0;
+            }
             return;
         }
         
-        // Handle hurt animation
-        if (currentState == AnimationState.HURT) {
+        // Update hurt animation timer (if playing)
+        if (isPlayingHurtAnimation) {
             hurtAnimationTimer += delta;
             if (hurtAnimationTimer >= HURT_ANIMATION_DURATION) {
                 hurtAnimationTimer = 0f;
-                currentState = AnimationState.IDLE;
+                isPlayingHurtAnimation = false;
             }
-            // Don't process other state changes while hurt
-            return;
         }
         
         // Update facing direction based on movement (when moving)
@@ -85,8 +89,11 @@ public class Player extends LivingEntity {
             }
         }
         
-        // Determine animation state based on velocity only
-        if (velocity.len() > 0) {
+        // Determine animation state based on hurt status and velocity
+        if (isPlayingHurtAnimation) {
+            // Show hurt animation but allow movement to continue
+            currentState = AnimationState.HURT;
+        } else if (velocity.len() > 0) {
             // Walking state when moving
             currentState = AnimationState.WALKING;
         } else {
@@ -94,7 +101,7 @@ public class Player extends LivingEntity {
             currentState = AnimationState.IDLE;
         }
         
-        // Apply velocity
+        // Apply velocity (movement continues during hurt animation)
         position.x += velocity.x * delta;
         position.y += velocity.y * delta;
         
@@ -113,6 +120,7 @@ public class Player extends LivingEntity {
         if (!isDead()) {
             currentState = AnimationState.HURT;
             hurtAnimationTimer = 0f;
+            isPlayingHurtAnimation = true;
         }
     }
     

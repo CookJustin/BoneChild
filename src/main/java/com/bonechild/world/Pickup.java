@@ -19,7 +19,10 @@ public class Pickup extends Entity {
     private boolean collected;
     
     public Pickup(float x, float y, PickupType type, float value) {
-        super(x, y, 16, 16); // Small pickup size
+        // Set size based on pickup type - XP orbs are much smaller
+        super(x, y, 
+            type == PickupType.XP_ORB ? 4 : 16,  // XP orbs are 4x4 (1/8th size of 16x16)
+            type == PickupType.XP_ORB ? 4 : 16); 
         this.type = type;
         this.value = value;
         this.collectRadius = 20f; // How close to player to auto-collect

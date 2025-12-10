@@ -42,7 +42,7 @@ public class Renderer {
         
         // Create tile map when tileset is loaded
         if (assets.getTilesetTexture() != null) {
-            this.tileMap = new TileMap(assets.getTilesetTexture(), 32);
+            this.tileMap = new TileMap(assets.getTilesetTexture(), 16); // Changed from 32 to 16 for Dungeon_Tileset
         }
         
         // Create separate player animation instances
@@ -226,8 +226,19 @@ public class Renderer {
                 batch.draw(frame, x, y, width, height);
                 batch.end();
             }
+        } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
+            // Draw animated health flask sprite
+            Animation healthAnim = assets.getHealthOrbAnimation();
+            if (healthAnim != null) {
+                healthAnim.update(deltaTime);
+                var frame = healthAnim.getCurrentFrame();
+                
+                batch.begin();
+                batch.draw(frame, x, y, width, height);
+                batch.end();
+            }
         } else {
-            // Keep XP and Health orbs as colored circles
+            // Keep XP orbs as colored circles
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             
             if (pickup.getType() == Pickup.PickupType.XP_ORB) {
@@ -246,24 +257,6 @@ public class Renderer {
                 
                 // Highlight
                 shapeRenderer.setColor(0.8f, 1f, 1f, 0.7f);
-                shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
-                
-            } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
-                // Draw health orb with green glow
-                // Outer glow
-                shapeRenderer.setColor(0f, 1f, 0f, 0.3f);
-                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
-                
-                // Main orb (bright green)
-                shapeRenderer.setColor(0.2f, 1f, 0.2f, 1f);
-                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
-                
-                // Inner bright core
-                shapeRenderer.setColor(0.6f, 1f, 0.6f, 0.8f);
-                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
-                
-                // Highlight
-                shapeRenderer.setColor(1f, 1f, 0.5f, 0.7f);
                 shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
             }
             

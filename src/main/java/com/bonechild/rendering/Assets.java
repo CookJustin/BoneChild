@@ -24,12 +24,19 @@ public class Assets {
     private Texture coin3;
     private Texture coin4;
     
+    // Flask sprites for health orb animation
+    private Texture flask1;
+    private Texture flask2;
+    private Texture flask3;
+    private Texture flask4;
+    
     // Animations
     private Animation idleAnimation;
     private Animation walkAnimation;
     private Animation hurtAnimation;
     private Animation deathAnimation;
     private Animation coinAnimation;
+    private Animation healthOrbAnimation;
     
     // Fonts
     private BitmapFont font;
@@ -61,8 +68,8 @@ public class Assets {
         
         // Load textures
         try {
-            tilesetTexture = new Texture(Gdx.files.internal("assets/SkeletonGraveyardTileset.png"));
-            Gdx.app.log("Assets", "Loaded tileset texture");
+            tilesetTexture = new Texture(Gdx.files.internal("assets/Dungeon_Tileset.png"));
+            Gdx.app.log("Assets", "Loaded dungeon tileset texture");
             
             // Load skeleton sprite sheets
             skeletonIdleSheet = new Texture(Gdx.files.internal("assets/SkeletonIdle.png"));
@@ -100,10 +107,20 @@ public class Assets {
             coin4 = new Texture(Gdx.files.internal("assets/coin_4.png"));
             
             // Create coin animation by combining the 4 coin textures
-            // We'll use a helper method to create this animation
             coinAnimation = createCoinAnimation();
             
             Gdx.app.log("Assets", "Loaded coin sprites and created coin animation");
+            
+            // Load flask sprites for health orbs
+            flask1 = new Texture(Gdx.files.internal("assets/flasks_1_1.png"));
+            flask2 = new Texture(Gdx.files.internal("assets/flasks_1_2.png"));
+            flask3 = new Texture(Gdx.files.internal("assets/flasks_1_3.png"));
+            flask4 = new Texture(Gdx.files.internal("assets/flasks_1_4.png"));
+            
+            // Create health orb animation
+            healthOrbAnimation = createHealthOrbAnimation();
+            
+            Gdx.app.log("Assets", "Loaded flask sprites and created health orb animation");
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
@@ -232,6 +249,22 @@ public class Assets {
             coin4.dispose();
         }
         
+        if (flask1 != null) {
+            flask1.dispose();
+        }
+        
+        if (flask2 != null) {
+            flask2.dispose();
+        }
+        
+        if (flask3 != null) {
+            flask3.dispose();
+        }
+        
+        if (flask4 != null) {
+            flask4.dispose();
+        }
+        
         if (font != null) {
             font.dispose();
         }
@@ -267,6 +300,7 @@ public class Assets {
     public Animation getHurtAnimation() { return hurtAnimation; }
     public Animation getDeathAnimation() { return deathAnimation; }
     public Animation getCoinAnimation() { return coinAnimation; }
+    public Animation getHealthOrbAnimation() { return healthOrbAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
     
@@ -286,7 +320,15 @@ public class Assets {
      */
     private Animation createCoinAnimation() {
         Texture[] coinFrames = {coin1, coin2, coin3, coin4};
-        return new Animation(coinFrames, 0.1f, true);
+        return new Animation(coinFrames, 0.2f, true); // Slowed down from 0.1f to 0.2f
+    }
+    
+    /**
+     * Create a health orb animation using the loaded flask textures
+     */
+    private Animation createHealthOrbAnimation() {
+        Texture[] flaskFrames = {flask1, flask2, flask3, flask4};
+        return new Animation(flaskFrames, 0.2f, true); // Slowed down from 0.1f to 0.2f
     }
     
     // Audio getters
