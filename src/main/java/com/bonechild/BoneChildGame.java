@@ -263,6 +263,32 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
+        // Check if player is dead and show game over screen
+        if (worldManager.getPlayer().isDead()) {
+            // Set stats and show game over screen
+            if (gameOverScreen != null && !gameOverScreen.isVisible()) {
+                gameOverScreen.setStats(0, worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
+                gameOverScreen.show();
+            }
+        }
+        
+        // Game is running - check game over screen
+        if (gameOverScreen != null && gameOverScreen.isVisible()) {
+            // Render game in background (paused state)
+            renderer.updateCamera();
+            renderer.setDeltaTime(0); // No animation updates while paused
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            renderer.renderPickups(worldManager.getPickups());
+            gameUI.render();
+            
+            // Update and render game over screen on top
+            gameOverScreen.update(delta);
+            gameOverScreen.render();
+            return;
+        }
+        
         // Game is running - check character stats screen FIRST (takes priority)
         if (characterStatsScreen != null && characterStatsScreen.isVisible()) {
             // Render game in background (paused state)
