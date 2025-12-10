@@ -45,7 +45,8 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     private boolean gamePaused = false;
     private float deathTimer = 0f;
     private boolean deathScreenShown = false;
-    private static final float DEATH_ANIMATION_DELAY = 2.0f; // Wait 2 seconds before showing death screen
+    private boolean deathSoundPlayed = false;
+    private static final float DEATH_ANIMATION_DELAY = 1.5f; // Delay before showing game over screen
     
     @Override
     public void create() {
@@ -268,6 +269,20 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         
         // Check if player is dead and show game over screen
         if (worldManager.getPlayer().isDead()) {
+            // Play death sound once when player first dies
+            if (!deathSoundPlayed) {
+                // Stop background music
+                if (assets.getBackgroundMusic() != null && assets.getBackgroundMusic().isPlaying()) {
+                    assets.getBackgroundMusic().stop();
+                    Gdx.app.log("BoneChild", "Stopped background music");
+                }
+                
+                // Play death sound
+                assets.playSound(assets.getDeathSound());
+                deathSoundPlayed = true;
+                Gdx.app.log("BoneChild", "Playing death sound");
+            }
+            
             // Increment death timer
             deathTimer += delta;
             
@@ -280,9 +295,10 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
                 }
             }
         } else {
-            // Reset death timer and flag if player is not dead
+            // Reset death timer and flags if player is not dead
             deathTimer = 0f;
             deathScreenShown = false;
+            deathSoundPlayed = false;
         }
         
         // Game is running - check game over screen
