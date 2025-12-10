@@ -172,7 +172,10 @@ public class Assets {
                 Gdx.app.log("Assets", "Loaded level up sound");
             }
             
-            if (Gdx.files.internal("assets/audio/death.ogg").exists()) {
+            if (Gdx.files.internal("assets/audio/death-sound.mp3").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death-sound.mp3"));
+                Gdx.app.log("Assets", "Loaded death sound: death-sound.mp3");
+            } else if (Gdx.files.internal("assets/audio/death.ogg").exists()) {
                 deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.ogg"));
                 Gdx.app.log("Assets", "Loaded death sound");
             } else if (Gdx.files.internal("assets/audio/death.wav").exists()) {
