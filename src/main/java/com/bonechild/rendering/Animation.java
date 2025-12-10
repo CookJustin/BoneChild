@@ -45,6 +45,21 @@ public class Animation {
     }
     
     /**
+     * Constructor for animation from separate texture files (e.g., coin_1.png, coin_2.png, etc.)
+     */
+    public Animation(Texture[] textures, float frameDuration, boolean looping) {
+        this.frames = new TextureRegion[textures.length];
+        this.frameDuration = frameDuration;
+        this.stateTime = 0;
+        this.looping = looping;
+        
+        // Create texture regions from individual textures
+        for (int i = 0; i < textures.length; i++) {
+            frames[i] = new TextureRegion(textures[i]);
+        }
+    }
+    
+    /**
      * Update animation state
      */
     public void update(float delta) {

@@ -18,11 +18,18 @@ public class Assets {
     private Texture skeletonHurtSheet;
     private Texture skeletonDieSheet;
     
+    // Coin sprites for animation
+    private Texture coin1;
+    private Texture coin2;
+    private Texture coin3;
+    private Texture coin4;
+    
     // Animations
     private Animation idleAnimation;
     private Animation walkAnimation;
     private Animation hurtAnimation;
     private Animation deathAnimation;
+    private Animation coinAnimation;
     
     // Fonts
     private BitmapFont font;
@@ -85,6 +92,18 @@ public class Assets {
             deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
             
             Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
+            
+            // Load coin sprites
+            coin1 = new Texture(Gdx.files.internal("assets/coin_1.png"));
+            coin2 = new Texture(Gdx.files.internal("assets/coin_2.png"));
+            coin3 = new Texture(Gdx.files.internal("assets/coin_3.png"));
+            coin4 = new Texture(Gdx.files.internal("assets/coin_4.png"));
+            
+            // Create coin animation by combining the 4 coin textures
+            // We'll use a helper method to create this animation
+            coinAnimation = createCoinAnimation();
+            
+            Gdx.app.log("Assets", "Loaded coin sprites and created coin animation");
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
@@ -194,6 +213,22 @@ public class Assets {
             skeletonDieSheet.dispose();
         }
         
+        if (coin1 != null) {
+            coin1.dispose();
+        }
+        
+        if (coin2 != null) {
+            coin2.dispose();
+        }
+        
+        if (coin3 != null) {
+            coin3.dispose();
+        }
+        
+        if (coin4 != null) {
+            coin4.dispose();
+        }
+        
         if (font != null) {
             font.dispose();
         }
@@ -228,6 +263,7 @@ public class Assets {
     public Animation getWalkAnimation() { return walkAnimation; }
     public Animation getHurtAnimation() { return hurtAnimation; }
     public Animation getDeathAnimation() { return deathAnimation; }
+    public Animation getCoinAnimation() { return coinAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
     
@@ -240,6 +276,14 @@ public class Assets {
             return new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.15f, true);
         }
         return null;
+    }
+    
+    /**
+     * Create a coin animation using the loaded coin textures
+     */
+    private Animation createCoinAnimation() {
+        Texture[] coinFrames = {coin1, coin2, coin3, coin4};
+        return new Animation(coinFrames, 0.1f, true);
     }
     
     // Audio getters

@@ -215,60 +215,60 @@ public class Renderer {
         float width = pickup.getWidth();
         float height = pickup.getHeight();
         
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        
         if (pickup.getType() == Pickup.PickupType.GOLD_COIN) {
-            // Draw gold coin with glow
-            // Outer glow
-            shapeRenderer.setColor(1f, 0.8f, 0f, 0.2f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+            // Draw animated coin sprite
+            Animation coinAnim = assets.getCoinAnimation();
+            if (coinAnim != null) {
+                coinAnim.update(deltaTime);
+                var frame = coinAnim.getCurrentFrame();
+                
+                batch.begin();
+                batch.draw(frame, x, y, width, height);
+                batch.end();
+            }
+        } else {
+            // Keep XP and Health orbs as colored circles
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             
-            // Main coin (gold/yellow)
-            shapeRenderer.setColor(1f, 0.85f, 0f, 1f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+            if (pickup.getType() == Pickup.PickupType.XP_ORB) {
+                // Draw XP orb with blue glow
+                // Outer glow
+                shapeRenderer.setColor(0f, 0.5f, 1f, 0.3f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+                
+                // Main orb (blue)
+                shapeRenderer.setColor(0.2f, 0.6f, 1f, 1f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+                
+                // Inner bright core
+                shapeRenderer.setColor(0.5f, 0.8f, 1f, 0.8f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
+                
+                // Highlight
+                shapeRenderer.setColor(0.8f, 1f, 1f, 0.7f);
+                shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+                
+            } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
+                // Draw health orb with green glow
+                // Outer glow
+                shapeRenderer.setColor(0f, 1f, 0f, 0.3f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+                
+                // Main orb (bright green)
+                shapeRenderer.setColor(0.2f, 1f, 0.2f, 1f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+                
+                // Inner bright core
+                shapeRenderer.setColor(0.6f, 1f, 0.6f, 0.8f);
+                shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
+                
+                // Highlight
+                shapeRenderer.setColor(1f, 1f, 0.5f, 0.7f);
+                shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+            }
             
-            // Highlight
-            shapeRenderer.setColor(1f, 1f, 0.5f, 0.6f);
-            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.2f, 12);
-            
-        } else if (pickup.getType() == Pickup.PickupType.XP_ORB) {
-            // Draw XP orb with blue glow
-            // Outer glow
-            shapeRenderer.setColor(0f, 0.5f, 1f, 0.3f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
-            
-            // Main orb (blue)
-            shapeRenderer.setColor(0.2f, 0.6f, 1f, 1f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
-            
-            // Inner bright core
-            shapeRenderer.setColor(0.5f, 0.8f, 1f, 0.8f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
-            
-            // Highlight
-            shapeRenderer.setColor(0.8f, 1f, 1f, 0.7f);
-            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
-            
-        } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
-            // Draw health orb with green glow
-            // Outer glow
-            shapeRenderer.setColor(0f, 1f, 0f, 0.3f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
-            
-            // Main orb (bright green)
-            shapeRenderer.setColor(0.2f, 1f, 0.2f, 1f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
-            
-            // Inner bright core
-            shapeRenderer.setColor(0.6f, 1f, 0.6f, 0.8f);
-            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
-            
-            // Highlight
-            shapeRenderer.setColor(1f, 1f, 0.5f, 0.7f);
-            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+            shapeRenderer.end();
         }
-        
-        shapeRenderer.end();
     }
     
     /**
