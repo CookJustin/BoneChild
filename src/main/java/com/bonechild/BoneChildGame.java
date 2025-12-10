@@ -376,6 +376,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         // Render game entities
         renderer.renderPlayer(worldManager.getPlayer());
         renderer.renderMobs(worldManager.getMobs());
+        renderer.renderProjectiles(worldManager.getProjectiles());
         renderer.renderPickups(worldManager.getPickups());
         
         // Render UI

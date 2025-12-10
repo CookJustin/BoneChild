@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class Pickup extends Entity {
     public enum PickupType {
-        GOLD_COIN, XP_ORB
+        GOLD_COIN, XP_ORB, HEALTH_ORB
     }
     
     private PickupType type;

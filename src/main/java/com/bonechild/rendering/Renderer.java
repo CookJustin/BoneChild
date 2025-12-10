@@ -9,6 +9,7 @@ import com.bonechild.world.Mob;
 import com.bonechild.world.Player;
 import com.bonechild.world.TileMap;
 import com.bonechild.world.Pickup;
+import com.bonechild.world.Projectile;
 
 /**
  * Handles rendering of all game objects
@@ -222,6 +223,56 @@ public class Renderer {
             // Highlight
             shapeRenderer.setColor(0.8f, 1f, 1f, 0.7f);
             shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+            
+        } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
+            // Draw health orb with green glow
+            // Outer glow
+            shapeRenderer.setColor(0f, 1f, 0f, 0.3f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.8f, 16);
+            
+            // Main orb (bright green)
+            shapeRenderer.setColor(0.2f, 1f, 0.2f, 1f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.5f, 16);
+            
+            // Inner bright core
+            shapeRenderer.setColor(0.6f, 1f, 0.6f, 0.8f);
+            shapeRenderer.circle(x + width / 2, y + height / 2, width * 0.3f, 14);
+            
+            // Highlight
+            shapeRenderer.setColor(1f, 1f, 0.5f, 0.7f);
+            shapeRenderer.circle(x + width * 0.3f, y + height * 0.3f, width * 0.15f, 10);
+        }
+        
+        shapeRenderer.end();
+    }
+    
+    /**
+     * Render all projectiles (fireballs)
+     */
+    public void renderProjectiles(Array<Projectile> projectiles) {
+        if (projectiles == null || projectiles.size == 0) return;
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        for (Projectile projectile : projectiles) {
+            if (projectile.isActive()) {
+                // Draw fireball as red ball with glow
+                float x = projectile.getPosition().x;
+                float y = projectile.getPosition().y;
+                float radius = projectile.getRadius();
+                
+                // Outer glow (orange) - proportional to radius
+                shapeRenderer.setColor(1f, 0.5f, 0f, 0.4f);
+                shapeRenderer.circle(x, y, radius * 1.8f, 16);
+                
+                // Main fireball (red)
+                shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
+                shapeRenderer.circle(x, y, radius, 16);
+                
+                // Inner core (bright red/yellow) - proportional to radius
+                shapeRenderer.setColor(1f, 0.6f, 0.3f, 0.8f);
+                shapeRenderer.circle(x, y, radius * 0.6f, 14);
+            }
         }
         
         shapeRenderer.end();

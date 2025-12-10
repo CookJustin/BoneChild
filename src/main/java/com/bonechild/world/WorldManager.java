@@ -13,6 +13,7 @@ public class WorldManager {
     private Player player;
     private Array<Mob> mobs;
     private Array<Pickup> pickups;
+    private Array<Projectile> projectiles;
     private Random random;
     
     // Wave management
@@ -24,6 +25,7 @@ public class WorldManager {
     public WorldManager() {
         this.mobs = new Array<>();
         this.pickups = new Array<>();
+        this.projectiles = new Array<>();
         this.random = new Random();
         
         // Initialize wave system
@@ -79,11 +81,35 @@ public class WorldManager {
             }
         }
         
-        // Process player attacks when attacking
-        if (player.getCurrentState() == Player.AnimationState.ATTACKING) {
-            // Attack all mobs in range
+        // Auto-cast fireballs at closest mob
+        if (player.canAttack() && mobs.size > 0) {
+            Mob closestMob = player.getClosestMob(mobs);
+            if (closestMob != null) {
+                Projectile fireball = player.castFireball(closestMob);
+                if (fireball != null) {
+                    projectiles.add(fireball);
+                }
+            }
+        }
+        
+        // Update projectiles
+        for (int i = projectiles.size - 1; i >= 0; i--) {
+            Projectile projectile = projectiles.get(i);
+            projectile.update(delta);
+            
+            if (!projectile.isActive()) {
+                projectiles.removeIndex(i);
+                continue;
+            }
+            
+            // Check collision with mobs
             for (Mob mob : mobs) {
-                player.attackMob(mob);
+                if (projectile.collidesWith(mob)) {
+                    mob.takeDamage(projectile.getDamage());
+                    projectile.deactivate();
+                    Gdx.app.log("WorldManager", "Projectile hit mob!");
+                    break;
+                }
             }
         }
         
@@ -130,6 +156,17 @@ public class WorldManager {
             pickups.add(xpOrb);
         }
         
+        // 30% chance to drop health orb
+        if (random.nextFloat() < 0.3f) {
+            Pickup healthOrb = new Pickup(
+                mobX,
+                mobY,
+                Pickup.PickupType.HEALTH_ORB,
+                10f // Heal 10% of max health
+            );
+            pickups.add(healthOrb);
+        }
+        
         Gdx.app.log("WorldManager", "Spawned pickups at (" + mobX + ", " + mobY + ")");
     }
     
@@ -143,6 +180,10 @@ public class WorldManager {
         } else if (pickup.getType() == Pickup.PickupType.XP_ORB) {
             player.addExperience(pickup.getValue());
             Gdx.app.log("WorldManager", "Collected XP orb: " + pickup.getValue());
+        } else if (pickup.getType() == Pickup.PickupType.HEALTH_ORB) {
+            float healAmount = player.getMaxHealth() * (pickup.getValue() / 100f);
+            player.heal(healAmount);
+            Gdx.app.log("WorldManager", "Collected health orb: Healed " + healAmount + " HP");
         }
         
         pickup.collect();
@@ -153,7 +194,8 @@ public class WorldManager {
      */
     private void spawnWave() {
         currentWave++;
-        int mobCount = mobsPerWave + (currentWave - 1); // Increase mobs each wave
+        // Increase mobs each wave by only 1 instead of scaling with wave number
+        int mobCount = mobsPerWave + Math.max(0, currentWave - 2);
         
         Gdx.app.log("WorldManager", "Spawning wave " + currentWave + " with " + mobCount + " mobs");
         
@@ -188,6 +230,7 @@ public class WorldManager {
     public Player getPlayer() { return player; }
     public Array<Mob> getMobs() { return mobs; }
     public Array<Pickup> getPickups() { return pickups; }
+    public Array<Projectile> getProjectiles() { return projectiles; }
     public int getCurrentWave() { return currentWave; }
     public int getMobCount() { return mobs.size; }
 }

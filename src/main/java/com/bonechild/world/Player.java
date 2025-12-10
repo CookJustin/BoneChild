@@ -31,7 +31,6 @@ public class Player extends LivingEntity {
     private float attackRange;
     private float attackCooldown;
     private float timeSinceLastAttack;
-    private boolean isAttacking; // Track if actively attacking
     
     public Player(float x, float y) {
         super(x, y, 64, 64, 100f, 200f); // Changed size to 64x64 for sprite
@@ -44,11 +43,10 @@ public class Player extends LivingEntity {
         this.facingRight = true;
         
         // Attack setup
-        this.attackDamage = 25f;
-        this.attackRange = 80f; // Attack range in pixels
+        this.attackDamage = 40f;
+        this.attackRange = 500f; // Attack range in pixels (projectile range)
         this.attackCooldown = 0.5f; // Can attack twice per second
         this.timeSinceLastAttack = 0;
-        this.isAttacking = false;
     }
     
     @Override
@@ -68,15 +66,12 @@ public class Player extends LivingEntity {
             }
         }
         
-        // Determine animation state based on velocity and attack status
-        if (isAttacking) {
-            // Stay in attacking state while actively attacking
-            currentState = AnimationState.ATTACKING;
-        } else if (velocity.len() > 0) {
-            // Walking state takes priority when not attacking
+        // Determine animation state based on velocity only
+        if (velocity.len() > 0) {
+            // Walking state when moving
             currentState = AnimationState.WALKING;
         } else {
-            // Only idle when not moving and not attacking
+            // Idle when not moving
             currentState = AnimationState.IDLE;
         }
         
@@ -93,48 +88,55 @@ public class Player extends LivingEntity {
     }
     
     /**
-     * Trigger attack animation and damage nearby enemies
+     * Get the closest mob within attack range
      */
-    public void attack() {
-        // Check cooldown
-        if (timeSinceLastAttack < attackCooldown) {
-            return;
+    public Mob getClosestMob(com.badlogic.gdx.utils.Array<Mob> mobs) {
+        Mob closest = null;
+        float closestDistance = attackRange;
+        
+        for (Mob mob : mobs) {
+            if (mob == null || mob.isDead()) {
+                continue;
+            }
+            
+            // Calculate distance to mob
+            float dx = mob.getPosition().x - position.x;
+            float dy = mob.getPosition().y - position.y;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+            
+            // Check if in range and closer than previous closest
+            if (distance <= attackRange && distance < closestDistance) {
+                closest = mob;
+                closestDistance = distance;
+            }
         }
         
-        isAttacking = true;
+        return closest;
+    }
+    
+    /**
+     * Create a fireball projectile at the closest mob
+     */
+    public Projectile castFireball(Mob targetMob) {
+        // Check cooldown
+        if (timeSinceLastAttack < attackCooldown || targetMob == null) {
+            return null;
+        }
+        
+        // Reset cooldown
         timeSinceLastAttack = 0;
         
-        Gdx.app.log("Player", "Player attacked! Damage: " + attackDamage + " Range: " + attackRange);
-    }
-    
-    /**
-     * Stop attacking
-     */
-    public void stopAttack() {
-        isAttacking = false;
-    }
-    
-    /**
-     * Deal damage to a mob if in range
-     */
-    public boolean attackMob(Mob mob) {
-        if (mob == null || mob.isDead()) {
-            return false;
-        }
+        // Create projectile toward target
+        Projectile projectile = new Projectile(
+            position.x + width / 2f,
+            position.y + height / 2f,
+            targetMob.getPosition().x + targetMob.getWidth() / 2f,
+            targetMob.getPosition().y + targetMob.getHeight() / 2f,
+            attackDamage
+        );
         
-        // Calculate distance to mob
-        float dx = mob.getPosition().x - position.x;
-        float dy = mob.getPosition().y - position.y;
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        
-        // Check if in attack range
-        if (distance <= attackRange) {
-            mob.takeDamage(attackDamage);
-            Gdx.app.log("Player", "Hit mob! Distance: " + distance + " Damage: " + attackDamage);
-            return true;
-        }
-        
-        return false;
+        Gdx.app.log("Player", "Fireball cast! Damage: " + attackDamage);
+        return projectile;
     }
     
     /**
@@ -142,13 +144,6 @@ public class Player extends LivingEntity {
      */
     public boolean canAttack() {
         return timeSinceLastAttack >= attackCooldown;
-    }
-    
-    /**
-     * Check if currently attacking
-     */
-    public boolean isCurrentlyAttacking() {
-        return isAttacking;
     }
     
     /**

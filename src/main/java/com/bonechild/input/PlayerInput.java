@@ -16,7 +16,6 @@ public class PlayerInput {
     private int keyMoveDown;
     private int keyMoveLeft;
     private int keyMoveRight;
-    private int keyAttack;
     
     public PlayerInput(Player player) {
         this.player = player;
@@ -25,7 +24,6 @@ public class PlayerInput {
         this.keyMoveDown = Input.Keys.S;
         this.keyMoveLeft = Input.Keys.A;
         this.keyMoveRight = Input.Keys.D;
-        this.keyAttack = Input.Keys.SPACE;
     }
     
     /**
@@ -59,25 +57,13 @@ public class PlayerInput {
         }
         
         player.setVelocity(movement.x, movement.y);
-        
-        // Attack on keybind (press)
-        if (Gdx.input.isKeyJustPressed(keyAttack)) {
-            player.attack();
-            Gdx.app.log("PlayerInput", "Attack triggered!");
-        }
-        
-        // Stop attack on keybind (release)
-        if (!Gdx.input.isKeyPressed(keyAttack)) {
-            player.stopAttack();
-        }
     }
     
     /**
      * Check for action inputs (shooting, abilities, etc.)
      */
     public boolean isActionPressed() {
-        return Gdx.input.isKeyPressed(keyAttack) || 
-               Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+        return Gdx.input.isButtonPressed(Input.Buttons.LEFT);
     }
     
     /**
@@ -92,14 +78,13 @@ public class PlayerInput {
      * Update keybinds from settings
      */
     public void setKeybinds(int[] keybinds) {
-        if (keybinds == null || keybinds.length < 5) {
+        if (keybinds == null || keybinds.length < 4) {
             return;
         }
         this.keyMoveUp = keybinds[0];
         this.keyMoveDown = keybinds[1];
         this.keyMoveLeft = keybinds[2];
         this.keyMoveRight = keybinds[3];
-        this.keyAttack = keybinds[4];
     }
     
     public void setPlayer(Player player) {
