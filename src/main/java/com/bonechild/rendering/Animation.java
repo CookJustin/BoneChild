@@ -27,6 +27,24 @@ public class Animation {
     }
     
     /**
+     * Constructor that allows selecting specific frames from a sprite sheet
+     */
+    public Animation(Texture spriteSheet, int[] frameIndices, int row, int frameWidth, int frameHeight, float frameDuration, boolean looping) {
+        this.frames = new TextureRegion[frameIndices.length];
+        this.frameDuration = frameDuration;
+        this.stateTime = 0;
+        this.looping = looping;
+        
+        // Cut the sprite sheet into frames using specific indices
+        for (int i = 0; i < frameIndices.length; i++) {
+            int frameIndex = frameIndices[i];
+            int x = frameIndex * frameWidth;
+            int y = row * frameHeight;
+            frames[i] = new TextureRegion(spriteSheet, x, y, frameWidth, frameHeight);
+        }
+    }
+    
+    /**
      * Update animation state
      */
     public void update(float delta) {

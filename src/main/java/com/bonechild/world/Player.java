@@ -19,12 +19,14 @@ public class Player extends LivingEntity {
     
     // Animation state
     public enum AnimationState {
-        IDLE, WALKING, ATTACKING
+        IDLE, WALKING, ATTACKING, HURT, DEAD
     }
     
     private AnimationState currentState;
     private AnimationState previousState;
     private boolean facingRight;
+    private float hurtAnimationTimer = 0f;
+    private static final float HURT_ANIMATION_DURATION = 0.25f; // 5 frames * 0.05s
     
     // Attack properties
     private float attackDamage;
@@ -57,6 +59,23 @@ public class Player extends LivingEntity {
         // Update attack cooldown
         timeSinceLastAttack += delta;
         
+        // If dead, stay in dead state
+        if (isDead() && currentState != AnimationState.DEAD) {
+            currentState = AnimationState.DEAD;
+            return;
+        }
+        
+        // Handle hurt animation
+        if (currentState == AnimationState.HURT) {
+            hurtAnimationTimer += delta;
+            if (hurtAnimationTimer >= HURT_ANIMATION_DURATION) {
+                hurtAnimationTimer = 0f;
+                currentState = AnimationState.IDLE;
+            }
+            // Don't process other state changes while hurt
+            return;
+        }
+        
         // Update facing direction based on movement (when moving)
         if (velocity.len() > 0) {
             if (velocity.x > 0) {
@@ -85,6 +104,16 @@ public class Player extends LivingEntity {
         
         position.x = Math.max(0, Math.min(position.x, screenWidth - width));
         position.y = Math.max(0, Math.min(position.y, screenHeight - height));
+    }
+    
+    @Override
+    public void takeDamage(float damage) {
+        super.takeDamage(damage);
+        // Trigger hurt animation when taking damage (if not dead)
+        if (!isDead()) {
+            currentState = AnimationState.HURT;
+            hurtAnimationTimer = 0f;
+        }
     }
     
     /**

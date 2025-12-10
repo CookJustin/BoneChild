@@ -43,6 +43,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     // Game state
     private boolean gameStarted = false;
     private boolean gamePaused = false;
+    private float deathTimer = 0f;
+    private boolean deathScreenShown = false;
+    private static final float DEATH_ANIMATION_DELAY = 2.0f; // Wait 2 seconds before showing death screen
     
     @Override
     public void create() {
@@ -265,11 +268,21 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         
         // Check if player is dead and show game over screen
         if (worldManager.getPlayer().isDead()) {
-            // Set stats and show game over screen
-            if (gameOverScreen != null && !gameOverScreen.isVisible()) {
-                gameOverScreen.setStats(0, worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
-                gameOverScreen.show();
+            // Increment death timer
+            deathTimer += delta;
+            
+            // Set stats and show game over screen after delay
+            if (deathTimer >= DEATH_ANIMATION_DELAY && !deathScreenShown) {
+                if (gameOverScreen != null && !gameOverScreen.isVisible()) {
+                    gameOverScreen.setStats(0, worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
+                    gameOverScreen.show();
+                    deathScreenShown = true;
+                }
             }
+        } else {
+            // Reset death timer and flag if player is not dead
+            deathTimer = 0f;
+            deathScreenShown = false;
         }
         
         // Game is running - check game over screen

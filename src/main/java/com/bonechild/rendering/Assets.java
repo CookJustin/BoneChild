@@ -12,13 +12,17 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
  */
 public class Assets {
     // Textures
-    private Texture skeletonSpriteSheet;
     private Texture tilesetTexture;
+    private Texture skeletonIdleSheet;
+    private Texture skeletonWalkSheet;
+    private Texture skeletonHurtSheet;
+    private Texture skeletonDieSheet;
     
-    // Animations (9 frames per row based on the sprite sheet)
+    // Animations
     private Animation idleAnimation;
     private Animation walkAnimation;
-    private Animation attackAnimation;
+    private Animation hurtAnimation;
+    private Animation deathAnimation;
     
     // Fonts
     private BitmapFont font;
@@ -53,25 +57,36 @@ public class Assets {
             tilesetTexture = new Texture(Gdx.files.internal("assets/SkeletonGraveyardTileset.png"));
             Gdx.app.log("Assets", "Loaded tileset texture");
             
-            skeletonSpriteSheet = new Texture(Gdx.files.internal("assets/SkeletonSpriteSheet.png"));
-            Gdx.app.log("Assets", "Loaded skeleton sprite sheet");
+            // Load skeleton sprite sheets
+            skeletonIdleSheet = new Texture(Gdx.files.internal("assets/SkeletonIdle.png"));
+            skeletonWalkSheet = new Texture(Gdx.files.internal("assets/SkeletonWalk.png"));
+            skeletonHurtSheet = new Texture(Gdx.files.internal("assets/SkeletonHurt.png"));
+            skeletonDieSheet = new Texture(Gdx.files.internal("assets/SkeletonDie.png"));
+            Gdx.app.log("Assets", "Loaded skeleton sprite sheets");
             
-            // Create animations
-            // Row 0: Idle animation
-            idleAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 0, 
-                                         FRAME_WIDTH, FRAME_HEIGHT, 0.15f, true);
+            // Create animations from sprite sheets
+            // Use only the frames that have actual skeleton content (not empty frames)
+            // Analysis showed only these frames have substantial content at 32px width
+            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            int[] goodHurtFrames = {1, 4, 7, 10, 13};
+            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
             
-            // Row 1: Walk animation
-            walkAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 1, 
-                                         FRAME_WIDTH, FRAME_HEIGHT, 0.12f, true);
+            // Idle: use first good frame as static pose
+            int[] idleFrame = {1};
+            idleAnimation = new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
             
-            // Row 2: Attack animation
-            attackAnimation = new Animation(skeletonSpriteSheet, FRAMES_PER_ROW, 2, 
-                                           FRAME_WIDTH, FRAME_HEIGHT, 0.10f, false);
+            // Walk: use only the 10 good frames
+            walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
             
-            Gdx.app.log("Assets", "Created player animations (Idle, Walk, Attack)");
+            // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
+            hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+            
+            // SkeletonDie: use only the 13 good frames
+            deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+            
+            Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
         } catch (Exception e) {
-            Gdx.app.error("Assets", "Failed to load skeleton sprite sheet: " + e.getMessage());
+            Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
         
         // Load fonts - use built-in with improved settings
@@ -163,8 +178,20 @@ public class Assets {
             tilesetTexture.dispose();
         }
         
-        if (skeletonSpriteSheet != null) {
-            skeletonSpriteSheet.dispose();
+        if (skeletonIdleSheet != null) {
+            skeletonIdleSheet.dispose();
+        }
+        
+        if (skeletonWalkSheet != null) {
+            skeletonWalkSheet.dispose();
+        }
+        
+        if (skeletonHurtSheet != null) {
+            skeletonHurtSheet.dispose();
+        }
+        
+        if (skeletonDieSheet != null) {
+            skeletonDieSheet.dispose();
         }
         
         if (font != null) {
@@ -197,12 +224,23 @@ public class Assets {
     
     // Getters
     public Texture getTilesetTexture() { return tilesetTexture; }
-    public Texture getSkeletonSpriteSheet() { return skeletonSpriteSheet; }
     public Animation getIdleAnimation() { return idleAnimation; }
     public Animation getWalkAnimation() { return walkAnimation; }
-    public Animation getAttackAnimation() { return attackAnimation; }
+    public Animation getHurtAnimation() { return hurtAnimation; }
+    public Animation getDeathAnimation() { return deathAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
+    
+    /**
+     * Create a new independent walk animation instance (for mobs)
+     */
+    public Animation createWalkAnimation() {
+        if (skeletonWalkSheet != null) {
+            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            return new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.15f, true);
+        }
+        return null;
+    }
     
     // Audio getters
     public Music getBackgroundMusic() { return backgroundMusic; }

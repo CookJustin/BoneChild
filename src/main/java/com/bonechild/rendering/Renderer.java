@@ -22,16 +22,38 @@ public class Renderer {
     private float deltaTime;
     private TileMap tileMap;
     
+    // Separate animation instances for player (not shared with mobs)
+    private Animation playerIdleAnimation;
+    private Animation playerWalkAnimation;
+    private Animation playerHurtAnimation;
+    private Animation playerDeathAnimation;
+    private Player.AnimationState lastPlayerState;
+    
+    // Separate animation instance for mobs (shared among all mobs)
+    private Animation mobWalkAnimation;
+    
     public Renderer(OrthographicCamera camera, Assets assets) {
         this.camera = camera;
         this.assets = assets;
         this.batch = new SpriteBatch();
         this.shapeRenderer = new ShapeRenderer();
         this.deltaTime = 0;
+        this.lastPlayerState = Player.AnimationState.IDLE;
         
         // Create tile map when tileset is loaded
         if (assets.getTilesetTexture() != null) {
             this.tileMap = new TileMap(assets.getTilesetTexture(), 32);
+        }
+        
+        // Create separate player animation instances
+        if (assets.getIdleAnimation() != null) {
+            playerIdleAnimation = assets.getIdleAnimation();
+            playerWalkAnimation = assets.getWalkAnimation();
+            playerHurtAnimation = assets.getHurtAnimation();
+            playerDeathAnimation = assets.getDeathAnimation();
+            
+            // Create a separate mob animation instance (not shared with player)
+            mobWalkAnimation = assets.createWalkAnimation();
         }
     }
     
@@ -62,24 +84,23 @@ public class Renderer {
      * Render the player with animations
      */
     public void renderPlayer(Player player) {
-        if (player == null || player.isDead()) return;
+        if (player == null) return;
         
         // Get the appropriate animation based on player state
         Animation currentAnimation;
         switch (player.getCurrentState()) {
             case WALKING:
-                currentAnimation = assets.getWalkAnimation();
+                currentAnimation = playerWalkAnimation;
                 break;
-            case ATTACKING:
-                currentAnimation = assets.getAttackAnimation();
-                // Return to idle after attack finishes
-                if (currentAnimation.isFinished()) {
-                    currentAnimation.reset();
-                }
+            case HURT:
+                currentAnimation = playerHurtAnimation;
+                break;
+            case DEAD:
+                currentAnimation = playerDeathAnimation;
                 break;
             case IDLE:
             default:
-                currentAnimation = assets.getIdleAnimation();
+                currentAnimation = playerIdleAnimation;
                 break;
         }
         
@@ -103,25 +124,30 @@ public class Renderer {
             frame.flip(true, false);
         }
         
-        // Draw the animated sprite
+        // Draw the sprite at 32x64 size (adjusted for new frame dimensions)
+        float spriteX = player.getPosition().x;
+        float spriteY = player.getPosition().y;
+        
         batch.draw(
             frame,
-            player.getPosition().x,
-            player.getPosition().y,
-            player.getWidth(),
-            player.getHeight()
+            spriteX,
+            spriteY,
+            32,  // New sprite width (32 pixels)
+            64   // Sprite height (still 64)
         );
         
         batch.end();
         
-        // Draw health bar above player
-        drawHealthBar(
-            player.getPosition().x,
-            player.getPosition().y + player.getHeight() + 5,
-            player.getWidth(),
-            5,
-            player.getHealthPercentage()
-        );
+        // Draw health bar above player (unless dead)
+        if (!player.isDead()) {
+            drawHealthBar(
+                player.getPosition().x,
+                player.getPosition().y + 64 + 5,
+                64,
+                5,
+                player.getHealthPercentage()
+            );
+        }
     }
     
     /**
@@ -131,15 +157,14 @@ public class Renderer {
         if (mobs == null || mobs.size == 0) return;
         
         // Use the walk animation for all mobs (they're always chasing)
-        Animation mobAnimation = assets.getWalkAnimation();
-        mobAnimation.update(deltaTime);
+        mobWalkAnimation.update(deltaTime);
         
         batch.begin();
         
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
                 // Get current frame
-                var frame = mobAnimation.getCurrentFrame();
+                var frame = mobWalkAnimation.getCurrentFrame();
                 
                 // Draw the animated sprite (mobs use skeleton sprite)
                 batch.draw(
