@@ -289,7 +289,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             // Set stats and show game over screen after delay
             if (deathTimer >= DEATH_ANIMATION_DELAY && !deathScreenShown) {
                 if (gameOverScreen != null && !gameOverScreen.isVisible()) {
-                    gameOverScreen.setStats(0, worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
+                    gameOverScreen.setStats(worldManager.getCurrentWave(), worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
                     gameOverScreen.show();
                     deathScreenShown = true;
                 }
