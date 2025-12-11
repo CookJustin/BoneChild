@@ -26,8 +26,8 @@ public class Pickup extends Entity {
         this.type = type;
         this.value = value;
         this.collectRadius = 20f; // How close to player to auto-collect
-        this.magneticPullDistance = 80f; // How far away magnetic pull starts - reduced from 150
-        this.magneticPullSpeed = 150f; // Speed of magnetic pull (pixels per second)
+        this.magneticPullDistance = 120f; // How far away magnetic pull starts - increased from 80
+        this.magneticPullSpeed = 250f; // Speed of magnetic pull (pixels per second) - increased from 150
         this.collected = false;
     }
     

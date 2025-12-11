@@ -22,6 +22,8 @@ public class CharacterStatsScreen {
     
     private boolean isVisible;
     private Player player;
+    private int currentPage = 0; // 0 = stats page, 1 = power-ups page
+    private static final int TOTAL_PAGES = 2;
     
     public CharacterStatsScreen(Assets assets, Player player) {
         this.batch = new SpriteBatch();
@@ -51,6 +53,14 @@ public class CharacterStatsScreen {
         // Close on C or ESC
         if (Gdx.input.isKeyJustPressed(Input.Keys.C) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             isVisible = false;
+        }
+        
+        // Navigate between pages with arrow keys or mouse clicks
+        if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+            currentPage = (currentPage + 1) % TOTAL_PAGES;
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+            currentPage = (currentPage - 1 + TOTAL_PAGES) % TOTAL_PAGES;
         }
     }
     
@@ -92,8 +102,8 @@ public class CharacterStatsScreen {
         
         batch.begin();
         
-        // Draw title
-        String title = "CHARACTER STATS";
+        // Draw title based on current page
+        String title = currentPage == 0 ? "CHARACTER STATS" : "POWER-UPS";
         glyphLayout.setText(titleFont, title);
         float titleX = screenWidth / 2f - glyphLayout.width / 2f;
         float titleY = boxY + boxHeight - 40f;
@@ -101,16 +111,32 @@ public class CharacterStatsScreen {
         titleFont.setColor(0.3f, 0.85f, 1f, 1f);
         titleFont.draw(batch, title, titleX, titleY);
         
+        // Draw page indicator
+        String pageIndicator = "Page " + (currentPage + 1) + "/" + TOTAL_PAGES + " (← →)";
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.6f);
+        glyphLayout.setText(font, pageIndicator);
+        float pageX = screenWidth / 2f - glyphLayout.width / 2f;
+        float pageY = boxY + 30f;
+        
+        font.setColor(0.7f, 0.7f, 0.7f, 1f);
+        font.draw(batch, pageIndicator, pageX, pageY);
+        font.getData().setScale(originalScale);
+        
         batch.end();
         
-        // Draw stats
-        drawStats(boxX, boxY, boxWidth, boxHeight);
+        // Draw content based on current page
+        if (currentPage == 0) {
+            drawStatsPage(boxX, boxY, boxWidth, boxHeight);
+        } else {
+            drawPowerUpsPage(boxX, boxY, boxWidth, boxHeight);
+        }
     }
     
     /**
-     * Draw all character stats
+     * Draw the stats page (page 1)
      */
-    private void drawStats(float boxX, float boxY, float boxWidth, float boxHeight) {
+    private void drawStatsPage(float boxX, float boxY, float boxWidth, float boxHeight) {
         batch.begin();
         
         float statX = boxX + 30f;
@@ -141,26 +167,92 @@ public class CharacterStatsScreen {
         font.draw(batch, "Attack Damage: " + String.format("%.0f", player.getAttackDamage()), statX, statY);
         statY -= lineHeight;
         
-        // Power-up Upgrades
-        font.setColor(0.9f, 0.9f, 0.9f, 1f);
-        font.draw(batch, "--- Power-ups ---", statX, statY);
-        statY -= lineHeight;
-        
-        font.setColor(0.3f, 0.9f, 1f, 1f);
-        font.draw(batch, "Speed Level: " + player.getSpeedLevel(), statX, statY);
-        statY -= lineHeight;
-        
-        font.setColor(1f, 0.3f, 0.3f, 1f);
-        font.draw(batch, "Strength Level: " + player.getStrengthLevel(), statX, statY);
-        statY -= lineHeight;
-        
-        font.setColor(1f, 0.85f, 0.2f, 1f);
-        font.draw(batch, "Grab Level: " + player.getGrabLevel(), statX, statY);
-        statY -= lineHeight;
-        
         // Resources
         font.setColor(1f, 0.85f, 0.2f, 1f);
         font.draw(batch, "Gold: " + player.getGold(), statX, statY);
+        statY -= lineHeight;
+        
+        batch.end();
+    }
+    
+    /**
+     * Draw the power-ups page (page 2)
+     */
+    private void drawPowerUpsPage(float boxX, float boxY, float boxWidth, float boxHeight) {
+        batch.begin();
+        
+        float statX = boxX + 30f;
+        float statY = boxY + boxHeight - 100f;
+        float lineHeight = 40f;
+        
+        // Scale down the font to fit better in the box
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.85f); // Scale to 85% to fit better
+        
+        font.setColor(0.9f, 0.9f, 0.9f, 1f);
+        font.draw(batch, "--- All Power-ups Chosen ---", statX, statY);
+        statY -= lineHeight * 1.2f;
+        
+        // Speed
+        if (player.getSpeedLevel() > 0) {
+            font.setColor(0.3f, 0.9f, 1f, 1f);
+            font.draw(batch, "Speed: Level " + player.getSpeedLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // Strength
+        if (player.getStrengthLevel() > 0) {
+            font.setColor(1f, 0.3f, 0.3f, 1f);
+            font.draw(batch, "Strength: Level " + player.getStrengthLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // Grab
+        if (player.getGrabLevel() > 0) {
+            font.setColor(1f, 0.85f, 0.2f, 1f);
+            font.draw(batch, "Grab: Level " + player.getGrabLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // Attack Speed
+        if (player.getAttackSpeedLevel() > 0) {
+            font.setColor(1f, 0.6f, 0.2f, 1f);
+            font.draw(batch, "Attack Speed: Level " + player.getAttackSpeedLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // Max HP
+        if (player.getMaxHpLevel() > 0) {
+            font.setColor(0.2f, 1f, 0.3f, 1f);
+            font.draw(batch, "Max HP: Level " + player.getMaxHpLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // XP Boost
+        if (player.getXpBoostLevel() > 0) {
+            font.setColor(0.8f, 0.3f, 1f, 1f);
+            font.draw(batch, "XP Boost: Level " + player.getXpBoostLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // Explosion Chance
+        if (player.getExplosionChanceLevel() > 0) {
+            font.setColor(1f, 0.5f, 0f, 1f);
+            font.draw(batch, "Explosion: Level " + player.getExplosionChanceLevel(), statX, statY);
+            statY -= lineHeight;
+        }
+        
+        // If no power-ups chosen yet
+        if (player.getSpeedLevel() == 0 && player.getStrengthLevel() == 0 && 
+            player.getGrabLevel() == 0 && player.getAttackSpeedLevel() == 0 &&
+            player.getMaxHpLevel() == 0 && player.getXpBoostLevel() == 0 &&
+            player.getExplosionChanceLevel() == 0) {
+            font.setColor(0.7f, 0.7f, 0.7f, 1f);
+            font.draw(batch, "No power-ups chosen yet.", statX, statY);
+        }
+        
+        // Restore original font scale
+        font.getData().setScale(originalScale);
         
         batch.end();
     }

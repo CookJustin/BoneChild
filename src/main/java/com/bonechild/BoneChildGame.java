@@ -82,6 +82,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             
             // Create world manager (creates player)
             worldManager = new WorldManager();
+            worldManager.setAssets(assets); // Pass assets for explosion animations
             
             // Create renderer
             renderer = new Renderer(camera, assets);
@@ -407,6 +408,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         renderer.renderPlayer(worldManager.getPlayer());
         renderer.renderMobs(worldManager.getMobs());
         renderer.renderProjectiles(worldManager.getProjectiles());
+        renderer.renderExplosions(worldManager.getExplosions());
         renderer.renderPickups(worldManager.getPickups());
         
         // Render UI

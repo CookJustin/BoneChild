@@ -36,6 +36,9 @@ public class Assets {
     // Fireball sprites for projectile animation (60 frames)
     private Texture[] fireballFrames;
     
+    // Explosion sprites for explosion effect (82 frames)
+    private Texture[] explosionFrames;
+    
     // UI Bar sprites
     private Texture pixelBarOutline;
     private Texture[] pixelBarInners; // 6 different inner bar fills
@@ -48,6 +51,7 @@ public class Assets {
     private Animation coinAnimation;
     private Animation healthOrbAnimation;
     private Animation fireballAnimation;
+    private Animation explosionAnimation;
     
     // Fonts
     private BitmapFont font;
@@ -164,6 +168,23 @@ public class Assets {
             }
             
             Gdx.app.log("Assets", "Loaded PixelBarOutline and 6 PixelBarInners");
+            
+            // Try to load explosion sprites (82 frames: explode0000.png to explode0081.png) - optional
+            try {
+                explosionFrames = new Texture[82];
+                for (int i = 0; i < 82; i++) {
+                    String frameNumber = String.format("%04d", i);
+                    explosionFrames[i] = new Texture(Gdx.files.internal("assets/effects/explode" + frameNumber + ".png"));
+                }
+                
+                // Create explosion animation - slowed down for better visibility (82 frames in ~0.82 seconds)
+                explosionAnimation = new Animation(explosionFrames, 0.01f, false); // Non-looping, slowed from 0.006f
+                Gdx.app.log("Assets", "Loaded 82 explosion frames and created explosion animation");
+            } catch (Exception e) {
+                Gdx.app.log("Assets", "Explosion sprites not found (optional): " + e.getMessage());
+                explosionFrames = null;
+                explosionAnimation = null;
+            }
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
@@ -329,6 +350,15 @@ public class Assets {
             }
         }
         
+        // Dispose explosion frames
+        if (explosionFrames != null) {
+            for (Texture frame : explosionFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+        
         // Dispose PixelBarOutline and PixelBarInners
         if (pixelBarOutline != null) {
             pixelBarOutline.dispose();
@@ -379,6 +409,7 @@ public class Assets {
     public Animation getCoinAnimation() { return coinAnimation; }
     public Animation getHealthOrbAnimation() { return healthOrbAnimation; }
     public Animation getFireballAnimation() { return fireballAnimation; }
+    public Animation getExplosionAnimation() { return explosionAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
     public Texture getPixelBarOutline() { return pixelBarOutline; }

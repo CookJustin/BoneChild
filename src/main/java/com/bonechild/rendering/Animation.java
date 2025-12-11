@@ -106,4 +106,11 @@ public class Animation {
     public float getStateTime() {
         return stateTime;
     }
+    
+    /**
+     * Get all frames (for cloning animations)
+     */
+    public TextureRegion[] getFrames() {
+        return frames;
+    }
 }

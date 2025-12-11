@@ -46,7 +46,8 @@ public class PowerUpScreen {
         GRAB("GRAB", "Grab", "Increase pickup range", 1f, 0.85f, 0.2f),
         ATTACK_SPEED("ATTACK_SPEED", "Attack Speed", "Attack faster", 1f, 0.6f, 0.2f),
         MAX_HP("MAX_HP", "Max HP", "Increase max health", 0.2f, 1f, 0.3f),
-        XP_BOOST("XP_BOOST", "XP Boost", "Gain 10% more XP", 0.8f, 0.3f, 1f);
+        XP_BOOST("XP_BOOST", "XP Boost", "Gain 10% more XP", 0.8f, 0.3f, 1f),
+        EXPLOSION_CHANCE("EXPLOSION_CHANCE", "Explosion", "5% chance to explode on kill", 1f, 0.5f, 0f);
         
         public final String id;
         public final String displayName;

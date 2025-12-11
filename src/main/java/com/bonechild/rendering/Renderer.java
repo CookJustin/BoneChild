@@ -120,6 +120,16 @@ public class Renderer {
         
         batch.begin();
         
+        // Apply flashing effect if player is invincible
+        if (player.isInvincible()) {
+            // Flash every 0.1 seconds (10 times per second)
+            float flashSpeed = 10f;
+            float alpha = (float)((Math.sin(player.getInvincibilityTimer() * flashSpeed * Math.PI) + 1.0) / 2.0);
+            // Oscillate alpha between 0.3 and 1.0 for visibility
+            alpha = 0.3f + (alpha * 0.7f);
+            batch.setColor(1f, 1f, 1f, alpha);
+        }
+        
         // Get current frame
         var frame = currentAnimation.getCurrentFrame();
         
@@ -327,6 +337,34 @@ public class Renderer {
                     1f,            // Scale Y
                     angle          // Rotation angle in degrees
                 );
+            }
+        }
+        
+        batch.end();
+    }
+    
+    /**
+     * Render all explosions
+     */
+    public void renderExplosions(Array<com.bonechild.world.Explosion> explosions) {
+        if (explosions == null || explosions.size == 0) return;
+        
+        batch.begin();
+        
+        for (com.bonechild.world.Explosion explosion : explosions) {
+            if (explosion.isActive()) {
+                Animation explosionAnim = explosion.getAnimation();
+                if (explosionAnim != null) {
+                    var frame = explosionAnim.getCurrentFrame();
+                    
+                    float x = explosion.getPosition().x;
+                    float y = explosion.getPosition().y;
+                    float width = explosion.getWidth();
+                    float height = explosion.getHeight();
+                    
+                    // Draw explosion sprite
+                    batch.draw(frame, x, y, width, height);
+                }
             }
         }
         

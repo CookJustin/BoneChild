@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
+import com.bonechild.rendering.Assets;
 
 /**
  * Manages all entities in the game world
@@ -14,7 +15,9 @@ public class WorldManager {
     private Array<Mob> mobs;
     private Array<Pickup> pickups;
     private Array<Projectile> projectiles;
+    private Array<Explosion> explosions;
     private Random random;
+    private Assets assets;
     
     // Wave management
     private float waveTimer;
@@ -26,6 +29,7 @@ public class WorldManager {
         this.mobs = new Array<>();
         this.pickups = new Array<>();
         this.projectiles = new Array<>();
+        this.explosions = new Array<>();
         this.random = new Random();
         
         // Initialize wave system
@@ -43,6 +47,13 @@ public class WorldManager {
     }
     
     /**
+     * Set assets (needed for explosion animation)
+     */
+    public void setAssets(Assets assets) {
+        this.assets = assets;
+    }
+    
+    /**
      * Update all entities
      */
     public void update(float delta) {
@@ -56,7 +67,17 @@ public class WorldManager {
             
             // Remove dead mobs and spawn pickups
             if (mob.isDead()) {
+                float mobX = mob.getPosition().x;
+                float mobY = mob.getPosition().y;
+                
                 spawnPickupsFromMob(mob);
+                
+                // Check for explosion chance
+                float explosionChance = player.getExplosionChance();
+                if (explosionChance > 0 && random.nextFloat() < explosionChance) {
+                    spawnExplosion(mobX, mobY);
+                }
+                
                 mobs.removeIndex(i);
                 Gdx.app.log("WorldManager", "Mob removed. Remaining: " + mobs.size);
             }
@@ -113,6 +134,28 @@ public class WorldManager {
             }
         }
         
+        // Update explosions
+        for (int i = explosions.size - 1; i >= 0; i--) {
+            Explosion explosion = explosions.get(i);
+            explosion.update(delta);
+            
+            // Deal AOE damage (only once per explosion)
+            if (!explosion.hasDealtDamage()) {
+                for (Mob mob : mobs) {
+                    if (explosion.shouldDamageMob(mob)) {
+                        mob.takeDamage(explosion.getDamage());
+                        Gdx.app.log("WorldManager", "Explosion damaged mob for " + explosion.getDamage());
+                    }
+                }
+                explosion.markDamageDealt();
+            }
+            
+            // Remove finished explosions
+            if (!explosion.isActive()) {
+                explosions.removeIndex(i);
+            }
+        }
+        
         // Wave spawning
         waveTimer += delta;
         if (waveTimer >= waveInterval) {
@@ -128,6 +171,10 @@ public class WorldManager {
         float mobX = mob.getPosition().x;
         float mobY = mob.getPosition().y;
         
+        // Mob sprite is 240x240, so center is at mobX + 120, mobY + 120
+        float mobCenterX = mobX + 120;
+        float mobCenterY = mobY + 120;
+        
         // 70% chance to drop gold coins (1-3 coins)
         if (random.nextFloat() < 0.7f) {
             int coinCount = 1 + random.nextInt(3); // 1-3 coins
@@ -136,10 +183,10 @@ public class WorldManager {
                 float offsetY = (random.nextFloat() - 0.5f) * 40f;
                 
                 Pickup coin = new Pickup(
-                    mobX + offsetX,
-                    mobY + offsetY,
+                    mobCenterX + offsetX,
+                    mobCenterY + offsetY,
                     Pickup.PickupType.GOLD_COIN,
-                    random.nextInt(5) + 5f // 5-10 gold per coin
+                    random.nextInt(3) + 2f // 2-4 gold per coin (reduced from 5-10)
                 );
                 pickups.add(coin);
             }
@@ -148,8 +195,8 @@ public class WorldManager {
         // 60% chance to drop XP orb
         if (random.nextFloat() < 0.6f) {
             Pickup xpOrb = new Pickup(
-                mobX,
-                mobY,
+                mobCenterX,
+                mobCenterY,
                 Pickup.PickupType.XP_ORB,
                 25f // 25 XP per orb
             );
@@ -159,15 +206,15 @@ public class WorldManager {
         // 30% chance to drop health orb
         if (random.nextFloat() < 0.3f) {
             Pickup healthOrb = new Pickup(
-                mobX,
-                mobY,
+                mobCenterX,
+                mobCenterY,
                 Pickup.PickupType.HEALTH_ORB,
                 10f // Heal 10% of max health
             );
             pickups.add(healthOrb);
         }
         
-        Gdx.app.log("WorldManager", "Spawned pickups at (" + mobX + ", " + mobY + ")");
+        Gdx.app.log("WorldManager", "Spawned pickups at mob center (" + mobCenterX + ", " + mobCenterY + ")");
     }
     
     /**
@@ -231,11 +278,51 @@ public class WorldManager {
         mobs.add(new Mob(x, y, player));
     }
     
+    /**
+     * Spawn an explosion at the given position
+     */
+    private void spawnExplosion(float x, float y) {
+        if (assets == null) {
+            Gdx.app.log("WorldManager", "Cannot spawn explosion - assets not set");
+            return;
+        }
+        
+        // Calculate explosion damage (25% of player damage)
+        float explosionDamage = player.getAttackDamage() * 0.25f;
+        
+        // Explosion radius
+        float explosionRadius = 100f;
+        
+        // Create explosion animation (need to create a new instance)
+        com.bonechild.rendering.Animation explosionAnim = null;
+        if (assets.getExplosionAnimation() != null) {
+            // We need to clone the animation by getting its frames and creating a new Animation
+            // But Animation constructor needs TextureRegion[], not Texture[]
+            // So we'll just use the shared animation and it will reset automatically since it's non-looping
+            explosionAnim = assets.getExplosionAnimation();
+            explosionAnim.reset(); // Reset to start
+        }
+        
+        // Mob sprite is 240x240, explosion sprite is 100x100
+        // Center explosion on the mob: mob_x + (240/2) - (100/2) = mob_x + 120 - 50 = mob_x + 70
+        Explosion explosion = new Explosion(
+            x + 70, // Center horizontally on 240px mob sprite
+            y + 70, // Center vertically on 240px mob sprite
+            explosionDamage,
+            explosionRadius,
+            explosionAnim
+        );
+        
+        explosions.add(explosion);
+        Gdx.app.log("WorldManager", "Spawned explosion at (" + (x + 70) + ", " + (y + 70) + ") centered on mob at (" + x + ", " + y + ")");
+    }
+    
     // Getters
     public Player getPlayer() { return player; }
     public Array<Mob> getMobs() { return mobs; }
     public Array<Pickup> getPickups() { return pickups; }
     public Array<Projectile> getProjectiles() { return projectiles; }
+    public Array<Explosion> getExplosions() { return explosions; }
     public int getCurrentWave() { return currentWave; }
     public int getMobCount() { return mobs.size; }
 }

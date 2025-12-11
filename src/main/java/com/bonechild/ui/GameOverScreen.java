@@ -215,8 +215,15 @@ public class GameOverScreen {
         shapeRenderer.rect(button.x, button.y, button.width, button.height);
         shapeRenderer.end();
         
-        // Draw button text
+        // Draw button text with smaller font for "EXIT TO MENU"
         batch.begin();
+        
+        float originalScale = font.getData().scaleX;
+        // Scale down font for "EXIT TO MENU" button to fit better
+        if (text.equals("EXIT TO MENU")) {
+            font.getData().setScale(originalScale * 0.8f);
+        }
+        
         glyphLayout.setText(font, text);
         float textX = button.x + button.width / 2f - glyphLayout.width / 2f;
         float textY = button.y + button.height / 2f + glyphLayout.height / 2f;
@@ -227,6 +234,10 @@ public class GameOverScreen {
             font.setColor(0.9f, 0.9f, 0.9f, 1f);
         }
         font.draw(batch, text, textX, textY);
+        
+        // Restore original font scale
+        font.getData().setScale(originalScale);
+        
         batch.end();
     }
     

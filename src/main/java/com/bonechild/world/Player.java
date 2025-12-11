@@ -18,6 +18,7 @@ public class Player extends LivingEntity {
     private int attackSpeedLevel = 0;
     private int maxHpLevel = 0;
     private int xpBoostLevel = 0;
+    private int explosionChanceLevel = 0;
     private boolean leveledUpThisFrame = false;
     
     // Animation state
@@ -31,6 +32,11 @@ public class Player extends LivingEntity {
     private float hurtAnimationTimer = 0f;
     private boolean isPlayingHurtAnimation = false;
     private static final float HURT_ANIMATION_DURATION = 0.25f; // 5 frames * 0.05s
+    
+    // Invincibility frames
+    private float invincibilityTimer = 0f;
+    private boolean isInvincible = false;
+    private static final float INVINCIBILITY_DURATION = 1.0f; // 1 second of invincibility after getting hit
     
     // Attack properties
     private float attackDamage;
@@ -62,6 +68,15 @@ public class Player extends LivingEntity {
         
         // Update attack cooldown
         timeSinceLastAttack += delta;
+        
+        // Update invincibility timer
+        if (isInvincible) {
+            invincibilityTimer += delta;
+            if (invincibilityTimer >= INVINCIBILITY_DURATION) {
+                invincibilityTimer = 0f;
+                isInvincible = false;
+            }
+        }
         
         // If dead, stay in dead state and stop all movement
         if (isDead()) {
@@ -118,12 +133,17 @@ public class Player extends LivingEntity {
     
     @Override
     public void takeDamage(float damage) {
+        if (isInvincible) {
+            return;
+        }
+        
         super.takeDamage(damage);
         // Trigger hurt animation when taking damage (if not dead)
         if (!isDead()) {
             currentState = AnimationState.HURT;
             hurtAnimationTimer = 0f;
             isPlayingHurtAnimation = true;
+            isInvincible = true;
         }
     }
     
@@ -276,7 +296,19 @@ public class Player extends LivingEntity {
                 // XP boost multiplier is calculated when collecting XP
                 Gdx.app.log("Player", "XP Boost upgraded! Level: " + xpBoostLevel);
                 break;
+            case "EXPLOSION_CHANCE":
+                explosionChanceLevel++;
+                // Each level gives 5% chance for explosions
+                Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 5) + "%");
+                break;
         }
+    }
+    
+    /**
+     * Get explosion chance (5% per level)
+     */
+    public float getExplosionChance() {
+        return explosionChanceLevel * 0.05f; // 5% per level
     }
     
     /**
@@ -308,9 +340,15 @@ public class Player extends LivingEntity {
     public int getSpeedLevel() { return speedLevel; }
     public int getStrengthLevel() { return strengthLevel; }
     public int getGrabLevel() { return grabLevel; }
+    public int getAttackSpeedLevel() { return attackSpeedLevel; }
+    public int getMaxHpLevel() { return maxHpLevel; }
+    public int getXpBoostLevel() { return xpBoostLevel; }
+    public int getExplosionChanceLevel() { return explosionChanceLevel; }
     public float getAttackDamage() { return attackDamage; }
     
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }
     public boolean isFacingRight() { return facingRight; }
+    public boolean isInvincible() { return isInvincible; }
+    public float getInvincibilityTimer() { return invincibilityTimer; }
 }
