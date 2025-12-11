@@ -97,6 +97,7 @@ public class GameUI {
         
         // Draw UI elements at bottom of screen
         drawLevelOrb();
+        drawHotbar(); // New: Draw hotbar above bars
         drawHealthBar();
         drawExpBar();
         drawGoldCounter();
@@ -364,6 +365,68 @@ public class GameUI {
         // Restore font scale
         font.getData().setScale(originalScale);
         
+        batch.end();
+    }
+    
+    private void drawHotbar() {
+        float slotSize = 40f; // Size of each hotbar slot
+        float slotSpacing = 8f; // Space between slots
+        float totalWidth = (slotSize * 4) + (slotSpacing * 3); // 4 slots with 3 gaps
+        float x = Gdx.graphics.getWidth() / 2f - totalWidth / 2f;
+        float y = 70; // Position above the XP bar
+        float borderWidth = 2f;
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        for (int i = 0; i < 4; i++) {
+            float slotX = x + (i * (slotSize + slotSpacing));
+            
+            // Drop shadow
+            shapeRenderer.setColor(0f, 0f, 0f, 0.6f);
+            shapeRenderer.rect(slotX + 2, y - 2, slotSize, slotSize);
+            
+            // Outer border
+            shapeRenderer.setColor(0.2f, 0.2f, 0.25f, 1f);
+            shapeRenderer.rect(slotX - borderWidth, y - borderWidth, 
+                              slotSize + borderWidth * 2, slotSize + borderWidth * 2);
+            
+            // Slot background
+            shapeRenderer.setColor(0.08f, 0.08f, 0.1f, 0.95f);
+            shapeRenderer.rect(slotX, y, slotSize, slotSize);
+            
+            // Highlight if key is pressed
+            if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.NUM_1 + i) ||
+                Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.NUMPAD_1 + i)) {
+                shapeRenderer.setColor(0.3f, 0.6f, 1f, 0.3f);
+                shapeRenderer.rect(slotX + 2, y + 2, slotSize - 4, slotSize - 4);
+            }
+        }
+        
+        shapeRenderer.end();
+        
+        // Draw hotkey numbers
+        batch.begin();
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.5f);
+        
+        for (int i = 0; i < 4; i++) {
+            float slotX = x + (i * (slotSize + slotSpacing));
+            String keyText = String.valueOf(i + 1);
+            
+            glyphLayout.setText(font, keyText);
+            float textX = slotX + slotSize - glyphLayout.width - 4;
+            float textY = y + glyphLayout.height + 4;
+            
+            // Shadow
+            font.setColor(0, 0, 0, 0.8f);
+            font.draw(batch, keyText, textX + 0.5f, textY - 0.5f);
+            
+            // Key number in bottom-right corner
+            font.setColor(0.7f, 0.7f, 0.7f, 1f);
+            font.draw(batch, keyText, textX, textY);
+        }
+        
+        font.getData().setScale(originalScale);
         batch.end();
     }
     

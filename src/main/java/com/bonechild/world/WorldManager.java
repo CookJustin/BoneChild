@@ -74,8 +74,15 @@ public class WorldManager {
                 
                 // Check for explosion chance
                 float explosionChance = player.getExplosionChance();
-                if (explosionChance > 0 && random.nextFloat() < explosionChance) {
-                    spawnExplosion(mobX, mobY);
+                if (explosionChance > 0) {
+                    float roll = random.nextFloat();
+                    Gdx.app.log("WorldManager", "Explosion chance: " + (explosionChance * 100) + "%, rolled: " + (roll * 100) + "%");
+                    if (roll < explosionChance) {
+                        spawnExplosion(mobX, mobY);
+                        Gdx.app.log("WorldManager", "✨ EXPLOSION TRIGGERED!");
+                    }
+                } else {
+                    Gdx.app.log("WorldManager", "No explosion chance (need to select Explosion power-up)");
                 }
                 
                 mobs.removeIndex(i);
@@ -293,14 +300,12 @@ public class WorldManager {
         // Explosion radius
         float explosionRadius = 100f;
         
-        // Create explosion animation (need to create a new instance)
-        com.bonechild.rendering.Animation explosionAnim = null;
-        if (assets.getExplosionAnimation() != null) {
-            // We need to clone the animation by getting its frames and creating a new Animation
-            // But Animation constructor needs TextureRegion[], not Texture[]
-            // So we'll just use the shared animation and it will reset automatically since it's non-looping
-            explosionAnim = assets.getExplosionAnimation();
-            explosionAnim.reset(); // Reset to start
+        // Create a NEW explosion animation instance (each explosion needs its own independent animation)
+        com.bonechild.rendering.Animation explosionAnim = assets.createExplosionAnimation();
+        
+        if (explosionAnim == null) {
+            Gdx.app.log("WorldManager", "Explosion animation not available - skipping explosion spawn");
+            return;
         }
         
         // Mob sprite is 240x240, explosion sprite is 100x100
@@ -314,7 +319,7 @@ public class WorldManager {
         );
         
         explosions.add(explosion);
-        Gdx.app.log("WorldManager", "Spawned explosion at (" + (x + 70) + ", " + (y + 70) + ") centered on mob at (" + x + ", " + y + ")");
+        Gdx.app.log("WorldManager", "✨ Spawned explosion at (" + (x + 70) + ", " + (y + 70) + ") with NEW animation instance");
     }
     
     // Getters

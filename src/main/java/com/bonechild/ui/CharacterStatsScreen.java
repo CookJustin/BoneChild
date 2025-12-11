@@ -50,12 +50,8 @@ public class CharacterStatsScreen {
     public void update(float delta) {
         if (!isVisible) return;
         
-        // Close on C or ESC
-        if (Gdx.input.isKeyJustPressed(Input.Keys.C) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            isVisible = false;
-        }
-        
-        // Navigate between pages with arrow keys or mouse clicks
+        // Input handling is now done in BoneChildGame.handleInput() to avoid conflicts
+        // Only handle page navigation here
         if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
             currentPage = (currentPage + 1) % TOTAL_PAGES;
         }

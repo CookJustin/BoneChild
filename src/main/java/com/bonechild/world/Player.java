@@ -298,17 +298,17 @@ public class Player extends LivingEntity {
                 break;
             case "EXPLOSION_CHANCE":
                 explosionChanceLevel++;
-                // Each level gives 5% chance for explosions
-                Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 5) + "%");
+                // Each level gives 50% chance for explosions (TESTING ONLY - normally 5%)
+                Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 50) + "%");
                 break;
         }
     }
     
     /**
-     * Get explosion chance (5% per level)
+     * Get explosion chance (50% per level - TESTING ONLY, normally 5%)
      */
     public float getExplosionChance() {
-        return explosionChanceLevel * 0.05f; // 5% per level
+        return explosionChanceLevel * 0.5f; // 50% per level (TESTING)
     }
     
     /**

@@ -2,30 +2,30 @@ package com.bonechild.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.bonechild.rendering.Assets;
 
 /**
- * Pause menu for BoneChild gameplay
+ * Pause menu for BoneChild gameplay - uses PNG assets
  */
 public class PauseMenu {
     private final SpriteBatch batch;
     private final ShapeRenderer shapeRenderer;
-    private final BitmapFont font;
-    private final BitmapFont titleFont;
-    private final GlyphLayout glyphLayout;
+    private final Assets assets;
     
-    // Buttons
-    private Rectangle resumeButton;
-    private Rectangle settingsButton;
-    private Rectangle exitButton;
-    private float buttonWidth = 300f; // Increased from 250f to fit "EXIT TO MENU" text
-    private float buttonHeight = 50f;
+    // Textures
+    private Texture bgTexture;
+    private Texture playButtonTexture;
+    private Texture settingsButtonTexture;
+    private Texture exitButtonTexture;
+    
+    // Button hit boxes
+    private Rectangle playButtonHitbox;
+    private Rectangle settingsButtonHitbox;
+    private Rectangle exitButtonHitbox;
     
     private boolean isVisible;
     private PauseCallback callback;
@@ -39,33 +39,79 @@ public class PauseMenu {
     public PauseMenu(Assets assets, PauseCallback callback) {
         this.batch = new SpriteBatch();
         this.shapeRenderer = new ShapeRenderer();
-        this.font = assets.getFont();
-        this.glyphLayout = new GlyphLayout();
+        this.assets = assets;
         this.callback = callback;
         this.isVisible = false;
         
-        // Create title font
-        this.titleFont = new BitmapFont();
-        this.titleFont.getData().setScale(2.0f);
-        this.titleFont.setColor(Color.WHITE);
-        this.titleFont.setUseIntegerPositions(false);
-        this.titleFont.getRegion().getTexture().setFilter(
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
-        );
+        // Load textures from assets (may be null if assets not loaded yet)
+        this.bgTexture = assets.getExitScreenMenuBg();
+        this.playButtonTexture = assets.getPlayButton();
+        this.settingsButtonTexture = assets.getSettingsButton();
+        this.exitButtonTexture = assets.getExitButton();
         
-        setupUI();
+        // Only setup UI if textures are loaded
+        if (bgTexture != null && playButtonTexture != null && settingsButtonTexture != null && exitButtonTexture != null) {
+            setupUI();
+        }
     }
     
     private void setupUI() {
+        // Check if textures are loaded
+        if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
+            return;
+        }
+        
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
-        float centerX = screenWidth / 2f - buttonWidth / 2f;
         
-        float startY = screenHeight / 2f + 50f;
-        resumeButton = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
-        settingsButton = new Rectangle(centerX, startY - buttonHeight - 20f, buttonWidth, buttonHeight);
-        exitButton = new Rectangle(centerX, startY - (buttonHeight * 2) - 40f, buttonWidth, buttonHeight);
+        // Calculate background size and position (centered, scaled to 50% for smaller menu)
+        float bgScale = Math.min(screenWidth / bgTexture.getWidth(), screenHeight / bgTexture.getHeight()) * 0.5f;
+        float bgWidth = bgTexture.getWidth() * bgScale;
+        float bgHeight = bgTexture.getHeight() * bgScale;
+        float bgX = (screenWidth - bgWidth) / 2f;
+        float bgY = (screenHeight - bgHeight) / 2f;
+        
+        // Button dimensions (all buttons are the same size now, cropped without whitespace)
+        float buttonScale = bgScale * 0.85f; // Scale buttons to fit nicely in the menu
+        float buttonWidth = playButtonTexture.getWidth() * buttonScale;
+        float buttonHeight = playButtonTexture.getHeight() * buttonScale;
+        
+        // Position buttons vertically - evenly spaced within the menu box
+        float centerX = screenWidth / 2f;
+        float centerY = bgY + (bgHeight / 2f); // Center of the background box
+        
+        // Spacing between buttons
+        float buttonSpacing = buttonHeight * 0.3f; // 30% of button height as spacing
+        
+        // Total height of all buttons plus spacing
+        float totalContentHeight = (buttonHeight * 3) + (buttonSpacing * 2);
+        
+        // Start Y position - top of the button group, centered vertically in the menu
+        float startY = centerY + (totalContentHeight / 2f);
+        
+        // Play button (Resume) - top
+        playButtonHitbox = new Rectangle(
+            centerX - buttonWidth / 2f,
+            startY - buttonHeight,
+            buttonWidth,
+            buttonHeight
+        );
+        
+        // Settings button - middle
+        settingsButtonHitbox = new Rectangle(
+            centerX - buttonWidth / 2f,
+            startY - buttonHeight - buttonSpacing - buttonHeight,
+            buttonWidth,
+            buttonHeight
+        );
+        
+        // Exit button - bottom
+        exitButtonHitbox = new Rectangle(
+            centerX - buttonWidth / 2f,
+            startY - buttonHeight - buttonSpacing - buttonHeight - buttonSpacing - buttonHeight,
+            buttonWidth,
+            buttonHeight
+        );
     }
     
     /**
@@ -74,34 +120,51 @@ public class PauseMenu {
     public void update(float delta) {
         if (!isVisible) return;
         
+        // Check if hitboxes are initialized
+        if (playButtonHitbox == null || settingsButtonHitbox == null || exitButtonHitbox == null) {
+            // Try to setup UI if textures are now loaded
+            if (bgTexture != null && playButtonTexture != null && settingsButtonTexture != null && exitButtonTexture != null) {
+                setupUI();
+            } else {
+                // Still can't setup, try loading textures
+                bgTexture = assets.getExitScreenMenuBg();
+                playButtonTexture = assets.getPlayButton();
+                settingsButtonTexture = assets.getSettingsButton();
+                exitButtonTexture = assets.getExitButton();
+                
+                if (bgTexture != null && playButtonTexture != null && settingsButtonTexture != null && exitButtonTexture != null) {
+                    setupUI();
+                }
+            }
+            
+            // If still null, can't process input yet
+            if (playButtonHitbox == null || settingsButtonHitbox == null || exitButtonHitbox == null) {
+                return;
+            }
+        }
+        
         // Check mouse clicks
         if (Gdx.input.justTouched()) {
             float mouseX = Gdx.input.getX();
             float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
             
-            if (resumeButton.contains(mouseX, mouseY)) {
+            if (playButtonHitbox.contains(mouseX, mouseY)) {
                 if (callback != null) {
                     callback.onResume();
                 }
                 isVisible = false;
-            } else if (settingsButton.contains(mouseX, mouseY)) {
+            } else if (settingsButtonHitbox.contains(mouseX, mouseY)) {
                 if (callback != null) {
                     callback.onPauseSettings();
                 }
-            } else if (exitButton.contains(mouseX, mouseY)) {
+            } else if (exitButtonHitbox.contains(mouseX, mouseY)) {
                 if (callback != null) {
                     callback.onExitToMenu();
                 }
             }
         }
         
-        // Resume with ESC
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if (callback != null) {
-                callback.onResume();
-            }
-            isVisible = false;
-        }
+        // ESC key handling removed - now handled centrally in BoneChildGame.handleInput()
     }
     
     /**
@@ -109,6 +172,30 @@ public class PauseMenu {
      */
     public void render() {
         if (!isVisible) return;
+        
+        // Check if textures are loaded, if not, try to load them
+        if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
+            bgTexture = assets.getExitScreenMenuBg();
+            playButtonTexture = assets.getPlayButton();
+            settingsButtonTexture = assets.getSettingsButton();
+            exitButtonTexture = assets.getExitButton();
+            
+            // If still null, can't render yet
+            if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
+                Gdx.app.log("PauseMenu", "Textures not loaded yet - cannot render");
+                return;
+            }
+            
+            // Setup UI now that textures are loaded
+            Gdx.app.log("PauseMenu", "Textures loaded, setting up UI");
+            setupUI();
+        }
+        
+        // Check if hitboxes are set up
+        if (playButtonHitbox == null || settingsButtonHitbox == null || exitButtonHitbox == null) {
+            Gdx.app.log("PauseMenu", "Hitboxes not initialized - cannot render");
+            return;
+        }
         
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
@@ -118,97 +205,27 @@ public class PauseMenu {
         Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA, com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
         
         // Draw semi-transparent overlay (low opacity - lets game show through)
-        shapeRenderer.setProjectionMatrix(shapeRenderer.getProjectionMatrix());
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.35f);
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
         
-        // Draw black box background for menu (centered)
-        float boxWidth = 400f;
-        float boxHeight = 350f;
-        float boxX = screenWidth / 2f - boxWidth / 2f;
-        float boxY = screenHeight / 2f - boxHeight / 2f;
-        
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.05f, 0.05f, 0.05f, 0.95f);
-        shapeRenderer.rect(boxX, boxY, boxWidth, boxHeight);
-        shapeRenderer.end();
-        
-        // Draw black box border
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
-        shapeRenderer.rect(boxX, boxY, boxWidth, boxHeight);
-        shapeRenderer.end();
-        
+        // Draw background image
         batch.begin();
         
-        // Draw title (moved higher)
-        String title = "PAUSED";
-        glyphLayout.setText(titleFont, title);
-        float titleX = screenWidth / 2f - glyphLayout.width / 2f;
-        float titleY = boxY + boxHeight - 30f;
+        // Calculate background size and position (centered, scaled to 50% for smaller menu)
+        float bgScale = Math.min(screenWidth / bgTexture.getWidth(), screenHeight / bgTexture.getHeight()) * 0.5f;
+        float bgWidth = bgTexture.getWidth() * bgScale;
+        float bgHeight = bgTexture.getHeight() * bgScale;
+        float bgX = (screenWidth - bgWidth) / 2f;
+        float bgY = (screenHeight - bgHeight) / 2f;
         
-        titleFont.setColor(1f, 0.2f, 0.2f, 1f);
-        titleFont.draw(batch, title, titleX, titleY);
-        
-        batch.end();
+        batch.draw(bgTexture, bgX, bgY, bgWidth, bgHeight);
         
         // Draw buttons
-        drawButton(resumeButton, "RESUME");
-        drawButton(settingsButton, "SETTINGS");
-        drawButton(exitButton, "EXIT TO MENU");
-    }
-    
-    /**
-     * Draw a button with text
-     */
-    private void drawButton(Rectangle button, String text) {
-        float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-        boolean hovered = button.contains(mouseX, mouseY);
-        
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        
-        // Button background
-        if (hovered) {
-            shapeRenderer.setColor(1f, 0.3f, 0.3f, 0.9f);
-        } else {
-            shapeRenderer.setColor(0.4f, 0.1f, 0.1f, 0.8f);
-        }
-        shapeRenderer.rect(button.x, button.y, button.width, button.height);
-        
-        // Button border
-        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
-        shapeRenderer.end();
-        
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
-        shapeRenderer.rect(button.x, button.y, button.width, button.height);
-        shapeRenderer.end();
-        
-        // Draw button text with smaller font for "EXIT TO MENU"
-        batch.begin();
-        
-        float originalScale = font.getData().scaleX;
-        // Scale down font for "EXIT TO MENU" button to fit better
-        if (text.equals("EXIT TO MENU")) {
-            font.getData().setScale(originalScale * 0.8f);
-        }
-        
-        glyphLayout.setText(font, text);
-        float textX = button.x + button.width / 2f - glyphLayout.width / 2f;
-        float textY = button.y + button.height / 2f + glyphLayout.height / 2f;
-        
-        if (hovered) {
-            font.setColor(Color.WHITE);
-        } else {
-            font.setColor(0.9f, 0.9f, 0.9f, 1f);
-        }
-        font.draw(batch, text, textX, textY);
-        
-        // Restore original font scale
-        font.getData().setScale(originalScale);
+        batch.draw(playButtonTexture, playButtonHitbox.x, playButtonHitbox.y, playButtonHitbox.width, playButtonHitbox.height);
+        batch.draw(settingsButtonTexture, settingsButtonHitbox.x, settingsButtonHitbox.y, settingsButtonHitbox.width, settingsButtonHitbox.height);
+        batch.draw(exitButtonTexture, exitButtonHitbox.x, exitButtonHitbox.y, exitButtonHitbox.width, exitButtonHitbox.height);
         
         batch.end();
     }
@@ -230,9 +247,7 @@ public class PauseMenu {
         if (shapeRenderer != null) {
             shapeRenderer.dispose();
         }
-        if (titleFont != null) {
-            titleFont.dispose();
-        }
+        // Don't dispose textures - they're managed by Assets class
     }
     
     public boolean isVisible() {

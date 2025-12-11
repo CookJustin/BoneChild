@@ -39,9 +39,11 @@ public class Assets {
     // Explosion sprites for explosion effect (82 frames)
     private Texture[] explosionFrames;
     
-    // UI Bar sprites
-    private Texture pixelBarOutline;
-    private Texture[] pixelBarInners; // 6 different inner bar fills
+    // Pause Menu UI sprites
+    private Texture exitScreenMenuBg;
+    private Texture playButton;
+    private Texture settingsButton;
+    private Texture exitButton;
     
     // Animations
     private Animation idleAnimation;
@@ -157,36 +159,50 @@ public class Assets {
                 fireballAnimation = null;
             }
             
-            // Load PixelBarOutline and PixelBarInners for UI bars
-            pixelBarOutline = new Texture(Gdx.files.internal("assets/ui/PixelBarOutline.png"));
-            pixelBarOutline.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest); // Crisp pixel art
-            
-            pixelBarInners = new Texture[6];
-            for (int i = 0; i < 6; i++) {
-                pixelBarInners[i] = new Texture(Gdx.files.internal("assets/ui/PixelBarInner" + (i + 1) + ".png"));
-                pixelBarInners[i].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            }
-            
-            Gdx.app.log("Assets", "Loaded PixelBarOutline and 6 PixelBarInners");
-            
-            // Try to load explosion sprites (82 frames: explode0000.png to explode0081.png) - optional
-            try {
-                explosionFrames = new Texture[82];
-                for (int i = 0; i < 82; i++) {
-                    String frameNumber = String.format("%04d", i);
-                    explosionFrames[i] = new Texture(Gdx.files.internal("assets/effects/explode" + frameNumber + ".png"));
-                }
-                
-                // Create explosion animation - slowed down for better visibility (82 frames in ~0.82 seconds)
-                explosionAnimation = new Animation(explosionFrames, 0.01f, false); // Non-looping, slowed from 0.006f
-                Gdx.app.log("Assets", "Loaded 82 explosion frames and created explosion animation");
-            } catch (Exception e) {
-                Gdx.app.log("Assets", "Explosion sprites not found (optional): " + e.getMessage());
-                explosionFrames = null;
-                explosionAnimation = null;
-            }
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
+        }
+        
+        // Load explosion sprites OUTSIDE the main try-catch so it doesn't get skipped
+        // Try to load explosion sprites (82 frames: explode0000.png to explode0081.png) - optional
+        try {
+            Gdx.app.log("Assets", "Starting to load explosion frames...");
+            explosionFrames = new Texture[82];
+            int loadedCount = 0;
+            for (int i = 0; i < 82; i++) {
+                String frameNumber = String.format("%04d", i);
+                String path = "assets/effects/explode" + frameNumber + ".png";
+                try {
+                    explosionFrames[i] = new Texture(Gdx.files.internal(path));
+                    loadedCount++;
+                } catch (Exception frameException) {
+                    Gdx.app.error("Assets", "Failed to load explosion frame " + i + " (" + path + "): " + frameException.getMessage());
+                    throw frameException; // Re-throw to trigger outer catch
+                }
+            }
+            
+            Gdx.app.log("Assets", "Successfully loaded " + loadedCount + " explosion frames");
+            
+            // Create explosion animation - slowed down for better visibility (82 frames in ~0.82 seconds)
+            explosionAnimation = new Animation(explosionFrames, 0.01f, false); // Non-looping, slowed from 0.006f
+            Gdx.app.log("Assets", "✨ Created explosion animation successfully!");
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "❌ FAILED to load explosion sprites: " + e.getMessage());
+            e.printStackTrace();
+            explosionFrames = null;
+            explosionAnimation = null;
+        }
+        
+        // Load Pause Menu UI sprites (outside main try-catch to ensure they load)
+        try {
+            exitScreenMenuBg = new Texture(Gdx.files.internal("assets/ui/ExitScreenMenu.png"));
+            playButton = new Texture(Gdx.files.internal("assets/ui/PlayButton.png"));
+            settingsButton = new Texture(Gdx.files.internal("assets/ui/SettingsButton.png"));
+            exitButton = new Texture(Gdx.files.internal("assets/ui/ExitButton.png"));
+            Gdx.app.log("Assets", "Loaded pause menu UI sprites");
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Failed to load pause menu UI sprites: " + e.getMessage());
+            e.printStackTrace();
         }
         
         // Load fonts - create a larger, crisper font
@@ -359,17 +375,21 @@ public class Assets {
             }
         }
         
-        // Dispose PixelBarOutline and PixelBarInners
-        if (pixelBarOutline != null) {
-            pixelBarOutline.dispose();
+        // Dispose pause menu UI sprites
+        if (exitScreenMenuBg != null) {
+            exitScreenMenuBg.dispose();
         }
         
-        if (pixelBarInners != null) {
-            for (Texture inner : pixelBarInners) {
-                if (inner != null) {
-                    inner.dispose();
-                }
-            }
+        if (playButton != null) {
+            playButton.dispose();
+        }
+        
+        if (settingsButton != null) {
+            settingsButton.dispose();
+        }
+        
+        if (exitButton != null) {
+            exitButton.dispose();
         }
         
         if (font != null) {
@@ -412,8 +432,12 @@ public class Assets {
     public Animation getExplosionAnimation() { return explosionAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
-    public Texture getPixelBarOutline() { return pixelBarOutline; }
-    public Texture[] getPixelBarInners() { return pixelBarInners; }
+    
+    // Pause Menu UI getters
+    public Texture getExitScreenMenuBg() { return exitScreenMenuBg; }
+    public Texture getPlayButton() { return playButton; }
+    public Texture getSettingsButton() { return settingsButton; }
+    public Texture getExitButton() { return exitButton; }
     
     /**
      * Create a new independent walk animation instance (for mobs)
@@ -509,5 +533,16 @@ public class Assets {
         if (sound != null) {
             sound.play(volume);
         }
+    }
+    
+    /**
+     * Create a new explosion animation instance (each explosion needs its own)
+     */
+    public Animation createExplosionAnimation() {
+        if (explosionFrames == null || explosionFrames.length == 0) {
+            return null;
+        }
+        // Create a new Animation instance with the same frames but independent state
+        return new Animation(explosionFrames, 0.01f, false);
     }
 }
