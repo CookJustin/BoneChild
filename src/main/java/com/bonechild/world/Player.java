@@ -15,6 +15,9 @@ public class Player extends LivingEntity {
     private int speedLevel = 0;
     private int strengthLevel = 0;
     private int grabLevel = 0;
+    private int attackSpeedLevel = 0;
+    private int maxHpLevel = 0;
+    private int xpBoostLevel = 0;
     private boolean leveledUpThisFrame = false;
     
     // Animation state
@@ -191,10 +194,12 @@ public class Player extends LivingEntity {
     }
     
     /**
-     * Add experience and check for level up
+     * Add experience with XP boost multiplier
      */
     public void addExperience(float amount) {
-        experience += amount;
+        // Apply XP boost multiplier (10% per level)
+        float multiplier = 1.0f + (xpBoostLevel * 0.1f);
+        experience += amount * multiplier;
         while (experience >= experienceToNextLevel) {
             levelUp();
         }
@@ -206,6 +211,18 @@ public class Player extends LivingEntity {
     public void addGold(int amount) {
         gold += amount;
         Gdx.app.log("Player", "Gold collected! Total: " + gold);
+    }
+    
+    /**
+     * Spend gold (returns true if successful)
+     */
+    public boolean spendGold(int amount) {
+        if (gold >= amount) {
+            gold -= amount;
+            Gdx.app.log("Player", "Spent " + amount + " gold. Remaining: " + gold);
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -242,6 +259,22 @@ public class Player extends LivingEntity {
                 grabLevel++;
                 // Grab increases pickup pull distance and speed (handled in Pickup class)
                 Gdx.app.log("Player", "Grab upgraded! Level: " + grabLevel);
+                break;
+            case "ATTACK_SPEED":
+                attackSpeedLevel++;
+                attackCooldown = Math.max(0.1f, attackCooldown - 0.05f); // Reduce cooldown by 0.05s, minimum 0.1s
+                Gdx.app.log("Player", "Attack Speed upgraded! Level: " + attackSpeedLevel + ", Cooldown: " + attackCooldown);
+                break;
+            case "MAX_HP":
+                maxHpLevel++;
+                maxHealth += 20f; // Increase max health by 20
+                currentHealth += 20f; // Also heal by 20 when upgrading
+                Gdx.app.log("Player", "Max HP upgraded! Level: " + maxHpLevel + ", Max HP: " + maxHealth);
+                break;
+            case "XP_BOOST":
+                xpBoostLevel++;
+                // XP boost multiplier is calculated when collecting XP
+                Gdx.app.log("Player", "XP Boost upgraded! Level: " + xpBoostLevel);
                 break;
         }
     }

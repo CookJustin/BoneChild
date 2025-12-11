@@ -99,6 +99,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             pauseMenu = new PauseMenu(assets, this);
             gameOverScreen = new GameOverScreen(assets, this);
             powerUpScreen = new PowerUpScreen(assets, this);
+            powerUpScreen.setPlayer(worldManager.getPlayer()); // Pass player reference for reroll
             characterStatsScreen = new CharacterStatsScreen(assets, worldManager.getPlayer());
             
             // Start background music
