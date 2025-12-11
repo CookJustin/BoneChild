@@ -36,7 +36,7 @@ public class Player extends LivingEntity {
     // Invincibility frames
     private float invincibilityTimer = 0f;
     private boolean isInvincible = false;
-    private static final float INVINCIBILITY_DURATION = 1.0f; // 1 second of invincibility after getting hit
+    private static final float INVINCIBILITY_DURATION = 0.375f; // 0.375 seconds of invincibility after getting hit (reduced from 1.0s -> 0.5s -> 0.375s)
     
     // Attack properties
     private float attackDamage;
