@@ -82,15 +82,15 @@ public class Assets {
             tilesetTexture = new Texture(Gdx.files.internal("assets/tiles/Dungeon_Tileset.png"));
             Gdx.app.log("Assets", "Loaded dungeon tileset texture");
             
-            // Load skeleton sprite sheets
-            skeletonIdleSheet = new Texture(Gdx.files.internal("assets/characters/SkeletonIdle.png"));
-            skeletonWalkSheet = new Texture(Gdx.files.internal("assets/characters/SkeletonWalk.png"));
-            skeletonHurtSheet = new Texture(Gdx.files.internal("assets/characters/SkeletonHurt.png"));
-            skeletonDieSheet = new Texture(Gdx.files.internal("assets/characters/SkeletonDie.png"));
+            // Load skeleton sprite sheets from the new player folder
+            skeletonIdleSheet = new Texture(Gdx.files.internal("assets/player/SkeletonIdle.png"));
+            skeletonWalkSheet = new Texture(Gdx.files.internal("assets/player/SkeletonWalk.png"));
+            skeletonHurtSheet = new Texture(Gdx.files.internal("assets/player/SkeletonHurt.png"));
+            skeletonDieSheet = new Texture(Gdx.files.internal("assets/player/SkeletonDie.png"));
             Gdx.app.log("Assets", "Loaded skeleton sprite sheets");
             
-            // Load orc sprite sheet for mobs
-            orcWalkSheet = new Texture(Gdx.files.internal("assets/characters/Orc-Walk.png"));
+            // Load orc sprite sheet for mobs from the enemies folder
+            orcWalkSheet = new Texture(Gdx.files.internal("assets/enemies/Orc-Walk.png"));
             Gdx.app.log("Assets", "Loaded orc walk sprite sheet");
             
             // Create animations from sprite sheets
@@ -137,16 +137,21 @@ public class Assets {
             
             Gdx.app.log("Assets", "Loaded flask sprites and created health orb animation");
             
-            // Load fireball sprites (60 frames: 1.png to 60.png)
-            fireballFrames = new Texture[60];
-            for (int i = 0; i < 60; i++) {
-                fireballFrames[i] = new Texture(Gdx.files.internal("assets/projectiles/" + (i + 1) + ".png"));
+            // Try to load fireball sprites (60 frames: Fireball1.png to Fireball60.png) - optional
+            try {
+                fireballFrames = new Texture[60];
+                for (int i = 0; i < 60; i++) {
+                    fireballFrames[i] = new Texture(Gdx.files.internal("assets/projectiles/Fireball" + (i + 1) + ".png"));
+                }
+                
+                // Create fireball animation - fast animation for dynamic effect
+                fireballAnimation = new Animation(fireballFrames, 0.01f, true);
+                Gdx.app.log("Assets", "Loaded 60 fireball frames and created fireball animation");
+            } catch (Exception e) {
+                Gdx.app.log("Assets", "Fireball sprites not found (optional) - projectiles will use fallback rendering");
+                fireballFrames = null;
+                fireballAnimation = null;
             }
-            
-            // Create fireball animation - fast animation for dynamic effect
-            fireballAnimation = new Animation(fireballFrames, 0.01f, true); // 60 frames at ~0.01s per frame = ~0.6s loop (faster!)
-            
-            Gdx.app.log("Assets", "Loaded 60 fireball frames and created fireball animation");
             
             // Load PixelBarOutline and PixelBarInners for UI bars
             pixelBarOutline = new Texture(Gdx.files.internal("assets/ui/PixelBarOutline.png"));
@@ -191,58 +196,58 @@ public class Assets {
     private void loadAudio() {
         try {
             // Try to load background music - "7th realm.mp3"
-            if (Gdx.files.internal("assets/audio/music/7th realm.mp3").exists()) {
-                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/music/7th realm.mp3"));
+            if (Gdx.files.internal("assets/audio/7th realm.mp3").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/7th realm.mp3"));
                 backgroundMusic.setLooping(true);
                 backgroundMusic.setVolume(0.5f);
                 Gdx.app.log("Assets", "Loaded background music: 7th realm.mp3");
-            } else if (Gdx.files.internal("assets/audio/music/background.ogg").exists()) {
-                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/music/background.ogg"));
+            } else if (Gdx.files.internal("assets/audio/background.ogg").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/background.ogg"));
                 backgroundMusic.setLooping(true);
                 backgroundMusic.setVolume(0.5f);
                 Gdx.app.log("Assets", "Loaded background music: background.ogg");
-            } else if (Gdx.files.internal("assets/audio/music/background.mp3").exists()) {
-                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/music/background.mp3"));
+            } else if (Gdx.files.internal("assets/audio/background.mp3").exists()) {
+                backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/audio/background.mp3"));
                 backgroundMusic.setLooping(true);
                 backgroundMusic.setVolume(0.5f);
                 Gdx.app.log("Assets", "Loaded background music: background.mp3");
             } else {
-                Gdx.app.log("Assets", "No background music found (place '7th realm.mp3' in assets/audio/music/)");
+                Gdx.app.log("Assets", "No background music found (place '7th realm.mp3' in assets/audio/)");
             }
             
             // Try to load sound effects
-            if (Gdx.files.internal("assets/audio/sfx/attack.ogg").exists()) {
-                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/attack.ogg"));
+            if (Gdx.files.internal("assets/audio/attack.ogg").exists()) {
+                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.ogg"));
                 Gdx.app.log("Assets", "Loaded attack sound");
-            } else if (Gdx.files.internal("assets/audio/sfx/attack.wav").exists()) {
-                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/attack.wav"));
+            } else if (Gdx.files.internal("assets/audio/attack.wav").exists()) {
+                attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.wav"));
                 Gdx.app.log("Assets", "Loaded attack sound");
             }
             
-            if (Gdx.files.internal("assets/audio/sfx/hit.ogg").exists()) {
-                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/hit.ogg"));
+            if (Gdx.files.internal("assets/audio/hit.ogg").exists()) {
+                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.ogg"));
                 Gdx.app.log("Assets", "Loaded hit sound");
-            } else if (Gdx.files.internal("assets/audio/sfx/hit.wav").exists()) {
-                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/hit.wav"));
+            } else if (Gdx.files.internal("assets/audio/hit.wav").exists()) {
+                hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.wav"));
                 Gdx.app.log("Assets", "Loaded hit sound");
             }
             
-            if (Gdx.files.internal("assets/audio/sfx/levelup.ogg").exists()) {
-                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/levelup.ogg"));
+            if (Gdx.files.internal("assets/audio/levelup.ogg").exists()) {
+                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.ogg"));
                 Gdx.app.log("Assets", "Loaded level up sound");
-            } else if (Gdx.files.internal("assets/audio/sfx/levelup.wav").exists()) {
-                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/levelup.wav"));
+            } else if (Gdx.files.internal("assets/audio/levelup.wav").exists()) {
+                levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.wav"));
                 Gdx.app.log("Assets", "Loaded level up sound");
             }
             
-            if (Gdx.files.internal("assets/audio/sfx/death-sound.mp3").exists()) {
-                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/death-sound.mp3"));
+            if (Gdx.files.internal("assets/audio/death-sound.mp3").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death-sound.mp3"));
                 Gdx.app.log("Assets", "Loaded death sound: death-sound.mp3");
-            } else if (Gdx.files.internal("assets/audio/sfx/death.ogg").exists()) {
-                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/death.ogg"));
+            } else if (Gdx.files.internal("assets/audio/death.ogg").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.ogg"));
                 Gdx.app.log("Assets", "Loaded death sound");
-            } else if (Gdx.files.internal("assets/audio/sfx/death.wav").exists()) {
-                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/sfx/death.wav"));
+            } else if (Gdx.files.internal("assets/audio/death.wav").exists()) {
+                deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.wav"));
                 Gdx.app.log("Assets", "Loaded death sound");
             }
             
@@ -386,6 +391,50 @@ public class Assets {
         if (orcWalkSheet != null) {
             // Orc-Walk sprite sheet is 800x100, meaning 8 frames of 100x100 pixels
             return new Animation(orcWalkSheet, 8, 0, 100, 100, 0.1f, true);
+        }
+        return null;
+    }
+    
+    /**
+     * Create a new independent player idle animation instance
+     */
+    public Animation createPlayerIdleAnimation() {
+        if (skeletonWalkSheet != null) {
+            int[] idleFrame = {1};
+            return new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
+        }
+        return null;
+    }
+    
+    /**
+     * Create a new independent player walk animation instance
+     */
+    public Animation createPlayerWalkAnimation() {
+        if (skeletonWalkSheet != null) {
+            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            return new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
+        }
+        return null;
+    }
+    
+    /**
+     * Create a new independent player hurt animation instance
+     */
+    public Animation createPlayerHurtAnimation() {
+        if (skeletonHurtSheet != null) {
+            int[] goodHurtFrames = {1, 4, 7, 10, 13};
+            return new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+        }
+        return null;
+    }
+    
+    /**
+     * Create a new independent player death animation instance
+     */
+    public Animation createPlayerDeathAnimation() {
+        if (skeletonDieSheet != null) {
+            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
+            return new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
         }
         return null;
     }

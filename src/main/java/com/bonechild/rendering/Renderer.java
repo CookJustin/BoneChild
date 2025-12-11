@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.Gdx;
 import com.bonechild.world.Mob;
 import com.bonechild.world.Player;
 import com.bonechild.world.TileMap;
@@ -45,16 +46,14 @@ public class Renderer {
             this.tileMap = new TileMap(assets.getTilesetTexture(), 16); // Changed from 32 to 16 for Dungeon_Tileset
         }
         
-        // Create separate player animation instances
-        if (assets.getIdleAnimation() != null) {
-            playerIdleAnimation = assets.getIdleAnimation();
-            playerWalkAnimation = assets.getWalkAnimation();
-            playerHurtAnimation = assets.getHurtAnimation();
-            playerDeathAnimation = assets.getDeathAnimation();
-            
-            // Create a separate mob animation instance (not shared with player)
-            mobWalkAnimation = assets.createWalkAnimation();
-        }
+        // Create separate player animation instances using factory methods
+        playerIdleAnimation = assets.createPlayerIdleAnimation();
+        playerWalkAnimation = assets.createPlayerWalkAnimation();
+        playerHurtAnimation = assets.createPlayerHurtAnimation();
+        playerDeathAnimation = assets.createPlayerDeathAnimation();
+        
+        // Create a separate mob animation instance (not shared with player)
+        mobWalkAnimation = assets.createWalkAnimation();
     }
     
     /**
@@ -85,6 +84,13 @@ public class Renderer {
      */
     public void renderPlayer(Player player) {
         if (player == null) return;
+        
+        // Check if animations are loaded - if not, skip rendering
+        if (playerIdleAnimation == null || playerWalkAnimation == null || 
+            playerHurtAnimation == null || playerDeathAnimation == null) {
+            Gdx.app.log("Renderer", "Player animations not loaded yet, skipping render");
+            return;
+        }
         
         // Get the appropriate animation based on player state
         Animation currentAnimation;
@@ -158,6 +164,12 @@ public class Renderer {
      */
     public void renderMobs(Array<Mob> mobs) {
         if (mobs == null || mobs.size == 0) return;
+        
+        // Check if mob animations are loaded - if not, skip rendering
+        if (mobWalkAnimation == null) {
+            Gdx.app.log("Renderer", "Mob animations not loaded yet, skipping render");
+            return;
+        }
         
         // Use the walk animation for all mobs (they're always chasing)
         mobWalkAnimation.update(deltaTime);
