@@ -45,9 +45,13 @@ public class SettingsScreen {
     
     // Keybind controls
     private Rectangle[] keybindButtons;
+    private Rectangle[] hotbarKeybindButtons; // Second column for hotbar
     private String[] keybindLabels;
+    private String[] hotbarKeybindLabels; // Labels for hotbar
     private int[] currentKeybinds;
+    private int[] hotbarKeybinds; // Hotbar keybinds (1-5)
     private int rebindingIndex = -1;
+    private boolean rebindingHotbar = false; // Track if rebinding hotbar or movement
     private float rebindWaitTime = 0;
     private float ignoreInputTimer = 0;
     
@@ -82,14 +86,23 @@ public class SettingsScreen {
         this.musicVolume = assets.getBackgroundMusic() != null ? assets.getBackgroundMusic().getVolume() : 0.5f;
         this.sfxVolume = 0.6f;
         
-        // Keybind setup
+        // Movement keybind setup (left column)
         this.keybindLabels = new String[]{
-            "Move Up", "Move Down", "Move Left", "Move Right", "Character Stats"
+            "Move Up", "Move Down", "Move Left", "Move Right", "Stats"
         };
         this.currentKeybinds = new int[]{
             Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D, Input.Keys.C
         };
         this.keybindButtons = new Rectangle[currentKeybinds.length];
+        
+        // Hotbar keybind setup (right column)
+        this.hotbarKeybindLabels = new String[]{
+            "Hotbar Slot 1", "Hotbar Slot 2", "Hotbar Slot 3", "Hotbar Slot 4", "Hotbar Slot 5"
+        };
+        this.hotbarKeybinds = new int[]{
+            Input.Keys.NUM_1, Input.Keys.NUM_2, Input.Keys.NUM_3, Input.Keys.NUM_4, Input.Keys.NUM_5
+        };
+        this.hotbarKeybindButtons = new Rectangle[hotbarKeybinds.length];
         
         setupUI();
     }
@@ -113,11 +126,20 @@ public class SettingsScreen {
         musicVolumeSlider = new Rectangle(sliderX, sliderY, 300f, 20f);
         sfxVolumeSlider = new Rectangle(sliderX, sliderY - 80f, 300f, 20f);
         
-        // Keybind buttons (with more spacing between them)
-        float keybindX = screenWidth / 2f - 150f;
-        float keybindY = screenHeight / 2f + 30f;
+        // Keybind buttons - TWO COLUMNS
+        float leftColumnX = screenWidth / 2f - 320f; // Left column
+        float rightColumnX = screenWidth / 2f + 20f; // Right column
+        float keybindY = screenHeight / 2f + 80f;
+        float buttonWidthSmall = 280f;
+        
+        // Left column (movement keys)
         for (int i = 0; i < keybindButtons.length; i++) {
-            keybindButtons[i] = new Rectangle(keybindX, keybindY - (i * 65f), 300f, 45f);
+            keybindButtons[i] = new Rectangle(leftColumnX, keybindY - (i * 60f), buttonWidthSmall, 45f);
+        }
+        
+        // Right column (hotbar keys)
+        for (int i = 0; i < hotbarKeybindButtons.length; i++) {
+            hotbarKeybindButtons[i] = new Rectangle(rightColumnX, keybindY - (i * 60f), buttonWidthSmall, 45f);
         }
     }
     
@@ -206,8 +228,18 @@ public class SettingsScreen {
                 for (int i = 0; i < keybindButtons.length; i++) {
                     if (keybindButtons[i].contains(mouseX, mouseY)) {
                         rebindingIndex = i;
+                        rebindingHotbar = false;
                         rebindWaitTime = 0;
                         Gdx.app.log("Settings", "Press a key to rebind: " + keybindLabels[i]);
+                        return;
+                    }
+                }
+                for (int i = 0; i < hotbarKeybindButtons.length; i++) {
+                    if (hotbarKeybindButtons[i].contains(mouseX, mouseY)) {
+                        rebindingIndex = i;
+                        rebindingHotbar = true;
+                        rebindWaitTime = 0;
+                        Gdx.app.log("Settings", "Press a key to rebind: " + hotbarKeybindLabels[i]);
                         return;
                     }
                 }
@@ -239,8 +271,13 @@ public class SettingsScreen {
                 }
                 
                 if (rebindWaitTime > 0.3f) {
-                    currentKeybinds[rebindingIndex] = keyCode;
-                    Gdx.app.log("Settings", "Keybind updated: " + keybindLabels[rebindingIndex] + " -> " + getKeyName(keyCode));
+                    if (rebindingHotbar) {
+                        hotbarKeybinds[rebindingIndex] = keyCode;
+                        Gdx.app.log("Settings", "Hotbar Keybind updated: " + hotbarKeybindLabels[rebindingIndex] + " -> " + getKeyName(keyCode));
+                    } else {
+                        currentKeybinds[rebindingIndex] = keyCode;
+                        Gdx.app.log("Settings", "Keybind updated: " + keybindLabels[rebindingIndex] + " -> " + getKeyName(keyCode));
+                    }
                     rebindingIndex = -1;
                     rebindWaitTime = 0;
                     return;
@@ -326,12 +363,21 @@ public class SettingsScreen {
     private void drawKeybindsMenu() {
         for (int i = 0; i < keybindButtons.length; i++) {
             String buttonText;
-            if (rebindingIndex == i) {
+            if (rebindingIndex == i && !rebindingHotbar) {
                 buttonText = "PRESS A KEY...";
             } else {
                 buttonText = keybindLabels[i] + ": " + getKeyName(currentKeybinds[i]);
             }
-            drawKeybindButton(keybindButtons[i], buttonText, rebindingIndex == i);
+            drawKeybindButton(keybindButtons[i], buttonText, rebindingIndex == i && !rebindingHotbar);
+        }
+        for (int i = 0; i < hotbarKeybindButtons.length; i++) {
+            String buttonText;
+            if (rebindingIndex == i && rebindingHotbar) {
+                buttonText = "PRESS A KEY...";
+            } else {
+                buttonText = hotbarKeybindLabels[i] + ": " + getKeyName(hotbarKeybinds[i]);
+            }
+            drawKeybindButton(hotbarKeybindButtons[i], buttonText, rebindingIndex == i && rebindingHotbar);
         }
     }
     

@@ -2,6 +2,7 @@ package com.bonechild.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -13,11 +14,23 @@ import com.bonechild.rendering.Assets;
  * Title screen menu for BoneChild
  */
 public class MenuScreen {
+    // Virtual resolution (matches the game's viewport)
+    private static final float VIRTUAL_WIDTH = 1280f;
+    private static final float VIRTUAL_HEIGHT = 720f;
+
     private final SpriteBatch batch;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
     private final BitmapFont titleFont;
     private final GlyphLayout glyphLayout;
+    
+    // Scrolling background
+    private Texture backgroundTexture;
+    private float backgroundX1;  // Position of first background image
+    private float backgroundX2;  // Position of second background image
+    private float backgroundX3;  // Position of third background image (extra coverage)
+    private float scrollSpeed = 30f;  // Pixels per second (reduced from 50 for slower scrolling)
+    private float scaledBackgroundWidth;  // Cached scaled width
     
     // Button properties
     private Rectangle startButton;
@@ -44,6 +57,29 @@ public class MenuScreen {
         this.callback = callback;
         this.isVisible = true;
         
+        // Load background texture
+        try {
+            this.backgroundTexture = new Texture(Gdx.files.internal("assets/backgrounds/TitleScreen.png"));
+            this.backgroundTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+            System.out.println("[MenuScreen] Background texture loaded: " + backgroundTexture.getWidth() + "x" + backgroundTexture.getHeight());
+            
+            // Calculate scaled width based on VIRTUAL height
+            float bgHeight = backgroundTexture.getHeight();
+            float scale = VIRTUAL_HEIGHT / bgHeight;
+            this.scaledBackgroundWidth = backgroundTexture.getWidth() * scale;
+            
+            // Initialize background positions - images overlap to create seamless scrolling
+            this.backgroundX1 = 0;
+            this.backgroundX2 = -this.scaledBackgroundWidth;
+            this.backgroundX3 = -this.scaledBackgroundWidth * 2;
+            
+            System.out.println("[MenuScreen] Scaled background width: " + scaledBackgroundWidth);
+            System.out.println("[MenuScreen] Initial positions: x1=" + backgroundX1 + ", x2=" + backgroundX2 + ", x3=" + backgroundX3);
+        } catch (Exception e) {
+            System.out.println("[MenuScreen] Background texture not found: " + e.getMessage());
+            this.backgroundTexture = null;
+        }
+        
         // Create title font (larger)
         this.titleFont = new BitmapFont();
         this.titleFont.getData().setScale(4.0f);
@@ -62,12 +98,11 @@ public class MenuScreen {
     }
     
     private void setupButtons() {
-        float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
-        float centerX = screenWidth / 2f - buttonWidth / 2f;
+        // Use VIRTUAL resolution instead of physical screen size
+        float centerX = VIRTUAL_WIDTH / 2f - buttonWidth / 2f;
         
         // Start Game button (centered vertically with some offset)
-        float startY = screenHeight / 2f + 30f;
+        float startY = VIRTUAL_HEIGHT / 2f + 30f;
         startButton = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
         
         // Settings button (below Start Game)
@@ -85,10 +120,33 @@ public class MenuScreen {
     public void update(float delta) {
         if (!isVisible) return;
         
-        // Check mouse clicks
+        // Update scrolling background
+        if (backgroundTexture != null) {
+            backgroundX1 += scrollSpeed * delta;
+            backgroundX2 += scrollSpeed * delta;
+            backgroundX3 += scrollSpeed * delta;
+            
+            // When an image scrolls completely off the right edge of the VIRTUAL screen,
+            // reposition it to the left side (negative position) to create seamless loop
+            if (backgroundX1 > VIRTUAL_WIDTH) {
+                float leftmost = Math.min(Math.min(backgroundX2, backgroundX3), backgroundX1);
+                backgroundX1 = leftmost - scaledBackgroundWidth;
+            }
+            if (backgroundX2 > VIRTUAL_WIDTH) {
+                float leftmost = Math.min(Math.min(backgroundX1, backgroundX3), backgroundX2);
+                backgroundX2 = leftmost - scaledBackgroundWidth;
+            }
+            if (backgroundX3 > VIRTUAL_WIDTH) {
+                float leftmost = Math.min(Math.min(backgroundX1, backgroundX2), backgroundX3);
+                backgroundX3 = leftmost - scaledBackgroundWidth;
+            }
+        }
+        
+        // Check mouse clicks (convert physical mouse coords to virtual coords)
         if (Gdx.input.justTouched()) {
-            float mouseX = Gdx.input.getX();
-            float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Flip Y coordinate
+            // Convert physical screen coordinates to virtual coordinates
+            float mouseX = Gdx.input.getX() * (VIRTUAL_WIDTH / Gdx.graphics.getWidth());
+            float mouseY = (Gdx.graphics.getHeight() - Gdx.input.getY()) * (VIRTUAL_HEIGHT / Gdx.graphics.getHeight());
             
             if (startButton.contains(mouseX, mouseY)) {
                 if (callback != null) {
@@ -127,22 +185,35 @@ public class MenuScreen {
     public void render() {
         if (!isVisible) return;
         
-        // Draw semi-transparent background overlay
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.7f);
-        shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        shapeRenderer.end();
+        // Clear the screen first
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT);
+        
+        // Enable blending for proper texture rendering
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA, com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
         
         batch.begin();
         
-        float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
+        // Draw scrolling background using VIRTUAL dimensions
+        if (backgroundTexture != null) {
+            // Set batch color to darker (0.7 = 70% brightness) to make text stand out
+            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+            
+            // Draw all three background images using the cached scaled width
+            batch.draw(backgroundTexture, backgroundX1, 0, scaledBackgroundWidth, VIRTUAL_HEIGHT);
+            batch.draw(backgroundTexture, backgroundX2, 0, scaledBackgroundWidth, VIRTUAL_HEIGHT);
+            batch.draw(backgroundTexture, backgroundX3, 0, scaledBackgroundWidth, VIRTUAL_HEIGHT);
+            
+            // Reset batch color to white for text rendering
+            batch.setColor(1f, 1f, 1f, 1f);
+        }
         
-        // Draw title
+        // Draw title using VIRTUAL dimensions
         String title = "BoneChild";
         glyphLayout.setText(titleFont, title);
-        float titleX = screenWidth / 2f - glyphLayout.width / 2f;
-        float titleY = screenHeight - 150f;
+        float titleX = VIRTUAL_WIDTH / 2f - glyphLayout.width / 2f;
+        float titleY = VIRTUAL_HEIGHT - 150f;
         
         // Title shadow
         titleFont.setColor(0, 0, 0, 0.8f);
@@ -155,8 +226,8 @@ public class MenuScreen {
         // Draw subtitle
         String subtitle = "A Survival Action Game";
         glyphLayout.setText(font, subtitle);
-        float subtitleX = screenWidth / 2f - glyphLayout.width / 2f;
-        float subtitleY = screenHeight - 200f;
+        float subtitleX = VIRTUAL_WIDTH / 2f - glyphLayout.width / 2f;
+        float subtitleY = VIRTUAL_HEIGHT - 200f;
         
         font.setColor(0.8f, 0.8f, 0.8f, 1f);
         font.draw(batch, subtitle, subtitleX, subtitleY);
@@ -173,8 +244,9 @@ public class MenuScreen {
      * Draw a button with text
      */
     private void drawButton(Rectangle button, String text, boolean isHovered) {
-        float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        // Convert physical mouse coords to virtual coords for hover detection
+        float mouseX = Gdx.input.getX() * (VIRTUAL_WIDTH / Gdx.graphics.getWidth());
+        float mouseY = (Gdx.graphics.getHeight() - Gdx.input.getY()) * (VIRTUAL_HEIGHT / Gdx.graphics.getHeight());
         boolean hovered = button.contains(mouseX, mouseY);
         
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -216,6 +288,20 @@ public class MenuScreen {
      */
     public void resize(int width, int height) {
         setupButtons();
+        
+        // Recalculate background scaling for VIRTUAL resolution
+        if (backgroundTexture != null) {
+            float bgHeight = backgroundTexture.getHeight();
+            float scale = VIRTUAL_HEIGHT / bgHeight;
+            this.scaledBackgroundWidth = backgroundTexture.getWidth() * scale;
+            
+            // Reposition backgrounds to maintain seamless scrolling
+            this.backgroundX1 = 0;
+            this.backgroundX2 = -this.scaledBackgroundWidth;
+            this.backgroundX3 = -this.scaledBackgroundWidth * 2;
+            
+            Gdx.app.log("MenuScreen", "Resized - Background width: " + scaledBackgroundWidth + " for virtual resolution: 1280x720");
+        }
     }
     
     /**
@@ -230,6 +316,9 @@ public class MenuScreen {
         }
         if (titleFont != null) {
             titleFont.dispose();
+        }
+        if (backgroundTexture != null) {
+            backgroundTexture.dispose();
         }
     }
     

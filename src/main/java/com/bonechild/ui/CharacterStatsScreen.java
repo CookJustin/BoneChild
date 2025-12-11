@@ -51,11 +51,11 @@ public class CharacterStatsScreen {
         if (!isVisible) return;
         
         // Input handling is now done in BoneChildGame.handleInput() to avoid conflicts
-        // Only handle page navigation here
-        if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+        // Only handle page navigation here - use ONLY arrow keys, not WASD
+        if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) {
             currentPage = (currentPage + 1) % TOTAL_PAGES;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT)) {
             currentPage = (currentPage - 1 + TOTAL_PAGES) % TOTAL_PAGES;
         }
     }
@@ -99,7 +99,7 @@ public class CharacterStatsScreen {
         batch.begin();
         
         // Draw title based on current page
-        String title = currentPage == 0 ? "CHARACTER STATS" : "POWER-UPS";
+        String title = currentPage == 0 ? "STATS" : "POWER-UPS";
         glyphLayout.setText(titleFont, title);
         float titleX = screenWidth / 2f - glyphLayout.width / 2f;
         float titleY = boxY + boxHeight - 40f;
@@ -107,8 +107,8 @@ public class CharacterStatsScreen {
         titleFont.setColor(0.3f, 0.85f, 1f, 1f);
         titleFont.draw(batch, title, titleX, titleY);
         
-        // Draw page indicator
-        String pageIndicator = "Page " + (currentPage + 1) + "/" + TOTAL_PAGES + " (← →)";
+        // Draw page indicator with arrow symbols instead of key names
+        String pageIndicator = "Page " + (currentPage + 1) + "/" + TOTAL_PAGES + " (< >)";
         float originalScale = font.getData().scaleX;
         font.getData().setScale(originalScale * 0.6f);
         glyphLayout.setText(font, pageIndicator);
@@ -137,7 +137,11 @@ public class CharacterStatsScreen {
         
         float statX = boxX + 30f;
         float statY = boxY + boxHeight - 100f;
-        float lineHeight = 40f;
+        float lineHeight = 30f; // Reduced for tighter spacing
+        
+        // Scale down the font significantly for better fit
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.65f); // Scale to 65% of original size
         
         font.setColor(0.9f, 0.9f, 0.9f, 1f);
         
@@ -168,6 +172,9 @@ public class CharacterStatsScreen {
         font.draw(batch, "Gold: " + player.getGold(), statX, statY);
         statY -= lineHeight;
         
+        // Restore original font scale
+        font.getData().setScale(originalScale);
+        
         batch.end();
     }
     
@@ -179,11 +186,11 @@ public class CharacterStatsScreen {
         
         float statX = boxX + 30f;
         float statY = boxY + boxHeight - 100f;
-        float lineHeight = 40f;
+        float lineHeight = 30f; // Reduced for tighter spacing
         
-        // Scale down the font to fit better in the box
+        // Scale down the font significantly to fit better in the box
         float originalScale = font.getData().scaleX;
-        font.getData().setScale(originalScale * 0.85f); // Scale to 85% to fit better
+        font.getData().setScale(originalScale * 0.6f); // Scale to 60% to ensure it fits
         
         font.setColor(0.9f, 0.9f, 0.9f, 1f);
         font.draw(batch, "--- All Power-ups Chosen ---", statX, statY);
@@ -272,5 +279,13 @@ public class CharacterStatsScreen {
     
     public void hide() {
         isVisible = false;
+    }
+    
+    /**
+     * Resize method (required for proper fullscreen support)
+     * This screen calculates positions dynamically, so no action needed
+     */
+    public void resize(int width, int height) {
+        // Positions are calculated dynamically in render(), so no action needed
     }
 }

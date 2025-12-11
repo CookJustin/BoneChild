@@ -4,6 +4,8 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.bonechild.input.PlayerInput;
 import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
@@ -22,7 +24,12 @@ import com.bonechild.ui.CharacterStatsScreen;
  * A top-down survival action game built with LibGDX
  */
 public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback, GameOverScreen.GameOverCallback, PowerUpScreen.PowerUpCallback {
+    // Virtual resolution for the game world (fixed size that scales to screen)
+    private static final float VIRTUAL_WIDTH = 1280f;
+    private static final float VIRTUAL_HEIGHT = 720f;
+    
     private OrthographicCamera camera;
+    private Viewport viewport;
     
     // Game systems
     private Assets assets;
@@ -52,9 +59,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     public void create() {
         Gdx.app.log("BoneChild", "Initializing game...");
         
-        // Setup camera
+        // Setup camera with fixed virtual resolution
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
+        viewport.apply();
+        camera.position.set(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, 0);
+        camera.update();
         
         // Load assets
         assets = new Assets();
@@ -248,12 +258,10 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
         
-        // Clear screen
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        
         // Show menu if game hasn't started
         if (!gameStarted) {
+            // MenuScreen handles its own screen clearing
+            
             // Only update menu if settings screen is NOT visible
             if (settingsScreen == null || !settingsScreen.isVisible()) {
                 menuScreen.update(delta);
@@ -268,6 +276,10 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             }
             return;
         }
+        
+        // Clear screen (only when game is running)
+        Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         
         // Check if player is dead and show game over screen
         if (worldManager.getPlayer().isDead()) {
@@ -523,18 +535,44 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     
     @Override
     public void resize(int width, int height) {
-        camera.setToOrtho(false, width, height);
+        Gdx.app.log("BoneChild", "Resize called: " + width + "x" + height);
         
+        // Update camera viewport
+        viewport.update(width, height);
+        camera.update();
+        
+        // Update menu screen (for title screen background scrolling)
         if (menuScreen != null) {
             menuScreen.resize(width, height);
         }
         
+        // Update all UI screens if game has started
         if (gameStarted) {
             if (gameUI != null) {
                 gameUI.resize(width, height);
             }
             if (inventoryUI != null) {
                 inventoryUI.resize(width, height);
+            }
+            if (pauseMenu != null) {
+                pauseMenu.resize(width, height);
+            }
+            if (gameOverScreen != null) {
+                gameOverScreen.resize(width, height);
+            }
+            if (powerUpScreen != null) {
+                powerUpScreen.resize(width, height);
+            }
+            if (characterStatsScreen != null) {
+                characterStatsScreen.resize(width, height);
+            }
+            if (settingsScreen != null) {
+                settingsScreen.resize(width, height);
+            }
+        } else {
+            // Even if game hasn't started, settings screen might be open
+            if (settingsScreen != null) {
+                settingsScreen.resize(width, height);
             }
         }
     }
