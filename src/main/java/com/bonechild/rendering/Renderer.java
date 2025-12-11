@@ -185,13 +185,17 @@ public class Renderer {
         // Draw health bars for mobs
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                drawHealthBar(
-                    mob.getPosition().x,
-                    mob.getPosition().y + mob.getHeight() + 2,
-                    mob.getWidth(),
-                    3,
-                    mob.getHealthPercentage()
-                );
+                // Use hitbox dimensions for health bar (smaller, more appropriate size)
+                float barWidth = mob.getHitboxWidth() * 2; // 2x hitbox width for visibility
+                float barHeight = 4;
+                
+                // Position health bar just above the hitbox (not above the full sprite)
+                // Hitbox is at offset (105, 105) with size 30x30
+                float hitboxTop = mob.getPosition().y + 105 + mob.getHitboxHeight();
+                float barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                float barY = hitboxTop + 5; // 5 pixels above the hitbox
+                
+                drawHealthBar(barX, barY, barWidth, barHeight, mob.getHealthPercentage());
             }
         }
     }
@@ -273,96 +277,77 @@ public class Renderer {
     public void renderProjectiles(Array<Projectile> projectiles) {
         if (projectiles == null || projectiles.size == 0) return;
         
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        // Get the fireball animation
+        Animation fireballAnim = assets.getFireballAnimation();
+        if (fireballAnim == null) return;
+        
+        // Update the fireball animation
+        fireballAnim.update(deltaTime);
+        
+        batch.begin();
         
         for (Projectile projectile : projectiles) {
             if (projectile.isActive()) {
-                // Draw fireball as red ball with glow
+                // Get current frame
+                var frame = fireballAnim.getCurrentFrame();
+                
                 float x = projectile.getPosition().x;
                 float y = projectile.getPosition().y;
-                float radius = projectile.getRadius();
+                float size = projectile.getRadius() * 8; // Increased from 4 to 8 for better visibility
                 
-                // Outer glow (orange) - proportional to radius
-                shapeRenderer.setColor(1f, 0.5f, 0f, 0.4f);
-                shapeRenderer.circle(x, y, radius * 1.8f, 16);
+                // Calculate rotation angle based on velocity direction
+                // atan2 returns angle in radians, convert to degrees
+                float angle = (float) Math.toDegrees(Math.atan2(
+                    projectile.getVelocity().y, 
+                    projectile.getVelocity().x
+                ));
                 
-                // Main fireball (red)
-                shapeRenderer.setColor(1f, 0.2f, 0.2f, 1f);
-                shapeRenderer.circle(x, y, radius, 16);
-                
-                // Inner core (bright red/yellow) - proportional to radius
-                shapeRenderer.setColor(1f, 0.6f, 0.3f, 0.8f);
-                shapeRenderer.circle(x, y, radius * 0.6f, 14);
+                // Draw fireball sprite centered and rotated to face direction of travel
+                batch.draw(
+                    frame,
+                    x - size / 2,  // X position (centered)
+                    y - size / 2,  // Y position (centered)
+                    size / 2,      // Origin X (center of sprite for rotation)
+                    size / 2,      // Origin Y (center of sprite for rotation)
+                    size,          // Width
+                    size,          // Height
+                    1f,            // Scale X
+                    1f,            // Scale Y
+                    angle          // Rotation angle in degrees
+                );
             }
         }
         
-        shapeRenderer.end();
+        batch.end();
     }
     
     /**
-     * Draw a health bar with fancy design
+     * Draw a health bar using simple colored rectangles (old style)
      */
-    private void drawHealthBar(float x, float y, float width, float height, float percentage) {
-        float borderWidth = 1f;
-        float padding = 1f;
-        
-        // Ensure ShapeRenderer is using proper blending
-        shapeRenderer.setAutoShapeType(true);
-        
-        // Draw shadow (offset slightly down and right for depth)
+    private void drawHealthBar(float x, float y, float width, float height, float healthPct) {
+        // Use basic colored bars (old style)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0f, 0f, 0f, 0.4f);
-        shapeRenderer.rect(x + 1, y - 1, width, height);
+        
+        // Background (dark red)
+        shapeRenderer.setColor(0.3f, 0.1f, 0.1f, 0.9f);
+        shapeRenderer.rect(x, y, width, height);
+        
+        // Health bar (green to yellow to red gradient based on health)
+        float healthWidth = width * healthPct;
+        if (healthPct > 0.5f) {
+            shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f);  // Green
+        } else if (healthPct > 0.25f) {
+            shapeRenderer.setColor(0.9f, 0.9f, 0.2f, 1f);  // Yellow
+        } else {
+            shapeRenderer.setColor(0.9f, 0.2f, 0.2f, 1f);  // Red
+        }
+        shapeRenderer.rect(x, y, healthWidth, height);
+        
+        // Border
         shapeRenderer.end();
-        
-        // Draw outer border (dark)
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 1f);
         shapeRenderer.rect(x, y, width, height);
-        shapeRenderer.end();
-        
-        // Draw inner background (very dark red)
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.3f, 0f, 0f, 1f);
-        shapeRenderer.rect(x + borderWidth, y + borderWidth, 
-                          width - borderWidth * 2, height - borderWidth * 2);
-        shapeRenderer.end();
-        
-        // Draw health fill with color gradient based on percentage
-        if (percentage > 0) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            
-            // Color changes from green -> yellow -> red as health decreases
-            if (percentage > 0.6f) {
-                // Green (high health) - bright and vibrant
-                shapeRenderer.setColor(0.2f, 1.0f, 0.2f, 1f);
-            } else if (percentage > 0.3f) {
-                // Yellow (medium health)
-                shapeRenderer.setColor(1.0f, 1.0f, 0.2f, 1f);
-            } else {
-                // Red (low health)
-                shapeRenderer.setColor(1.0f, 0.2f, 0.2f, 1f);
-            }
-            
-            float fillWidth = (width - borderWidth * 2 - padding * 2) * percentage;
-            shapeRenderer.rect(x + borderWidth + padding, y + borderWidth + padding, 
-                              fillWidth, height - borderWidth * 2 - padding * 2);
-            shapeRenderer.end();
-            
-            // Draw highlight on top of health bar for shine effect
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(1f, 1f, 1f, 0.3f);
-            shapeRenderer.rect(x + borderWidth + padding, 
-                              y + height - borderWidth - padding - 1, 
-                              fillWidth, 1);
-            shapeRenderer.end();
-        }
-        
-        // Draw inner border highlight (lighter edge on top for 3D effect)
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 0.8f);
-        shapeRenderer.rect(x + borderWidth, y + borderWidth, 
-                          width - borderWidth * 2, height - borderWidth * 2);
         shapeRenderer.end();
     }
     

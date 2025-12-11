@@ -30,7 +30,7 @@ public class WorldManager {
         
         // Initialize wave system
         this.waveTimer = 0;
-        this.waveInterval = 3f; // Spawn first wave after 3 seconds (faster than 10)
+        this.waveInterval = 0f; // Start at 0 so wave 1 spawns immediately
         this.currentWave = 0;
         this.mobsPerWave = 3;
         
@@ -216,6 +216,11 @@ public class WorldManager {
             }
             
             mobs.add(new Mob(x, y, player));
+        }
+        
+        // After wave 1 spawns, set interval to 7 seconds for all subsequent waves
+        if (currentWave == 1) {
+            waveInterval = 7f;
         }
     }
     

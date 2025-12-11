@@ -64,18 +64,17 @@ public class Projectile {
             return false;
         }
         
-        // Use the mob's center position
-        float mobCenterX = mob.getPosition().x + mob.getWidth() / 2f;
-        float mobCenterY = mob.getPosition().y + mob.getHeight() / 2f;
+        // Use the mob's actual hitbox center position
+        float mobHitboxCenterX = mob.getPosition().x + mob.getHitboxWidth() / 2f + 105f; // 105 is the hitbox offset
+        float mobHitboxCenterY = mob.getPosition().y + mob.getHitboxHeight() / 2f + 105f;
         
-        // Calculate distance from projectile center to mob center
-        float dx = mobCenterX - position.x;
-        float dy = mobCenterY - position.y;
+        // Calculate distance from projectile center to mob hitbox center
+        float dx = mobHitboxCenterX - position.x;
+        float dy = mobHitboxCenterY - position.y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
         
-        // Collision hitbox: projectile radius + a better mob hitbox radius
-        // Using about 60% of mob width as hitbox (accounting for sprite padding)
-        float mobHitboxRadius = mob.getWidth() * 0.3f;
+        // Collision hitbox: projectile radius + mob's actual hitbox radius
+        float mobHitboxRadius = mob.getHitboxWidth() / 2f;
         
         return distance < (radius + mobHitboxRadius);
     }
@@ -89,6 +88,7 @@ public class Projectile {
     
     // Getters
     public Vector2 getPosition() { return position; }
+    public Vector2 getVelocity() { return velocity; }
     public float getRadius() { return radius; }
     public float getDamage() { return damage; }
     public boolean isActive() { return active; }

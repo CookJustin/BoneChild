@@ -13,11 +13,15 @@ public class Mob extends LivingEntity {
     private float timeSinceLastAttack;
     
     public Mob(float x, float y, Player target) {
-        super(x, y, 48, 48, 50f, 100f);
+        super(x, y, 240, 240, 50f, 100f); // Increased from 48x48 to 240x240 (5x size)
         this.target = target;
         this.damage = 10f;
         this.attackCooldown = 1f; // Attack once per second
         this.timeSinceLastAttack = 0;
+        
+        // Set smaller hitbox (30x30) centered on the large sprite
+        // Offset: (240 - 30) / 2 = 105 pixels from bottom-left to center the hitbox
+        setHitbox(30, 30, 105, 105);
     }
     
     @Override
@@ -26,9 +30,19 @@ public class Mob extends LivingEntity {
             return;
         }
         
-        // Move towards player
-        Vector2 targetPos = target.getPosition();
-        Vector2 direction = new Vector2(targetPos.x - position.x, targetPos.y - position.y);
+        // Calculate center of this mob's hitbox
+        float myHitboxCenterX = position.x + hitboxOffsetX + hitboxWidth / 2f;
+        float myHitboxCenterY = position.y + hitboxOffsetY + hitboxHeight / 2f;
+        
+        // Calculate center of player's hitbox (player has default hitbox = full size)
+        float targetHitboxCenterX = target.getPosition().x + target.getWidth() / 2f;
+        float targetHitboxCenterY = target.getPosition().y + target.getHeight() / 2f;
+        
+        // Calculate direction from mob's hitbox center to player's hitbox center
+        Vector2 direction = new Vector2(
+            targetHitboxCenterX - myHitboxCenterX,
+            targetHitboxCenterY - myHitboxCenterY
+        );
         direction.nor(); // Normalize
         
         velocity.set(direction.x * speed, direction.y * speed);

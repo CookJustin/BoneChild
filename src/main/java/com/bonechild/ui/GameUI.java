@@ -25,6 +25,7 @@ public class GameUI {
     private final BitmapFont font;
     private final GlyphLayout glyphLayout;
     private final SpriteBatch batch;
+    private final Assets assets;
     
     // UI Labels (only for non-bar UI)
     private Label waveLabel;
@@ -37,6 +38,7 @@ public class GameUI {
     public GameUI(Assets assets, Player player, WorldManager worldManager) {
         this.player = player;
         this.worldManager = worldManager;
+        this.assets = assets;
         this.stage = new Stage(new ScreenViewport());
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
@@ -179,6 +181,37 @@ public class GameUI {
         float barHeight = 36;
         float x = Gdx.graphics.getWidth() / 2f - barWidth / 2f;
         float y = 35;
+        
+        // Use the old fallback rendering
+        drawHealthBarFallback(x, y, barWidth, barHeight);
+        
+        // Draw health text
+        batch.begin();
+        String healthText = String.format("%.0f / %.0f", 
+            player.getCurrentHealth(), player.getMaxHealth());
+        
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.65f);
+        
+        glyphLayout.setText(font, healthText);
+        float textX = x + barWidth / 2f - glyphLayout.width / 2f;
+        float textY = y + barHeight / 2f + glyphLayout.height / 2f + 1;
+        
+        // Single subtle shadow for readability
+        font.setColor(0, 0, 0, 0.8f);
+        font.draw(batch, healthText, textX + 1, textY - 1);
+        
+        // Main text
+        font.setColor(1f, 1f, 1f, 1f);
+        font.draw(batch, healthText, textX, textY);
+        
+        font.getData().setScale(originalScale);
+        batch.end();
+        
+        // Removed HP label - no longer needed
+    }
+    
+    private void drawHealthBarFallback(float x, float y, float barWidth, float barHeight) {
         float borderWidth = 3;
         float innerPadding = 2;
         
@@ -271,52 +304,6 @@ public class GameUI {
         shapeRenderer.rect(x + barWidth - 1, y, 1, barHeight); // Right edge
         
         shapeRenderer.end();
-        
-        // Draw health text with enhanced styling
-        batch.begin();
-        String healthText = String.format("%.0f / %.0f", 
-            player.getCurrentHealth(), player.getMaxHealth());
-        
-        // Scale font slightly for health bar
-        float originalScale = font.getData().scaleX;
-        font.getData().setScale(originalScale * 0.9f);
-        
-        glyphLayout.setText(font, healthText);
-        float textX = x + barWidth / 2f - glyphLayout.width / 2f;
-        float textY = y + barHeight / 2f + glyphLayout.height / 2f + 2;
-        
-        // Triple shadow for strong depth
-        font.setColor(0, 0, 0, 0.9f);
-        font.draw(batch, healthText, textX + 3, textY - 3);
-        font.setColor(0, 0, 0, 0.7f);
-        font.draw(batch, healthText, textX + 2, textY - 2);
-        font.setColor(0, 0, 0, 0.5f);
-        font.draw(batch, healthText, textX + 1, textY - 1);
-        
-        // Main text with subtle outline glow
-        font.setColor(1f, 1f, 1f, 1f);
-        font.draw(batch, healthText, textX, textY);
-        
-        // Restore font scale
-        font.getData().setScale(originalScale);
-        
-        // HP label
-        font.getData().setScale(originalScale * 0.6f);
-        String hpLabel = "HP";
-        glyphLayout.setText(font, hpLabel);
-        float labelX = x + barWidth / 2f - glyphLayout.width / 2f;
-        float labelY = y + barHeight + 18;
-        
-        // Shadow
-        font.setColor(0, 0, 0, 0.8f);
-        font.draw(batch, hpLabel, labelX + 1, labelY - 1);
-        
-        // Label
-        font.setColor(0.85f, 0.85f, 0.9f, 1f);
-        font.draw(batch, hpLabel, labelX, labelY);
-        
-        font.getData().setScale(originalScale);
-        batch.end();
     }
     
     private void drawExpBar() {
@@ -421,23 +408,10 @@ public class GameUI {
         font.setColor(1f, 1f, 1f, 1f);
         font.draw(batch, expText, textX, textY);
         
-        // XP label
-        font.getData().setScale(originalScale * 0.55f);
-        String xpLabel = "EXPERIENCE";
-        glyphLayout.setText(font, xpLabel);
-        float labelX = x + barWidth / 2f - glyphLayout.width / 2f;
-        float labelY = y + barHeight + 14;
-        
-        // Shadow
-        font.setColor(0, 0, 0, 0.8f);
-        font.draw(batch, xpLabel, labelX + 1, labelY - 1);
-        
-        // Label in gold
-        font.setColor(1f, 0.85f, 0.3f, 1f);
-        font.draw(batch, xpLabel, labelX, labelY);
-        
         font.getData().setScale(originalScale);
         batch.end();
+        
+        // Removed EXPERIENCE label - no longer needed
     }
     
     private void drawGoldCounter() {
@@ -456,14 +430,19 @@ public class GameUI {
         shapeRenderer.setColor(1f, 0.85f, 0f, 0.9f);
         shapeRenderer.rect(x, y + boxHeight - 3, boxWidth, 3);
         
-        // Gold coin icon
-        shapeRenderer.setColor(1f, 0.85f, 0f, 1f);
-        shapeRenderer.circle(x + 25, y + boxHeight / 2, 12, 16);
-        
         shapeRenderer.end();
         
-        // Gold text
+        // Draw animated coin sprite and gold text
         batch.begin();
+        
+        // Draw animated coin icon
+        var coinAnim = assets.getCoinAnimation();
+        if (coinAnim != null) {
+            var coinFrame = coinAnim.getCurrentFrame();
+            float coinSize = 24;
+            batch.draw(coinFrame, x + 13, y + boxHeight / 2 - coinSize / 2, coinSize, coinSize);
+        }
+        
         String goldText = "Gold: " + player.getGold();
         glyphLayout.setText(font, goldText);
         float textX = x + 50;
