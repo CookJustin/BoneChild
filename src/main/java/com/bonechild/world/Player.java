@@ -251,13 +251,21 @@ public class Player extends LivingEntity {
     private void levelUp() {
         level++;
         experience -= experienceToNextLevel;
-        experienceToNextLevel *= 1.5f; // Increase exp needed for next level
+        
+        // Increase exp needed for next level
+        // First 3 levels: 1.5x multiplier (normal progression)
+        // After level 3: 1.05x multiplier (scaled down by ~30% for easier leveling)
+        if (level <= 3) {
+            experienceToNextLevel *= 1.5f;
+        } else {
+            experienceToNextLevel *= 1.05f;
+        }
         
         // Heal player on level up
         heal(maxHealth * 0.2f);
         
         leveledUpThisFrame = true;
-        Gdx.app.log("Player", "Level up! Now level " + level);
+        Gdx.app.log("Player", "Level up! Now level " + level + ", Next level needs: " + experienceToNextLevel + " XP");
     }
     
     /**
@@ -298,17 +306,17 @@ public class Player extends LivingEntity {
                 break;
             case "EXPLOSION_CHANCE":
                 explosionChanceLevel++;
-                // Each level gives 50% chance for explosions (TESTING ONLY - normally 5%)
-                Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 50) + "%");
+                // Each level gives 5% chance for explosions
+                Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 5) + "%");
                 break;
         }
     }
     
     /**
-     * Get explosion chance (50% per level - TESTING ONLY, normally 5%)
+     * Get explosion chance (5% per level)
      */
     public float getExplosionChance() {
-        return explosionChanceLevel * 0.5f; // 50% per level (TESTING)
+        return explosionChanceLevel * 0.05f; // 5% per level
     }
     
     /**
