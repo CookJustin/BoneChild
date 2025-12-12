@@ -11,49 +11,55 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
  * Manages and loads all game assets (textures, fonts, sounds, etc.)
  */
 public class Assets {
-            public Texture getVampireBodyAttack() { return vampireBodyAttack; }
-            public Texture getVampireHeadAttack() { return vampireHeadAttack; }
-            public Texture getVampireMagicAttack() { return vampireMagicAttack; }
-            public Texture getVampireDeathSmoke() { return vampireDeathSmoke; }
-        // Vampire enemy sprites
-        private Texture vampireBodyAttack;
-        private Texture vampireHeadAttack;
-        private Texture vampireMagicAttack;
-        private Texture vampireDeathSmoke;
+    public Texture getVampireBodyAttack() { return vampireBodyAttack; }
+    public Texture getVampireHeadAttack() { return vampireHeadAttack; }
+    public Texture getVampireMagicAttack() { return vampireMagicAttack; }
+    public Texture getVampireDeathSmoke() { return vampireDeathSmoke; }
+    public Texture getChristmasJadSheet() { return christmasJadSheet; }
+
+    // Vampire enemy sprites
+    private Texture vampireBodyAttack;
+    private Texture vampireHeadAttack;
+    private Texture vampireMagicAttack;
+    private Texture vampireDeathSmoke;
+
+    // Christmas Jad enemy sprite
+    private Texture christmasJadSheet;
+
     // Textures
     private Texture tilesetTexture;
     private Texture skeletonIdleSheet;
     private Texture skeletonWalkSheet;
     private Texture skeletonHurtSheet;
     private Texture skeletonDieSheet;
-    
+
     // Orc sprite sheet for mobs
     private Texture orcWalkSheet;
-    
+
     // Coin sprites for animation
     private Texture coin1;
     private Texture coin2;
     private Texture coin3;
     private Texture coin4;
-    
+
     // Flask sprites for health orb animation
     private Texture flask1;
     private Texture flask2;
     private Texture flask3;
     private Texture flask4;
-    
+
     // Fireball sprites for projectile animation (60 frames)
     private Texture[] fireballFrames;
-    
+
     // Explosion sprites for explosion effect (82 frames)
     private Texture[] explosionFrames;
-    
+
     // Pause Menu UI sprites
     private Texture exitScreenMenuBg;
     private Texture playButton;
     private Texture settingsButton;
     private Texture exitButton;
-    
+
     // Animations
     private Animation idleAnimation;
     private Animation walkAnimation;
@@ -63,108 +69,113 @@ public class Assets {
     private Animation healthOrbAnimation;
     private Animation fireballAnimation;
     private Animation explosionAnimation;
-    
+
     // Fonts
     private BitmapFont font;
-    
+
     // Audio
     private Music backgroundMusic;
     private Sound attackSound;
     private Sound hitSound;
     private Sound levelUpSound;
     private Sound deathSound;
-    
+
     private boolean loaded = false;
-    
+
     // Sprite sheet configuration
     private static final int FRAME_WIDTH = 32;  // Width of each frame
     private static final int FRAME_HEIGHT = 32; // Height of each frame
     private static final int FRAMES_PER_ROW = 3; // 9 frames per animation
-    
+
     /**
      * Load all assets
      */
     public void load() {
-                    // Load vampire enemy sprites
-                    vampireBodyAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_body.png"));
-                    vampireHeadAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_head.png"));
-                    vampireMagicAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_magic.png"));
-                    vampireDeathSmoke = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Death_smoke.png"));
-                    Gdx.app.log("Assets", "Loaded vampire enemy sprites");
+        // Load vampire enemy sprites
+        vampireBodyAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_body.png"));
+        vampireHeadAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_head.png"));
+        vampireMagicAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_magic.png"));
+        vampireDeathSmoke = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Death_smoke.png"));
+        Gdx.app.log("Assets", "Loaded vampire enemy sprites");
+
+        // Load Christmas Jad enemy sprite
+        christmasJadSheet = new Texture(Gdx.files.internal("assets/enemies/Christmas Jad.png"));
+        Gdx.app.log("Assets", "Loaded Christmas Jad sprite sheet");
+
         if (loaded) {
             Gdx.app.log("Assets", "Assets already loaded");
             return;
         }
-        
+
         Gdx.app.log("Assets", "Loading assets...");
-        
+
         // Load textures
         try {
             tilesetTexture = new Texture(Gdx.files.internal("assets/tiles/Dungeon_Tileset.png"));
             Gdx.app.log("Assets", "Loaded dungeon tileset texture");
-            
+
             // Load skeleton sprite sheets from the new player folder
             skeletonIdleSheet = new Texture(Gdx.files.internal("assets/player/SkeletonIdle.png"));
             skeletonWalkSheet = new Texture(Gdx.files.internal("assets/player/SkeletonWalk.png"));
             skeletonHurtSheet = new Texture(Gdx.files.internal("assets/player/SkeletonHurt.png"));
             skeletonDieSheet = new Texture(Gdx.files.internal("assets/player/SkeletonDie.png"));
             Gdx.app.log("Assets", "Loaded skeleton sprite sheets");
-            
+
             // Load orc sprite sheet for mobs from the enemies folder
             orcWalkSheet = new Texture(Gdx.files.internal("assets/enemies/Orc-Walk.png"));
             Gdx.app.log("Assets", "Loaded orc walk sprite sheet");
-            
+
             // Create animations from sprite sheets
             // Use only the frames that have actual skeleton content (not empty frames)
             // Analysis showed only these frames have substantial content at 32px width
             int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
             int[] goodHurtFrames = {1, 4, 7, 10, 13};
             int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
-            
+
             // Idle: use first good frame as static pose
             int[] idleFrame = {1};
             idleAnimation = new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
-            
+
             // Walk: use only the 10 good frames
             walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
-            
+
             // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
             hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
-            
+
             // SkeletonDie: use only the 13 good frames
             deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
-            
+
             Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
-            
+
             // Load coin sprites
             coin1 = new Texture(Gdx.files.internal("assets/items/coin_1.png"));
             coin2 = new Texture(Gdx.files.internal("assets/items/coin_2.png"));
             coin3 = new Texture(Gdx.files.internal("assets/items/coin_3.png"));
             coin4 = new Texture(Gdx.files.internal("assets/items/coin_4.png"));
-            
+
             // Create coin animation by combining the 4 coin textures
             coinAnimation = createCoinAnimation();
-            
+
             Gdx.app.log("Assets", "Loaded coin sprites and created coin animation");
-            
+
             // Load flask sprites for health orbs
             flask1 = new Texture(Gdx.files.internal("assets/items/flasks_1_1.png"));
             flask2 = new Texture(Gdx.files.internal("assets/items/flasks_1_2.png"));
             flask3 = new Texture(Gdx.files.internal("assets/items/flasks_1_3.png"));
             flask4 = new Texture(Gdx.files.internal("assets/items/flasks_1_4.png"));
-            
+
             // Create health orb animation
             healthOrbAnimation = createHealthOrbAnimation();
-            
+
             Gdx.app.log("Assets", "Loaded flask sprites and created health orb animation");
-            
+
             // Try to load fireball sprites (60 frames: Fireball1.png to Fireball60.png) - optional
             try {
                 fireballFrames = new Texture[60];
                 for (int i = 0; i < 60; i++) {
                     fireballFrames[i] = new Texture(Gdx.files.internal("assets/projectiles/Fireball" + (i + 1) + ".png"));
                 }
-                
+
                 // Create fireball animation - fast animation for dynamic effect
                 fireballAnimation = new Animation(fireballFrames, 0.01f, true);
                 Gdx.app.log("Assets", "Loaded 60 fireball frames and created fireball animation");
@@ -173,11 +184,11 @@ public class Assets {
                 fireballFrames = null;
                 fireballAnimation = null;
             }
-            
+
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load skeleton animations: " + e.getMessage());
         }
-        
+
         // Load explosion sprites OUTSIDE the main try-catch so it doesn't get skipped
         // Try to load explosion sprites (82 frames: explode0000.png to explode0081.png) - optional
         try {
@@ -195,9 +206,9 @@ public class Assets {
                     throw frameException; // Re-throw to trigger outer catch
                 }
             }
-            
+
             Gdx.app.log("Assets", "Successfully loaded " + loadedCount + " explosion frames");
-            
+
             // Create explosion animation - slowed down for better visibility (82 frames in ~0.82 seconds)
             explosionAnimation = new Animation(explosionFrames, 0.01f, false); // Non-looping, slowed from 0.006f
             Gdx.app.log("Assets", "✨ Created explosion animation successfully!");
@@ -207,7 +218,7 @@ public class Assets {
             explosionFrames = null;
             explosionAnimation = null;
         }
-        
+
         // Load Pause Menu UI sprites (outside main try-catch to ensure they load)
         try {
             exitScreenMenuBg = new Texture(Gdx.files.internal("assets/ui/ExitScreenMenu.png"));
@@ -219,29 +230,29 @@ public class Assets {
             Gdx.app.error("Assets", "Failed to load pause menu UI sprites: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         // Load fonts - create a larger, crisper font
         font = new BitmapFont();
         font.getData().setScale(2.5f); // Larger scale for better readability
         font.setColor(Color.WHITE);
         font.getData().markupEnabled = true; // Enable colored text
-        
+
         // Get the font texture and set it to use nearest neighbor filtering for crisp text
         font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         font.setUseIntegerPositions(true); // Snap to pixels for crisp rendering
-        
+
         // Adjust line height for better spacing
         font.getData().lineHeight *= 1.1f;
-        
+
         Gdx.app.log("Assets", "Font loaded with crisp rendering (scale 2.5x)");
-        
+
         // Load audio (optional - will use placeholders if files don't exist)
         loadAudio();
-        
+
         loaded = true;
         Gdx.app.log("Assets", "All assets loaded successfully");
     }
-    
+
     /**
      * Load audio files (background music and sound effects)
      */
@@ -266,7 +277,7 @@ public class Assets {
             } else {
                 Gdx.app.log("Assets", "No background music found (place '7th realm.mp3' in assets/audio/)");
             }
-            
+
             // Try to load sound effects
             if (Gdx.files.internal("assets/audio/attack.ogg").exists()) {
                 attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.ogg"));
@@ -275,7 +286,7 @@ public class Assets {
                 attackSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/attack.wav"));
                 Gdx.app.log("Assets", "Loaded attack sound");
             }
-            
+
             if (Gdx.files.internal("assets/audio/hit.ogg").exists()) {
                 hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.ogg"));
                 Gdx.app.log("Assets", "Loaded hit sound");
@@ -283,7 +294,7 @@ public class Assets {
                 hitSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/hit.wav"));
                 Gdx.app.log("Assets", "Loaded hit sound");
             }
-            
+
             if (Gdx.files.internal("assets/audio/levelup.ogg").exists()) {
                 levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.ogg"));
                 Gdx.app.log("Assets", "Loaded level up sound");
@@ -291,7 +302,7 @@ public class Assets {
                 levelUpSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/levelup.wav"));
                 Gdx.app.log("Assets", "Loaded level up sound");
             }
-            
+
             if (Gdx.files.internal("assets/audio/death-sound.mp3").exists()) {
                 deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death-sound.mp3"));
                 Gdx.app.log("Assets", "Loaded death sound: death-sound.mp3");
@@ -302,76 +313,95 @@ public class Assets {
                 deathSound = Gdx.audio.newSound(Gdx.files.internal("assets/audio/death.wav"));
                 Gdx.app.log("Assets", "Loaded death sound");
             }
-            
+
         } catch (Exception e) {
             Gdx.app.error("Assets", "Error loading audio: " + e.getMessage());
         }
     }
-    
+
     /**
      * Dispose of all assets
      */
     public void dispose() {
         if (!loaded) return;
-        
+
         Gdx.app.log("Assets", "Disposing assets...");
-        
+
         if (tilesetTexture != null) {
             tilesetTexture.dispose();
         }
-        
+
         if (skeletonIdleSheet != null) {
             skeletonIdleSheet.dispose();
         }
-        
+
         if (skeletonWalkSheet != null) {
             skeletonWalkSheet.dispose();
         }
-        
+
         if (skeletonHurtSheet != null) {
             skeletonHurtSheet.dispose();
         }
-        
+
         if (skeletonDieSheet != null) {
             skeletonDieSheet.dispose();
         }
-        
+
         if (orcWalkSheet != null) {
             orcWalkSheet.dispose();
         }
-        
+
+        // Dispose vampire textures
+        if (vampireBodyAttack != null) {
+            vampireBodyAttack.dispose();
+        }
+        if (vampireHeadAttack != null) {
+            vampireHeadAttack.dispose();
+        }
+        if (vampireMagicAttack != null) {
+            vampireMagicAttack.dispose();
+        }
+        if (vampireDeathSmoke != null) {
+            vampireDeathSmoke.dispose();
+        }
+
+        // Dispose Christmas Jad texture
+        if (christmasJadSheet != null) {
+            christmasJadSheet.dispose();
+        }
+
         if (coin1 != null) {
             coin1.dispose();
         }
-        
+
         if (coin2 != null) {
             coin2.dispose();
         }
-        
+
         if (coin3 != null) {
             coin3.dispose();
         }
-        
+
         if (coin4 != null) {
             coin4.dispose();
         }
-        
+
         if (flask1 != null) {
             flask1.dispose();
         }
-        
+
         if (flask2 != null) {
             flask2.dispose();
         }
-        
+
         if (flask3 != null) {
             flask3.dispose();
         }
-        
+
         if (flask4 != null) {
             flask4.dispose();
         }
-        
+
         // Dispose fireball frames
         if (fireballFrames != null) {
             for (Texture frame : fireballFrames) {
@@ -380,7 +410,7 @@ public class Assets {
                 }
             }
         }
-        
+
         // Dispose explosion frames
         if (explosionFrames != null) {
             for (Texture frame : explosionFrames) {
@@ -389,52 +419,52 @@ public class Assets {
                 }
             }
         }
-        
+
         // Dispose pause menu UI sprites
         if (exitScreenMenuBg != null) {
             exitScreenMenuBg.dispose();
         }
-        
+
         if (playButton != null) {
             playButton.dispose();
         }
-        
+
         if (settingsButton != null) {
             settingsButton.dispose();
         }
-        
+
         if (exitButton != null) {
             exitButton.dispose();
         }
-        
+
         if (font != null) {
             font.dispose();
         }
-        
+
         // Dispose audio
         if (backgroundMusic != null) {
             backgroundMusic.dispose();
         }
-        
+
         if (attackSound != null) {
             attackSound.dispose();
         }
-        
+
         if (hitSound != null) {
             hitSound.dispose();
         }
-        
+
         if (levelUpSound != null) {
             levelUpSound.dispose();
         }
-        
+
         if (deathSound != null) {
             deathSound.dispose();
         }
-        
+
         loaded = false;
     }
-    
+
     // Getters
     public Texture getTilesetTexture() { return tilesetTexture; }
     public Animation getIdleAnimation() { return idleAnimation; }
@@ -447,13 +477,13 @@ public class Assets {
     public Animation getExplosionAnimation() { return explosionAnimation; }
     public BitmapFont getFont() { return font; }
     public boolean isLoaded() { return loaded; }
-    
+
     // Pause Menu UI getters
     public Texture getExitScreenMenuBg() { return exitScreenMenuBg; }
     public Texture getPlayButton() { return playButton; }
     public Texture getSettingsButton() { return settingsButton; }
     public Texture getExitButton() { return exitButton; }
-    
+
     /**
      * Create a new independent walk animation instance (for mobs)
      */
@@ -464,7 +494,7 @@ public class Assets {
         }
         return null;
     }
-    
+
     /**
      * Create a new independent player idle animation instance
      */
@@ -475,7 +505,7 @@ public class Assets {
         }
         return null;
     }
-    
+
     /**
      * Create a new independent player walk animation instance
      */
@@ -486,7 +516,7 @@ public class Assets {
         }
         return null;
     }
-    
+
     /**
      * Create a new independent player hurt animation instance
      */
@@ -497,7 +527,7 @@ public class Assets {
         }
         return null;
     }
-    
+
     /**
      * Create a new independent player death animation instance
      */
@@ -508,7 +538,7 @@ public class Assets {
         }
         return null;
     }
-    
+
     /**
      * Create a coin animation using the loaded coin textures
      */
@@ -516,7 +546,7 @@ public class Assets {
         Texture[] coinFrames = {coin1, coin2, coin3, coin4};
         return new Animation(coinFrames, 0.2f, true); // Slowed down from 0.1f to 0.2f
     }
-    
+
     /**
      * Create a health orb animation using the loaded flask textures
      */
@@ -524,14 +554,14 @@ public class Assets {
         Texture[] flaskFrames = {flask1, flask2, flask3, flask4};
         return new Animation(flaskFrames, 0.2f, true); // Slowed down from 0.1f to 0.2f
     }
-    
+
     // Audio getters
     public Music getBackgroundMusic() { return backgroundMusic; }
     public Sound getAttackSound() { return attackSound; }
     public Sound getHitSound() { return hitSound; }
     public Sound getLevelUpSound() { return levelUpSound; }
     public Sound getDeathSound() { return deathSound; }
-    
+
     /**
      * Play a sound effect if it's loaded
      */
@@ -540,7 +570,7 @@ public class Assets {
             sound.play(0.6f); // 60% volume
         }
     }
-    
+
     /**
      * Play a sound effect with custom volume
      */
@@ -549,7 +579,7 @@ public class Assets {
             sound.play(volume);
         }
     }
-    
+
     /**
      * Create a new explosion animation instance (each explosion needs its own)
      */

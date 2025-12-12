@@ -283,6 +283,20 @@ public class WorldManager {
         }
         mobs.add(new Vampire(vx, vy, player, assets));
         
+        // Spawn one Christmas Jad every 3 waves (on waves 3, 6, 9, etc.)
+        if (currentWave % 3 == 0) {
+            float cx, cy;
+            if (random.nextBoolean()) {
+                cx = random.nextBoolean() ? -50 : screenWidth + 50;
+                cy = random.nextFloat() * screenHeight;
+            } else {
+                cx = random.nextFloat() * screenWidth;
+                cy = random.nextBoolean() ? -50 : screenHeight + 50;
+            }
+            mobs.add(new ChristmasJad(cx, cy, player, assets));
+            Gdx.app.log("WorldManager", "🎄 Spawned Christmas Jad boss on wave " + currentWave + "!");
+        }
+        
         // After wave 1 spawns, set interval to 7 seconds for all subsequent waves
         if (currentWave == 1) {
             waveInterval = 7f;

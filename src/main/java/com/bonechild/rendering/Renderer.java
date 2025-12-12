@@ -224,6 +224,8 @@ public class Renderer {
             if (mob.isActive() && !mob.isDead()) {
                 if (mob instanceof com.bonechild.world.Vampire) {
                     ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
+                } else if (mob instanceof com.bonechild.world.ChristmasJad) {
+                    ((com.bonechild.world.ChristmasJad) mob).render(batch, deltaTime);
                 } else {
                     // Get current frame
                     var frame = mobWalkAnimation.getCurrentFrame();
@@ -251,6 +253,11 @@ public class Renderer {
                     // Use the same bar width as the original mob (30x2=60)
                     barWidth = 60f;
                     // Center above the Vampire's hitbox
+                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                } else if (mob instanceof com.bonechild.world.ChristmasJad) {
+                    // Christmas Jad gets a larger health bar (80px wide)
+                    barWidth = 80f;
+                    // Center above the Christmas Jad's hitbox
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 } else {
                     barWidth = mob.getHitboxWidth() * 2;
