@@ -120,6 +120,42 @@ public class Renderer {
         
         batch.begin();
         
+        // Render ghost trail first (behind player)
+        var ghostTrail = player.getGhostTrail();
+        if (ghostTrail != null && !ghostTrail.isEmpty()) {
+            var frame = currentAnimation.getCurrentFrame();
+            
+            for (var ghost : ghostTrail) {
+                // Set ghost opacity
+                batch.setColor(1f, 1f, 1f, ghost.getOpacity());
+                
+                // Flip sprite if facing left
+                boolean needsFlip = !ghost.isFacingRight() && !frame.isFlipX();
+                boolean needsUnflip = ghost.isFacingRight() && frame.isFlipX();
+                
+                if (needsFlip || needsUnflip) {
+                    frame.flip(true, false);
+                }
+                
+                // Draw ghost sprite
+                batch.draw(
+                    frame,
+                    ghost.getX(),
+                    ghost.getY(),
+                    32,
+                    64
+                );
+                
+                // Flip back if needed
+                if (needsFlip || needsUnflip) {
+                    frame.flip(true, false);
+                }
+            }
+            
+            // Reset color to white for normal player rendering
+            batch.setColor(Color.WHITE);
+        }
+        
         // Apply flashing effect if player is invincible
         if (player.isInvincible()) {
             // Flash every 0.1 seconds (10 times per second)

@@ -16,6 +16,7 @@ public class PlayerInput {
     private int keyMoveDown;
     private int keyMoveLeft;
     private int keyMoveRight;
+    private int keyDodge;
     
     public PlayerInput(Player player) {
         this.player = player;
@@ -24,6 +25,7 @@ public class PlayerInput {
         this.keyMoveDown = Input.Keys.S;
         this.keyMoveLeft = Input.Keys.A;
         this.keyMoveRight = Input.Keys.D;
+        this.keyDodge = Input.Keys.SPACE;
     }
     
     /**
@@ -31,6 +33,32 @@ public class PlayerInput {
      */
     public void update() {
         if (player == null || player.isDead()) {
+            return;
+        }
+        
+        // Check for dodge input (don't allow if already dodging)
+        if (Gdx.input.isKeyJustPressed(keyDodge) && !player.isDodging()) {
+            // Get current movement direction for dodge
+            float dirX = 0, dirY = 0;
+            if (Gdx.input.isKeyPressed(keyMoveUp) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
+                dirY += 1;
+            }
+            if (Gdx.input.isKeyPressed(keyMoveDown) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+                dirY -= 1;
+            }
+            if (Gdx.input.isKeyPressed(keyMoveLeft) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+                dirX -= 1;
+            }
+            if (Gdx.input.isKeyPressed(keyMoveRight) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+                dirX += 1;
+            }
+            
+            // Perform dodge in movement direction (or facing direction if not moving)
+            player.dodge(dirX, dirY);
+        }
+        
+        // Don't allow manual movement during dodge
+        if (player.isDodging()) {
             return;
         }
         
@@ -78,13 +106,18 @@ public class PlayerInput {
      * Update keybinds from settings
      */
     public void setKeybinds(int[] keybinds) {
-        if (keybinds == null || keybinds.length < 4) {
+        if (keybinds == null || keybinds.length < 5) {
             return;
         }
         this.keyMoveUp = keybinds[0];
         this.keyMoveDown = keybinds[1];
         this.keyMoveLeft = keybinds[2];
         this.keyMoveRight = keybinds[3];
+        this.keyDodge = Input.Keys.SPACE; // Dodge is always SPACE for now
+    }
+    
+    public int getDodgeKey() {
+        return keyDodge;
     }
     
     public void setPlayer(Player player) {

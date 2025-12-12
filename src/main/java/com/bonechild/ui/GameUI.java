@@ -100,6 +100,7 @@ public class GameUI {
         drawHotbar(); // New: Draw hotbar above bars
         drawHealthBar();
         drawExpBar();
+        drawDodgeCharges(); // New: Draw dodge charges indicator
         drawGoldCounter();
     }
     
@@ -425,6 +426,79 @@ public class GameUI {
             font.setColor(0.7f, 0.7f, 0.7f, 1f);
             font.draw(batch, keyText, textX, textY);
         }
+        
+        font.getData().setScale(originalScale);
+        batch.end();
+    }
+    
+    private void drawDodgeCharges() {
+        float chargeSize = 20f; // Size of each charge circle
+        float chargeSpacing = 6f; // Space between charges
+        int maxCharges = player.getMaxDodgeCharges();
+        int currentCharges = player.getDodgeCharges();
+        float rechargeProgress = player.getDodgeRechargeProgress();
+        
+        // Position to the right of the health bar
+        float healthBarWidth = 210f;
+        float healthBarX = Gdx.graphics.getWidth() / 2f - healthBarWidth / 2f;
+        float x = healthBarX + healthBarWidth + 15f; // 15px gap from health bar
+        float y = 25f + 9f; // Center vertically with health bar (18px height / 2 = 9px)
+        
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        for (int i = 0; i < maxCharges; i++) {
+            float chargeX = x + (i * (chargeSize + chargeSpacing));
+            float chargeY = y;
+            
+            // Drop shadow
+            shapeRenderer.setColor(0f, 0f, 0f, 0.5f);
+            shapeRenderer.circle(chargeX + 1, chargeY - 1, chargeSize / 2f, 16);
+            
+            // Border
+            shapeRenderer.setColor(0.3f, 0.3f, 0.35f, 1f);
+            shapeRenderer.circle(chargeX, chargeY, chargeSize / 2f + 1, 16);
+            
+            // Background
+            shapeRenderer.setColor(0.1f, 0.1f, 0.12f, 0.95f);
+            shapeRenderer.circle(chargeX, chargeY, chargeSize / 2f, 16);
+            
+            // Fill based on charge status
+            if (i < currentCharges) {
+                // Full charge - cyan/blue color
+                shapeRenderer.setColor(0.3f, 0.85f, 1f, 1f);
+                shapeRenderer.circle(chargeX, chargeY, (chargeSize / 2f) - 2, 16);
+                
+                // Inner highlight
+                shapeRenderer.setColor(0.6f, 0.95f, 1f, 0.6f);
+                shapeRenderer.circle(chargeX - 2, chargeY + 2, (chargeSize / 2f) - 5, 12);
+            } else if (i == currentCharges && rechargeProgress > 0) {
+                // Recharging - show progress
+                shapeRenderer.setColor(0.3f, 0.85f, 1f, 0.5f);
+                // Draw a partial circle based on progress
+                float angle = 360f * rechargeProgress;
+                shapeRenderer.arc(chargeX, chargeY, (chargeSize / 2f) - 2, 90, angle, 16);
+            }
+        }
+        
+        shapeRenderer.end();
+        
+        // Draw "DODGE" label below charges
+        batch.begin();
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.3f);
+        
+        String label = "DODGE";
+        glyphLayout.setText(font, label);
+        float labelX = x + ((maxCharges * (chargeSize + chargeSpacing)) - chargeSpacing) / 2f - glyphLayout.width / 2f;
+        float labelY = y - chargeSize / 2f - 3f;
+        
+        // Shadow
+        font.setColor(0, 0, 0, 0.8f);
+        font.draw(batch, label, labelX + 0.5f, labelY - 0.5f);
+        
+        // Label text
+        font.setColor(0.3f, 0.85f, 1f, 1f);
+        font.draw(batch, label, labelX, labelY);
         
         font.getData().setScale(originalScale);
         batch.end();

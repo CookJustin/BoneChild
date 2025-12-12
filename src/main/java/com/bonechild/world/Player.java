@@ -38,6 +38,23 @@ public class Player extends LivingEntity {
     private boolean isInvincible = false;
     private static final float INVINCIBILITY_DURATION = 0.375f; // 0.375 seconds of invincibility after getting hit (reduced from 1.0s -> 0.5s -> 0.375s)
     
+    // Dodge mechanic
+    private static final int MAX_DODGE_CHARGES = 3;
+    private static final float DODGE_CHARGE_COOLDOWN = 2.0f; // 2 seconds to recharge one dodge
+    private static final float DODGE_DURATION = 0.25f; // Dodge lasts 0.25 seconds
+    private static final float DODGE_DISTANCE = 150f; // Distance to dash
+    private int dodgeCharges = MAX_DODGE_CHARGES;
+    private float dodgeRechargeTimer = 0f;
+    private boolean isDodging = false;
+    private float dodgeTimer = 0f;
+    private float dodgeDirectionX = 0f;
+    private float dodgeDirectionY = 0f;
+    
+    // Ghost trail for dodge effect
+    private java.util.ArrayList<GhostSprite> ghostTrail = new java.util.ArrayList<>();
+    private float ghostSpawnTimer = 0f;
+    private static final float GHOST_SPAWN_INTERVAL = 0.04f; // Spawn ghost every 0.04 seconds during dodge
+    
     // Attack properties
     private float attackDamage;
     private float attackRange;
@@ -69,8 +86,53 @@ public class Player extends LivingEntity {
         // Update attack cooldown
         timeSinceLastAttack += delta;
         
-        // Update invincibility timer
-        if (isInvincible) {
+        // Update dodge recharge timer
+        if (dodgeCharges < MAX_DODGE_CHARGES) {
+            dodgeRechargeTimer += delta;
+            if (dodgeRechargeTimer >= DODGE_CHARGE_COOLDOWN) {
+                dodgeCharges++;
+                dodgeRechargeTimer = 0f;
+                Gdx.app.log("Player", "Dodge charge restored! Charges: " + dodgeCharges);
+            }
+        }
+        
+        // Update dodge state
+        if (isDodging) {
+            dodgeTimer += delta;
+            
+            // Spawn ghost trail
+            ghostSpawnTimer += delta;
+            if (ghostSpawnTimer >= GHOST_SPAWN_INTERVAL) {
+                spawnGhost();
+                ghostSpawnTimer = 0f;
+            }
+            
+            // Apply dodge movement
+            float dodgeSpeed = DODGE_DISTANCE / DODGE_DURATION;
+            velocity.x = dodgeDirectionX * dodgeSpeed;
+            velocity.y = dodgeDirectionY * dodgeSpeed;
+            
+            // End dodge after duration
+            if (dodgeTimer >= DODGE_DURATION) {
+                isDodging = false;
+                dodgeTimer = 0f;
+                isInvincible = false;
+                velocity.x = 0;
+                velocity.y = 0;
+            }
+        }
+        
+        // Update ghost trail
+        for (int i = ghostTrail.size() - 1; i >= 0; i--) {
+            GhostSprite ghost = ghostTrail.get(i);
+            ghost.update(delta);
+            if (ghost.isExpired()) {
+                ghostTrail.remove(i);
+            }
+        }
+        
+        // Update invincibility timer (for taking damage, not dodge)
+        if (isInvincible && !isDodging) {
             invincibilityTimer += delta;
             if (invincibilityTimer >= INVINCIBILITY_DURATION) {
                 invincibilityTimer = 0f;
@@ -131,6 +193,55 @@ public class Player extends LivingEntity {
         position.y = Math.max(0, Math.min(position.y, screenHeight - height));
     }
     
+    /**
+     * Perform a dodge/dash
+     */
+    public boolean dodge(float dirX, float dirY) {
+        if (dodgeCharges <= 0 || isDodging || isDead()) {
+            return false;
+        }
+        
+        // Use a charge
+        dodgeCharges--;
+        
+        // If no direction provided, dodge in facing direction
+        if (dirX == 0 && dirY == 0) {
+            dirX = facingRight ? 1 : -1;
+        } else {
+            // Normalize direction
+            float length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+            if (length > 0) {
+                dirX /= length;
+                dirY /= length;
+            }
+        }
+        
+        // Start dodge
+        isDodging = true;
+        dodgeTimer = 0f;
+        ghostSpawnTimer = 0f;
+        dodgeDirectionX = dirX;
+        dodgeDirectionY = dirY;
+        isInvincible = true; // Grant i-frames during dodge
+        
+        Gdx.app.log("Player", "Dodge! Charges remaining: " + dodgeCharges);
+        return true;
+    }
+    
+    /**
+     * Spawn a ghost sprite at current position
+     */
+    private void spawnGhost() {
+        ghostTrail.add(new GhostSprite(position.x, position.y, width, height, facingRight));
+    }
+    
+    /**
+     * Get ghost trail for rendering
+     */
+    public java.util.ArrayList<GhostSprite> getGhostTrail() {
+        return ghostTrail;
+    }
+    
     @Override
     public void takeDamage(float damage) {
         if (isInvincible) {
@@ -143,7 +254,9 @@ public class Player extends LivingEntity {
             currentState = AnimationState.HURT;
             hurtAnimationTimer = 0f;
             isPlayingHurtAnimation = true;
-            isInvincible = true;
+            // Removed: No longer grant invincibility after taking damage
+            // isInvincible = true;
+            // invincibilityTimer = 0f;
         }
     }
     
@@ -353,6 +466,12 @@ public class Player extends LivingEntity {
     public int getXpBoostLevel() { return xpBoostLevel; }
     public int getExplosionChanceLevel() { return explosionChanceLevel; }
     public float getAttackDamage() { return attackDamage; }
+    public int getDodgeCharges() { return dodgeCharges; }
+    public int getMaxDodgeCharges() { return MAX_DODGE_CHARGES; }
+    public float getDodgeRechargeProgress() { 
+        return dodgeCharges < MAX_DODGE_CHARGES ? dodgeRechargeTimer / DODGE_CHARGE_COOLDOWN : 0f; 
+    }
+    public boolean isDodging() { return isDodging; }
     
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }
