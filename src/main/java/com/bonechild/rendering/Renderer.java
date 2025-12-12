@@ -28,7 +28,6 @@ public class Renderer {
     private Animation playerWalkAnimation;
     private Animation playerHurtAnimation;
     private Animation playerDeathAnimation;
-    private Player.AnimationState lastPlayerState;
     
     // Separate animation instance for mobs (shared among all mobs)
     private Animation mobWalkAnimation;
@@ -39,7 +38,6 @@ public class Renderer {
         this.batch = new SpriteBatch();
         this.shapeRenderer = new ShapeRenderer();
         this.deltaTime = 0;
-        this.lastPlayerState = Player.AnimationState.IDLE;
         
         // Create tile map when tileset is loaded
         if (assets.getTilesetTexture() != null) {
@@ -224,17 +222,20 @@ public class Renderer {
         
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                // Get current frame
-                var frame = mobWalkAnimation.getCurrentFrame();
-                
-                // Draw the animated sprite (mobs use skeleton sprite)
-                batch.draw(
-                    frame,
-                    mob.getPosition().x,
-                    mob.getPosition().y,
-                    mob.getWidth(),
-                    mob.getHeight()
-                );
+                if (mob instanceof com.bonechild.world.Vampire) {
+                    ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
+                } else {
+                    // Get current frame
+                    var frame = mobWalkAnimation.getCurrentFrame();
+                    // Draw the animated sprite (mobs use skeleton sprite)
+                    batch.draw(
+                        frame,
+                        mob.getPosition().x,
+                        mob.getPosition().y,
+                        mob.getWidth(),
+                        mob.getHeight()
+                    );
+                }
             }
         }
         
@@ -243,16 +244,20 @@ public class Renderer {
         // Draw health bars for mobs
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                // Use hitbox dimensions for health bar (smaller, more appropriate size)
-                float barWidth = mob.getHitboxWidth() * 2; // 2x hitbox width for visibility
+                float barWidth;
                 float barHeight = 4;
-                
-                // Position health bar just above the hitbox (not above the full sprite)
-                // Hitbox is at offset (105, 105) with size 30x30
-                float hitboxTop = mob.getPosition().y + 105 + mob.getHitboxHeight();
+                float hitboxTop;
+                if (mob instanceof com.bonechild.world.Vampire) {
+                    // Use the same bar width as the original mob (30x2=60)
+                    barWidth = 60f;
+                    // Center above the Vampire's hitbox
+                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                } else {
+                    barWidth = mob.getHitboxWidth() * 2;
+                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                }
                 float barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                float barY = hitboxTop + 5; // 5 pixels above the hitbox
-                
+                float barY = hitboxTop + 5;
                 drawHealthBar(barX, barY, barWidth, barHeight, mob.getHealthPercentage());
             }
         }

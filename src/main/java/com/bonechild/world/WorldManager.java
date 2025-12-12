@@ -271,6 +271,17 @@ public class WorldManager {
             
             mobs.add(new Mob(x, y, player));
         }
+
+        // Spawn one Vampire per wave for testing
+        float vx, vy;
+        if (random.nextBoolean()) {
+            vx = random.nextBoolean() ? -50 : screenWidth + 50;
+            vy = random.nextFloat() * screenHeight;
+        } else {
+            vx = random.nextFloat() * screenWidth;
+            vy = random.nextBoolean() ? -50 : screenHeight + 50;
+        }
+        mobs.add(new Vampire(vx, vy, player, assets));
         
         // After wave 1 spawns, set interval to 7 seconds for all subsequent waves
         if (currentWave == 1) {

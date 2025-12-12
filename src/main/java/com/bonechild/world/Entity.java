@@ -71,6 +71,8 @@ public abstract class Entity {
     
     public float getHitboxWidth() { return hitboxWidth; }
     public float getHitboxHeight() { return hitboxHeight; }
+    public float getHitboxOffsetX() { return hitboxOffsetX; }
+    public float getHitboxOffsetY() { return hitboxOffsetY; }
     
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

@@ -9,6 +9,13 @@ import com.badlogic.gdx.math.Vector2;
 public class Mob extends LivingEntity {
     private Player target;
     private float damage;
+
+    public void setDamage(float damage) {
+        this.damage = damage;
+    }
+
+
+
     private float attackCooldown;
     private float timeSinceLastAttack;
     

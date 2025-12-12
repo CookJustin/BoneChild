@@ -64,9 +64,9 @@ public class Projectile {
             return false;
         }
         
-        // Use the mob's actual hitbox center position
-        float mobHitboxCenterX = mob.getPosition().x + mob.getHitboxWidth() / 2f + 105f; // 105 is the hitbox offset
-        float mobHitboxCenterY = mob.getPosition().y + mob.getHitboxHeight() / 2f + 105f;
+        // Use the mob's actual hitbox center position (dynamic offset)
+        float mobHitboxCenterX = mob.getPosition().x + mob.getHitboxOffsetX() + mob.getHitboxWidth() / 2f;
+        float mobHitboxCenterY = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight() / 2f;
         
         // Calculate distance from projectile center to mob hitbox center
         float dx = mobHitboxCenterX - position.x;

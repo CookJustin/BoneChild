@@ -11,6 +11,15 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
  * Manages and loads all game assets (textures, fonts, sounds, etc.)
  */
 public class Assets {
+            public Texture getVampireBodyAttack() { return vampireBodyAttack; }
+            public Texture getVampireHeadAttack() { return vampireHeadAttack; }
+            public Texture getVampireMagicAttack() { return vampireMagicAttack; }
+            public Texture getVampireDeathSmoke() { return vampireDeathSmoke; }
+        // Vampire enemy sprites
+        private Texture vampireBodyAttack;
+        private Texture vampireHeadAttack;
+        private Texture vampireMagicAttack;
+        private Texture vampireDeathSmoke;
     // Textures
     private Texture tilesetTexture;
     private Texture skeletonIdleSheet;
@@ -76,6 +85,12 @@ public class Assets {
      * Load all assets
      */
     public void load() {
+                    // Load vampire enemy sprites
+                    vampireBodyAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_body.png"));
+                    vampireHeadAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_head.png"));
+                    vampireMagicAttack = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Attack_magic.png"));
+                    vampireDeathSmoke = new Texture(Gdx.files.internal("assets/enemies/Vampire/Vampires1_Death_smoke.png"));
+                    Gdx.app.log("Assets", "Loaded vampire enemy sprites");
         if (loaded) {
             Gdx.app.log("Assets", "Assets already loaded");
             return;
