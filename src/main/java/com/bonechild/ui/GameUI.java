@@ -27,6 +27,9 @@ public class GameUI {
     private final SpriteBatch batch;
     private final Assets assets;
     
+    // Screen projection matrix for UI
+    private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
+    
     // UI Labels (only for non-bar UI)
     private Label waveLabel;
     private Label mobCountLabel;
@@ -44,6 +47,10 @@ public class GameUI {
         this.batch = new SpriteBatch();
         this.font = assets.getFont();
         this.glyphLayout = new GlyphLayout();
+        
+        // Create UI camera for proper screen-space rendering
+        this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
+        this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Create skin for UI
         skin = new Skin();
@@ -93,6 +100,12 @@ public class GameUI {
      * Render the UI
      */
     public void render() {
+        // Update camera and set projection matrices for HUD elements
+        uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        uiCamera.update();
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
+        
         stage.draw();
         
         // Draw UI elements at bottom of screen
@@ -508,6 +521,8 @@ public class GameUI {
      * Resize the UI
      */
     public void resize(int width, int height) {
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
         stage.getViewport().update(width, height, true);
     }
     

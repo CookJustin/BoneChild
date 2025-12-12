@@ -20,6 +20,9 @@ public class CharacterStatsScreen {
     private final BitmapFont titleFont;
     private final GlyphLayout glyphLayout;
     
+    // Screen projection matrix for UI
+    private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
+    
     private boolean isVisible;
     private Player player;
     private int currentPage = 0; // 0 = stats page, 1 = power-ups page
@@ -32,6 +35,10 @@ public class CharacterStatsScreen {
         this.glyphLayout = new GlyphLayout();
         this.player = player;
         this.isVisible = false;
+        
+        // Create UI camera for proper screen-space rendering
+        this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
+        this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Create title font
         this.titleFont = new BitmapFont();
@@ -68,6 +75,12 @@ public class CharacterStatsScreen {
         
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
+        
+        // Update camera and set projection matrices
+        uiCamera.setToOrtho(false, screenWidth, screenHeight);
+        uiCamera.update();
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
         
         // Enable blending for proper transparency
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
@@ -283,9 +296,9 @@ public class CharacterStatsScreen {
     
     /**
      * Resize method (required for proper fullscreen support)
-     * This screen calculates positions dynamically, so no action needed
      */
     public void resize(int width, int height) {
-        // Positions are calculated dynamically in render(), so no action needed
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
     }
 }

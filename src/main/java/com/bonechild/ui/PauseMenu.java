@@ -16,6 +16,9 @@ public class PauseMenu {
     private final ShapeRenderer shapeRenderer;
     private final Assets assets;
     
+    // Screen projection matrix for UI
+    private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
+    
     // Textures
     private Texture bgTexture;
     private Texture playButtonTexture;
@@ -42,6 +45,10 @@ public class PauseMenu {
         this.assets = assets;
         this.callback = callback;
         this.isVisible = false;
+        
+        // Create UI camera for proper screen-space rendering
+        this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
+        this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Load textures from assets (may be null if assets not loaded yet)
         this.bgTexture = assets.getExitScreenMenuBg();
@@ -200,6 +207,12 @@ public class PauseMenu {
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
         
+        // Update camera and set projection matrices
+        uiCamera.setToOrtho(false, screenWidth, screenHeight);
+        uiCamera.update();
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
+        
         // Enable blending for proper transparency
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA, com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -234,6 +247,8 @@ public class PauseMenu {
      * Resize pause menu
      */
     public void resize(int width, int height) {
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
         setupUI();
     }
     

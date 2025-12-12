@@ -24,6 +24,9 @@ public class PowerUpScreen {
     private final BitmapFont titleFont;
     private final GlyphLayout glyphLayout;
     
+    // Screen projection matrix for UI
+    private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
+    
     // Buttons for each power-up (vertical layout)
     private Rectangle[] powerUpButtons = new Rectangle[3];
     private Rectangle rerollButton;
@@ -76,6 +79,10 @@ public class PowerUpScreen {
         this.callback = callback;
         this.isVisible = false;
         this.random = new Random();
+        
+        // Create UI camera for proper screen-space rendering
+        this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
+        this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Create title font
         this.titleFont = new BitmapFont();
@@ -195,6 +202,12 @@ public class PowerUpScreen {
         
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
+        
+        // Update camera and set projection matrices
+        uiCamera.setToOrtho(false, screenWidth, screenHeight);
+        uiCamera.update();
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
         
         // Enable blending for proper transparency
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
@@ -375,6 +388,8 @@ public class PowerUpScreen {
      * Resize screen
      */
     public void resize(int width, int height) {
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
         setupUI();
     }
     
