@@ -131,7 +131,19 @@ public class PowerUpScreen {
         // Get all available power-ups
         List<PowerUp> allPowerUps = new ArrayList<>();
         for (PowerUp powerUp : PowerUp.values()) {
+            // Skip Explosion Chance if player already has level 20 (100% chance)
+            if (powerUp == PowerUp.EXPLOSION_CHANCE && player != null && player.getExplosionChanceLevel() >= 20) {
+                continue; // Don't add to pool
+            }
             allPowerUps.add(powerUp);
+        }
+        
+        // If we have less than 3 power-ups available (all maxed out), allow duplicates
+        if (allPowerUps.size() < 3) {
+            // This shouldn't happen unless all power-ups are maxed, but just in case
+            while (allPowerUps.size() < 3) {
+                allPowerUps.add(PowerUp.SPEED); // Default fallback
+            }
         }
         
         // Shuffle and pick 3

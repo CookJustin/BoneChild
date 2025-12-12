@@ -281,8 +281,10 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         
-        // Check if player is dead and show game over screen
-        if (worldManager.getPlayer().isDead()) {
+        // Check if player is dead
+        boolean playerIsDead = worldManager.getPlayer().isDead();
+        
+        if (playerIsDead) {
             // Play death sound once when player first dies
             if (!deathSoundPlayed) {
                 // Stop background music
@@ -300,14 +302,37 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             // Increment death timer
             deathTimer += delta;
             
+            // Continue updating player to allow death animation to play
+            worldManager.getPlayer().update(delta);
+            
             // Set stats and show game over screen after delay
             if (deathTimer >= DEATH_ANIMATION_DELAY && !deathScreenShown) {
                 if (gameOverScreen != null && !gameOverScreen.isVisible()) {
                     gameOverScreen.setStats(worldManager.getCurrentWave(), worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
                     gameOverScreen.show();
                     deathScreenShown = true;
+                    Gdx.app.log("BoneChild", "Game over screen shown");
                 }
             }
+            
+            // Render the game world in background (frozen, no updates except player animation)
+            renderer.updateCamera();
+            renderer.setDeltaTime(delta); // Keep animations playing during death
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            renderer.renderPickups(worldManager.getPickups());
+            renderer.renderProjectiles(worldManager.getProjectiles());
+            renderer.renderExplosions(worldManager.getExplosions());
+            gameUI.render();
+            
+            // Render game over screen on top if shown
+            if (gameOverScreen != null && gameOverScreen.isVisible()) {
+                gameOverScreen.update(delta);
+                gameOverScreen.render();
+            }
+            
+            return; // Don't process any other game logic when dead
         } else {
             // Reset death timer and flags if player is not dead
             deathTimer = 0f;
