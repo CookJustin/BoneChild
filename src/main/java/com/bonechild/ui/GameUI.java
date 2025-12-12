@@ -6,11 +6,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.bonechild.rendering.Assets;
 import com.bonechild.world.Player;
 import com.bonechild.world.WorldManager;
@@ -19,8 +14,6 @@ import com.bonechild.world.WorldManager;
  * Game HUD displaying health, level, wave info, etc.
  */
 public class GameUI {
-    private final Stage stage;
-    private final Skin skin;
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
     private final GlyphLayout glyphLayout;
@@ -30,10 +23,6 @@ public class GameUI {
     // Screen projection matrix for UI
     private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
     
-    // UI Labels (only for non-bar UI)
-    private Label waveLabel;
-    private Label mobCountLabel;
-    
     // References
     private final Player player;
     private final WorldManager worldManager;
@@ -42,7 +31,6 @@ public class GameUI {
         this.player = player;
         this.worldManager = worldManager;
         this.assets = assets;
-        this.stage = new Stage(new ScreenViewport());
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
         this.font = assets.getFont();
@@ -51,49 +39,13 @@ public class GameUI {
         // Create UI camera for proper screen-space rendering
         this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
         this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        
-        // Create skin for UI
-        skin = new Skin();
-        skin.add("default", assets.getFont());
-        
-        Label.LabelStyle labelStyle = new Label.LabelStyle();
-        labelStyle.font = assets.getFont();
-        labelStyle.fontColor = Color.WHITE;
-        skin.add("default", labelStyle);
-        
-        setupUI();
-    }
-    
-    private void setupUI() {
-        Table table = new Table();
-        table.setFillParent(false);
-        table.top().left();
-        table.setPosition(15, Gdx.graphics.getHeight() - 15);
-        stage.addActor(table);
-        
-        // Wave info with enhanced styling
-        waveLabel = new Label("Wave: 0", skin);
-        waveLabel.setColor(new Color(1f, 0.6f, 0.1f, 1f)); // Bright orange
-        table.add(waveLabel).left().padBottom(8);
-        table.row();
-        
-        // Mob count with enhanced styling
-        mobCountLabel = new Label("Enemies: 0", skin);
-        mobCountLabel.setColor(new Color(1f, 0.3f, 0.3f, 1f)); // Bright red
-        table.add(mobCountLabel).left();
     }
     
     /**
      * Update UI with current game state
      */
     public void update(float delta) {
-        if (player == null || worldManager == null) return;
-        
-        // Update labels
-        waveLabel.setText("Wave: " + worldManager.getCurrentWave());
-        mobCountLabel.setText("Enemies: " + worldManager.getMobCount());
-        
-        stage.act(delta);
+        // No stage to update anymore
     }
     
     /**
@@ -106,15 +58,42 @@ public class GameUI {
         batch.setProjectionMatrix(uiCamera.combined);
         shapeRenderer.setProjectionMatrix(uiCamera.combined);
         
-        stage.draw();
+        // Draw wave/enemies info in top-left
+        drawWaveInfo();
         
         // Draw UI elements at bottom of screen
         drawLevelOrb();
-        drawHotbar(); // New: Draw hotbar above bars
+        drawHotbar();
         drawHealthBar();
         drawExpBar();
-        drawDodgeCharges(); // New: Draw dodge charges indicator
+        drawDodgeCharges();
         drawGoldCounter();
+    }
+    
+    private void drawWaveInfo() {
+        if (player == null || worldManager == null) return;
+        
+        batch.begin();
+        
+        float x = 15f;
+        float y = Gdx.graphics.getHeight() - 15f;
+        float lineHeight = 25f;
+        
+        float originalScale = font.getData().scaleX;
+        font.getData().setScale(originalScale * 0.8f);
+        
+        // Wave info
+        String waveText = "Wave: " + worldManager.getCurrentWave();
+        font.setColor(1f, 0.6f, 0.1f, 1f); // Bright orange
+        font.draw(batch, waveText, x, y);
+        
+        // Mob count
+        String mobText = "Enemies: " + worldManager.getMobCount();
+        font.setColor(1f, 0.3f, 0.3f, 1f); // Bright red
+        font.draw(batch, mobText, x, y - lineHeight);
+        
+        font.getData().setScale(originalScale);
+        batch.end();
     }
     
     private void drawLevelOrb() {
@@ -523,18 +502,13 @@ public class GameUI {
     public void resize(int width, int height) {
         uiCamera.setToOrtho(false, width, height);
         uiCamera.update();
-        stage.getViewport().update(width, height, true);
     }
     
     /**
      * Dispose UI resources
      */
     public void dispose() {
-        stage.dispose();
-        skin.dispose();
         shapeRenderer.dispose();
         batch.dispose();
     }
-    
-    public Stage getStage() { return stage; }
 }

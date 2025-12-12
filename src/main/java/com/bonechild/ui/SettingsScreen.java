@@ -21,6 +21,9 @@ public class SettingsScreen {
     private final BitmapFont titleFont;
     private final GlyphLayout glyphLayout;
     
+    // Screen projection matrix for UI
+    private final com.badlogic.gdx.graphics.OrthographicCamera uiCamera;
+    
     // Menu states
     private enum MenuState {
         MAIN, VOLUME, KEYBINDS
@@ -71,6 +74,10 @@ public class SettingsScreen {
         this.callback = callback;
         this.assets = assets;
         this.isVisible = false;
+        
+        // Create UI camera for proper screen-space rendering
+        this.uiCamera = new com.badlogic.gdx.graphics.OrthographicCamera();
+        this.uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Create title font
         this.titleFont = new BitmapFont();
@@ -296,15 +303,21 @@ public class SettingsScreen {
     public void render() {
         if (!isVisible) return;
         
+        // Update camera and set projection matrices
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        uiCamera.setToOrtho(false, screenWidth, screenHeight);
+        uiCamera.update();
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
+        
         // Draw overlay
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.7f);
-        shapeRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
         
         batch.begin();
-        float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
         
         // Draw title
         String title = "SETTINGS";
@@ -456,6 +469,8 @@ public class SettingsScreen {
     }
     
     public void resize(int width, int height) {
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
         setupUI();
     }
     

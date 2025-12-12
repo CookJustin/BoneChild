@@ -235,10 +235,34 @@ public class PauseMenu {
         
         batch.draw(bgTexture, bgX, bgY, bgWidth, bgHeight);
         
-        // Draw buttons
+        // Check which button is hovered
+        float mouseX = Gdx.input.getX();
+        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        boolean playHovered = playButtonHitbox.contains(mouseX, mouseY);
+        boolean settingsHovered = settingsButtonHitbox.contains(mouseX, mouseY);
+        boolean exitHovered = exitButtonHitbox.contains(mouseX, mouseY);
+        
+        // Draw buttons with tint if hovered (darker tint for subtle effect)
+        // Play button
+        if (playHovered) {
+            batch.setColor(0.7f, 0.7f, 0.7f, 1f); // Darken to 70% brightness
+        }
         batch.draw(playButtonTexture, playButtonHitbox.x, playButtonHitbox.y, playButtonHitbox.width, playButtonHitbox.height);
+        batch.setColor(1f, 1f, 1f, 1f); // Reset to white
+        
+        // Settings button
+        if (settingsHovered) {
+            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+        }
         batch.draw(settingsButtonTexture, settingsButtonHitbox.x, settingsButtonHitbox.y, settingsButtonHitbox.width, settingsButtonHitbox.height);
+        batch.setColor(1f, 1f, 1f, 1f);
+        
+        // Exit button
+        if (exitHovered) {
+            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+        }
         batch.draw(exitButtonTexture, exitButtonHitbox.x, exitButtonHitbox.y, exitButtonHitbox.width, exitButtonHitbox.height);
+        batch.setColor(1f, 1f, 1f, 1f);
         
         batch.end();
     }
