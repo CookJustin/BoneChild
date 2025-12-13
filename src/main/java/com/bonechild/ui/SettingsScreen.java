@@ -26,15 +26,15 @@ public class SettingsScreen {
     
     // Menu states
     private enum MenuState {
-        MAIN, VOLUME, KEYBINDS
+        MAIN, VOLUME, KEYBINDS, DISPLAY
     }
     
     private MenuState currentState = MenuState.MAIN;
-    private MenuState previousState = MenuState.MAIN; // Track where we came from
     
     // Main menu buttons
     private Rectangle volumeButton;
     private Rectangle keybindsButton;
+    private Rectangle displayButton;
     private Rectangle backButton;
     private float buttonWidth = 250f;
     private float buttonHeight = 50f;
@@ -47,7 +47,7 @@ public class SettingsScreen {
     private boolean draggingMusicSlider;
     private boolean draggingSFXSlider;
     
-    // Screen shake toggle
+    // Screen shake toggle (moved to Display menu)
     private Rectangle screenShakeToggle;
     private boolean screenShakeEnabled = true;
     
@@ -134,6 +134,7 @@ public class SettingsScreen {
         float mainMenuY = screenHeight / 2f + 50f;
         volumeButton = new Rectangle(centerX, mainMenuY, buttonWidth, buttonHeight);
         keybindsButton = new Rectangle(centerX, mainMenuY - buttonHeight - 20f, buttonWidth, buttonHeight);
+        displayButton = new Rectangle(centerX, mainMenuY - 2 * (buttonHeight + 20f), buttonWidth, buttonHeight);
         
         // Volume sliders (with more spacing for text above)
         float sliderX = screenWidth / 2f - 150f;
@@ -211,7 +212,7 @@ public class SettingsScreen {
             float mouseX = Gdx.input.getX();
             float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
             
-            // Check back button
+            // Check back button FIRST (highest priority)
             if (backButton.contains(mouseX, mouseY)) {
                 if (currentState == MenuState.MAIN) {
                     if (callback != null) {
@@ -221,29 +222,40 @@ public class SettingsScreen {
                 } else {
                     currentState = MenuState.MAIN;
                 }
-                return;
+                return; // Early return to prevent fall-through
             }
             
+            // Handle state-specific clicks
             if (currentState == MenuState.MAIN) {
                 if (volumeButton.contains(mouseX, mouseY)) {
-                    previousState = MenuState.MAIN;
                     currentState = MenuState.VOLUME;
                     return;
                 }
                 if (keybindsButton.contains(mouseX, mouseY)) {
-                    previousState = MenuState.MAIN;
                     currentState = MenuState.KEYBINDS;
+                    return;
+                }
+                if (displayButton.contains(mouseX, mouseY)) {
+                    currentState = MenuState.DISPLAY;
                     return;
                 }
             } else if (currentState == MenuState.VOLUME) {
                 if (musicVolumeSlider.contains(mouseX, mouseY)) {
                     draggingMusicSlider = true;
+                    float sliderProgress = (mouseX - musicVolumeSlider.x) / musicVolumeSlider.width;
+                    musicVolume = Math.max(0, Math.min(1, sliderProgress));
+                    if (assets.getBackgroundMusic() != null) {
+                        assets.getBackgroundMusic().setVolume(musicVolume);
+                    }
                     return;
                 }
                 if (sfxVolumeSlider.contains(mouseX, mouseY)) {
                     draggingSFXSlider = true;
+                    float sliderProgress = (mouseX - sfxVolumeSlider.x) / sfxVolumeSlider.width;
+                    sfxVolume = Math.max(0, Math.min(1, sliderProgress));
                     return;
                 }
+            } else if (currentState == MenuState.DISPLAY) {
                 if (screenShakeToggle.contains(mouseX, mouseY)) {
                     screenShakeEnabled = !screenShakeEnabled;
                     com.bonechild.rendering.CameraShake.setEnabled(screenShakeEnabled);
@@ -251,6 +263,7 @@ public class SettingsScreen {
                     return;
                 }
             } else if (currentState == MenuState.KEYBINDS) {
+                // Check movement keybinds (left column)
                 for (int i = 0; i < keybindButtons.length; i++) {
                     if (keybindButtons[i].contains(mouseX, mouseY)) {
                         rebindingIndex = i;
@@ -260,6 +273,7 @@ public class SettingsScreen {
                         return;
                     }
                 }
+                // Check hotbar keybinds (right column)
                 for (int i = 0; i < hotbarKeybindButtons.length; i++) {
                     if (hotbarKeybindButtons[i].contains(mouseX, mouseY)) {
                         rebindingIndex = i;
@@ -274,15 +288,19 @@ public class SettingsScreen {
         
         // ESC to go back
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if (currentState == MenuState.MAIN) {
-                // Close settings entirely
+            MenuState stateBeforeEsc = currentState; // Store current state before changing
+            
+            if (stateBeforeEsc != MenuState.MAIN) {
+                // In a submenu - go back to MAIN
+                currentState = MenuState.MAIN;
+            } else {
+                // Already in MAIN - close settings entirely
                 if (callback != null) {
                     callback.onBack();
                 }
                 isVisible = false;
-            } else {
-                // Go back to previous menu state
-                currentState = previousState;
+                // Add a small delay so the calling screen doesn't immediately process ESC
+                ignoreInputTimer = 0.15f;
             }
         }
     }
@@ -356,8 +374,11 @@ public class SettingsScreen {
         if (currentState == MenuState.MAIN) {
             drawButton(volumeButton, "VOLUME");
             drawButton(keybindsButton, "KEYBINDS");
+            drawButton(displayButton, "DISPLAY");
         } else if (currentState == MenuState.VOLUME) {
             drawVolumeMenu();
+        } else if (currentState == MenuState.DISPLAY) {
+            drawDisplayMenu();
         } else if (currentState == MenuState.KEYBINDS) {
             drawKeybindsMenu();
         }
@@ -370,12 +391,25 @@ public class SettingsScreen {
                  musicVolumeSlider.x, musicVolumeSlider.y + 50f);
         font.draw(batch, "SFX: " + String.format("%.0f%%", sfxVolume * 100), 
                  sfxVolumeSlider.x, sfxVolumeSlider.y + 50f);
-        font.draw(batch, "Screen Shake: " + (screenShakeEnabled ? "ON" : "OFF"), 
-                 screenShakeToggle.x, screenShakeToggle.y + 50f);
         batch.end();
         
         drawSlider(musicVolumeSlider, musicVolume);
         drawSlider(sfxVolumeSlider, sfxVolume);
+    }
+    
+    private void drawDisplayMenu() {
+        batch.begin();
+        font.setColor(Color.WHITE); // Use bright white for better visibility
+        
+        // Draw label above the button with better spacing
+        String labelText = "Screen Shake: " + (screenShakeEnabled ? "ON" : "OFF");
+        glyphLayout.setText(font, labelText);
+        float labelX = screenShakeToggle.x + screenShakeToggle.width / 2f - glyphLayout.width / 2f;
+        float labelY = screenShakeToggle.y + screenShakeToggle.height + 40f; // Position above the button
+        
+        font.draw(batch, labelText, labelX, labelY);
+        batch.end();
+        
         drawButton(screenShakeToggle, screenShakeEnabled ? "ON" : "OFF");
     }
     
@@ -511,7 +545,6 @@ public class SettingsScreen {
     public void show() {
         isVisible = true;
         currentState = MenuState.MAIN;
-        previousState = MenuState.MAIN;
         ignoreInputTimer = 0.1f;
         
         // Sync screen shake setting with global state

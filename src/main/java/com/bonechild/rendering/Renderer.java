@@ -233,9 +233,17 @@ public class Renderer {
         batch.begin();
         
         for (Mob mob : mobs) {
-            if (mob.isActive() && !mob.isDead()) {
-                if (mob instanceof com.bonechild.world.Goblin) {
-                    ((com.bonechild.world.Goblin) mob).render(batch, deltaTime);
+            // Allow Globs to render when dead (for death animation)
+            boolean shouldRender = mob.isActive() && !mob.isDead();
+            if (mob instanceof com.bonechild.world.Glob) {
+                com.bonechild.world.Glob glob = (com.bonechild.world.Glob) mob;
+                // Render if active and either alive OR death animation not complete
+                shouldRender = mob.isActive() && (!mob.isDead() || !glob.isDeathAnimationComplete());
+            }
+            
+            if (shouldRender) {
+                if (mob instanceof com.bonechild.world.Glob) {
+                    ((com.bonechild.world.Glob) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.Vampire) {
                     ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {
@@ -257,37 +265,50 @@ public class Renderer {
         
         batch.end();
         
-        // Draw health bars for mobs
+        // Draw health bars for mobs (only for alive mobs)
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
                 float barWidth;
                 float barHeight;
-                float hitboxTop;
+                float barX;
+                float barY;
+                
                 if (mob instanceof com.bonechild.world.Vampire) {
                     // Use the same bar width as the original mob (30x2=60)
                     barWidth = 60f;
                     barHeight = 4;
                     // Center above the Vampire's hitbox
-                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                    barY = hitboxTop + 5;
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {
                     // Christmas Jad gets a larger health bar (80px wide)
                     barWidth = 80f;
                     barHeight = 4;
                     // Center above the Christmas Jad's hitbox
-                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                } else if (mob instanceof com.bonechild.world.Goblin) {
-                    // Goblin gets 80px bar to match hitbox
+                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                    barY = hitboxTop + 5;
+                } else if (mob instanceof com.bonechild.world.Glob) {
+                    // Glob gets 80px bar to match visual size
                     barWidth = 80f;
                     barHeight = 4;
-                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    // The Glob sprite is 48x48 rendered at 160x160 scale
+                    // The blob body is in the center-bottom portion
+                    // Position bar above the visible blob (roughly 1/3 up from bottom of 160px sprite)
+                    float hitboxCenterX = mob.getPosition().x + mob.getHitboxOffsetX() + (mob.getHitboxWidth() / 2);
+                    float blobTop = mob.getPosition().y + 60f; // Position above the visible blob
+                    barX = hitboxCenterX - (barWidth / 2);
+                    barY = blobTop;
                 } else {
                     // Skeleton mobs
                     barWidth = mob.getHitboxWidth() * 2;
                     barHeight = 4;
-                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                    barY = hitboxTop + 5;
                 }
-                float barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                float barY = hitboxTop + 5;
+                
                 drawHealthBar(barX, barY, barWidth, barHeight, mob.getHealthPercentage());
             }
         }

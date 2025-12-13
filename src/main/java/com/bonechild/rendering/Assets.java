@@ -39,9 +39,9 @@ public class Assets {
     // Orc sprite sheet for mobs
     private Texture orcWalkSheet;
 
-    // Goblin (Enemy_14_B) sprites for mobs
-    private Texture[] goblinWalkFrames;
-    private Texture[] goblinDeathFrames;
+    // Glob (Enemy_14_B) sprites for mobs
+    private Texture[] globWalkFrames;
+    private Texture[] globDeathFrames;
 
     // Coin sprites for animation
     private Texture coin1;
@@ -135,18 +135,18 @@ public class Assets {
             orcWalkSheet = new Texture(Gdx.files.internal("assets/enemies/Orc-Walk.png"));
             Gdx.app.log("Assets", "Loaded orc walk sprite sheet");
 
-            // Load goblin (Enemy_14_B) walk and death animation frames
-            goblinWalkFrames = new Texture[6];
+            // Load glob (Enemy_14_B) walk and death animation frames
+            globWalkFrames = new Texture[6];
             for (int i = 0; i < 6; i++) {
-                goblinWalkFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Walk_" + (i + 1) + ".png"));
+                globWalkFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Walk_" + (i + 1) + ".png"));
             }
-            Gdx.app.log("Assets", "Loaded goblin walk animation frames (1-6)");
+            Gdx.app.log("Assets", "Loaded glob walk animation frames (1-6)");
 
-            goblinDeathFrames = new Texture[6];
+            globDeathFrames = new Texture[6];
             for (int i = 0; i < 6; i++) {
-                goblinDeathFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Dead_" + (i + 1) + ".png"));
+                globDeathFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Dead_" + (i + 1) + ".png"));
             }
-            Gdx.app.log("Assets", "Loaded goblin death animation frames (1-6)");
+            Gdx.app.log("Assets", "Loaded glob death animation frames (1-6)");
 
             // Load new player sprite frames (Player1.png to Player6.png)
             playerFrames = new Texture[6];
@@ -592,21 +592,21 @@ public class Assets {
     }
 
     /**
-     * Create a new goblin walk animation instance (for mobs)
+     * Create a new glob walk animation instance (for mobs)
      */
-    public Animation createGoblinWalkAnimation() {
-        if (goblinWalkFrames != null && goblinWalkFrames.length > 0) {
-            return new Animation(goblinWalkFrames, 0.1f, true);
+    public Animation createGlobWalkAnimation() {
+        if (globWalkFrames != null && globWalkFrames.length > 0) {
+            return new Animation(globWalkFrames, 48, 48, 0.1f, true);
         }
         return null;
     }
 
     /**
-     * Create a new goblin death animation instance (for mobs)
+     * Create a new glob death animation instance (for mobs)
      */
-    public Animation createGoblinDeathAnimation() {
-        if (goblinDeathFrames != null && goblinDeathFrames.length > 0) {
-            return new Animation(goblinDeathFrames, 0.15f, false); // Slightly slower death animation
+    public Animation createGlobDeathAnimation() {
+        if (globDeathFrames != null && globDeathFrames.length > 0) {
+            return new Animation(globDeathFrames, 48, 48, 0.15f, false); // Slightly slower death animation
         }
         return null;
     }

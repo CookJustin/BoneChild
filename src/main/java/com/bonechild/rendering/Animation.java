@@ -60,6 +60,23 @@ public class Animation {
     }
     
     /**
+     * Constructor for animation from separate texture files with custom region size
+     * Useful when the actual sprite is smaller than the PNG canvas
+     */
+    public Animation(Texture[] textures, int regionWidth, int regionHeight, float frameDuration, boolean looping) {
+        this.frames = new TextureRegion[textures.length];
+        this.frameDuration = frameDuration;
+        this.stateTime = 0;
+        this.looping = looping;
+        
+        // Create texture regions from individual textures, using only the specified region
+        for (int i = 0; i < textures.length; i++) {
+            // Extract the region from the top-left corner (0, 0) with specified dimensions
+            frames[i] = new TextureRegion(textures[i], 0, 0, regionWidth, regionHeight);
+        }
+    }
+    
+    /**
      * Update animation state
      */
     public void update(float delta) {

@@ -50,17 +50,12 @@ echo "  - Standard JAR: target/bonechild-game-1.0.0.jar"
 echo "  - Dependencies: target/lib/"
 echo ""
 
-# Ask if user wants to create native package
-read -p "Do you want to create a native package? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
-    echo -e "${YELLOW}Creating native package...${NC}"
-    mvn package -Pnative-package
-    echo ""
-    echo -e "${GREEN}Native package created successfully!${NC}"
-    echo "Package location: target/dist/"
-fi
+# Create native package automatically
+echo -e "${YELLOW}Creating native package...${NC}"
+mvn package -Pnative-package
+echo ""
+echo -e "${GREEN}Native package created successfully!${NC}"
+echo "Package location: target/dist/"
 
 echo ""
 echo -e "${GREEN}Done!${NC}"

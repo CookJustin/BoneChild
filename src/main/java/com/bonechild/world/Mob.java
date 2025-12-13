@@ -26,9 +26,9 @@ public class Mob extends LivingEntity {
         this.attackCooldown = 1f; // Attack once per second
         this.timeSinceLastAttack = 0;
         
-        // Set smaller hitbox (30x30) centered on the large sprite
-        // Offset: (240 - 30) / 2 = 105 pixels from bottom-left to center the hitbox
-        setHitbox(30, 30, 105, 105);
+        // Set smaller hitbox (20x20) centered on the large sprite for better accuracy
+        // Offset: (240 - 20) / 2 = 110 pixels from bottom-left to center the hitbox
+        setHitbox(20, 20, 110, 110);
     }
     
     @Override

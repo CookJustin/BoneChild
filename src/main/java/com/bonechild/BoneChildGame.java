@@ -525,6 +525,11 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
+        // If settings screen is open, don't process ESC for pause menu (let settings handle it)
+        if (settingsScreen != null && settingsScreen.isVisible()) {
+            return;
+        }
+        
         // Handle ESC key for pause menu (toggle pause)
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             if (gamePaused && pauseMenu != null && pauseMenu.isVisible()) {

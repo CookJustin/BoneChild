@@ -341,12 +341,15 @@ public class Player extends LivingEntity {
         boolean isCrit = critRandom.nextFloat() < BASE_CRIT_CHANCE;
         float finalDamage = isCrit ? variedDamage * CRIT_MULTIPLIER : variedDamage;
         
-        // Create projectile toward target
+        // Create projectile toward target's hitbox center (not sprite center)
+        float targetHitboxCenterX = targetMob.getPosition().x + targetMob.getHitboxOffsetX() + targetMob.getHitboxWidth() / 2f;
+        float targetHitboxCenterY = targetMob.getPosition().y + targetMob.getHitboxOffsetY() + targetMob.getHitboxHeight() / 2f;
+        
         Projectile projectile = new Projectile(
             position.x + width / 2f,
             position.y + height / 2f,
-            targetMob.getPosition().x + targetMob.getWidth() / 2f,
-            targetMob.getPosition().y + targetMob.getHeight() / 2f,
+            targetHitboxCenterX,
+            targetHitboxCenterY,
             finalDamage,
             isCrit
         );

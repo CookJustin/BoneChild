@@ -93,6 +93,14 @@ public class WorldManager {
             
             // Remove dead mobs and spawn pickups
             if (mob.isDead()) {
+                // For Globs, wait for death animation to complete before removing
+                if (mob instanceof Glob) {
+                    Glob glob = (Glob) mob;
+                    if (!glob.isDeathAnimationComplete()) {
+                        continue; // Keep the glob alive until animation finishes
+                    }
+                }
+                
                 float mobX = mob.getPosition().x;
                 float mobY = mob.getPosition().y;
                 
@@ -184,9 +192,9 @@ public class WorldManager {
                     
                     // Spawn damage number above mob (closer to the mob, not way above it)
                     if (renderer != null) {
-                        float mobCenterX = mob.getPosition().x + mob.getWidth() / 2f;
-                        // Position damage number just slightly above center of mob instead of at the top
-                        float mobCenterY = mob.getPosition().y + mob.getHeight() / 2f + 20f;
+                        // Use hitbox center for proper positioning, especially for Glob with offset hitbox
+                        float mobCenterX = mob.getPosition().x + mob.getHitboxOffsetX() + (mob.getHitboxWidth() / 2f);
+                        float mobCenterY = mob.getPosition().y + mob.getHitboxOffsetY() + (mob.getHitboxHeight() / 2f) + 20f;
                         renderer.spawnDamageNumber(mobCenterX, mobCenterY, damageDealt, isCrit);
                         
                         // 🩸 BLOOD PARTICLES when mob is hit!
@@ -377,10 +385,10 @@ public class WorldManager {
         }
         mobs.add(new Vampire(vx, vy, player, assets));
         
-        // Spawn 1-2 Goblins every wave starting from wave 2
+        // Spawn 1-2 Globs every wave starting from wave 2
         if (currentWave >= 2) {
-            int goblinCount = 1 + random.nextInt(2); // 1-2 goblins
-            for (int i = 0; i < goblinCount; i++) {
+            int globCount = 1 + random.nextInt(2); // 1-2 globs
+            for (int i = 0; i < globCount; i++) {
                 float gx, gy;
                 if (random.nextBoolean()) {
                     gx = random.nextBoolean() ? -50 : screenWidth + 50;
@@ -389,9 +397,9 @@ public class WorldManager {
                     gx = random.nextFloat() * screenWidth;
                     gy = random.nextBoolean() ? -50 : screenHeight + 50;
                 }
-                mobs.add(new Goblin(gx, gy, player, assets));
+                mobs.add(new Glob(gx, gy, player, assets));
             }
-            Gdx.app.log("WorldManager", "👺 Spawned " + goblinCount + " Goblin(s) on wave " + currentWave + "!");
+            Gdx.app.log("WorldManager", "💧 Spawned " + globCount + " Glob(s) on wave " + currentWave + "!");
         }
         
         // Spawn one Christmas Jad every 3 waves (on waves 3, 6, 9, etc.)
@@ -492,8 +500,8 @@ public class WorldManager {
             Gdx.app.log("WorldManager", "⚡ Chain lightning hit mob for " + currentDamage + " damage!");
 
             if (renderer != null) {
-                renderer.spawnDamageNumber(nextMob.getPosition().x + nextMob.getWidth() / 2f,
-                                           nextMob.getPosition().y + nextMob.getHeight() / 2f + 20f,
+                renderer.spawnDamageNumber(nextMob.getPosition().x + nextMob.getHitboxOffsetX() + (nextMob.getHitboxWidth() / 2f),
+                                           nextMob.getPosition().y + nextMob.getHitboxOffsetY() + (nextMob.getHitboxHeight() / 2f) + 20f,
                                            currentDamage, false);
             }
 
