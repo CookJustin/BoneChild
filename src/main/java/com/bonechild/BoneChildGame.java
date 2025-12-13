@@ -4,8 +4,6 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.bonechild.input.PlayerInput;
 import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
@@ -24,12 +22,7 @@ import com.bonechild.ui.CharacterStatsScreen;
  * A top-down survival action game built with LibGDX
  */
 public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback, GameOverScreen.GameOverCallback, PowerUpScreen.PowerUpCallback {
-    // Virtual resolution for the game world (fixed size that scales to screen)
-    private static final float VIRTUAL_WIDTH = 1280f;
-    private static final float VIRTUAL_HEIGHT = 720f;
-    
     private OrthographicCamera camera;
-    private Viewport viewport;
     
     // Game systems
     private Assets assets;
@@ -59,12 +52,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     public void create() {
         Gdx.app.log("BoneChild", "Initializing game...");
         
-        // Setup camera with fixed virtual resolution
+        // Setup camera
         camera = new OrthographicCamera();
-        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
-        viewport.apply();
-        camera.position.set(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, 0);
-        camera.update();
+        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         
         // Load assets
         assets = new Assets();
@@ -92,7 +82,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             
             // Create world manager (creates player)
             worldManager = new WorldManager();
-            worldManager.setAssets(assets); // Pass assets for explosion animations
+            worldManager.setAssets(assets);
             
             // Create renderer
             renderer = new Renderer(camera, assets);
@@ -258,10 +248,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
         
+        // Clear screen
+        Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        
         // Show menu if game hasn't started
         if (!gameStarted) {
-            // MenuScreen handles its own screen clearing
-            
             // Only update menu if settings screen is NOT visible
             if (settingsScreen == null || !settingsScreen.isVisible()) {
                 menuScreen.update(delta);
@@ -277,14 +269,8 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
-        // Clear screen (only when game is running)
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        
-        // Check if player is dead
-        boolean playerIsDead = worldManager.getPlayer().isDead();
-        
-        if (playerIsDead) {
+        // Check if player is dead and show game over screen
+        if (worldManager.getPlayer().isDead()) {
             // Play death sound once when player first dies
             if (!deathSoundPlayed) {
                 // Stop background music
@@ -302,37 +288,14 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             // Increment death timer
             deathTimer += delta;
             
-            // Continue updating player to allow death animation to play
-            worldManager.getPlayer().update(delta);
-            
             // Set stats and show game over screen after delay
             if (deathTimer >= DEATH_ANIMATION_DELAY && !deathScreenShown) {
                 if (gameOverScreen != null && !gameOverScreen.isVisible()) {
                     gameOverScreen.setStats(worldManager.getCurrentWave(), worldManager.getPlayer().getGold(), worldManager.getPlayer().getLevel());
                     gameOverScreen.show();
                     deathScreenShown = true;
-                    Gdx.app.log("BoneChild", "Game over screen shown");
                 }
             }
-            
-            // Render the game world in background (frozen, no updates except player animation)
-            renderer.updateCamera();
-            renderer.setDeltaTime(delta); // Keep animations playing during death
-            renderer.renderBackground();
-            renderer.renderPlayer(worldManager.getPlayer());
-            renderer.renderMobs(worldManager.getMobs());
-            renderer.renderPickups(worldManager.getPickups());
-            renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
-            gameUI.render();
-            
-            // Render game over screen on top if shown
-            if (gameOverScreen != null && gameOverScreen.isVisible()) {
-                gameOverScreen.update(delta);
-                gameOverScreen.render();
-            }
-            
-            return; // Don't process any other game logic when dead
         } else {
             // Reset death timer and flags if player is not dead
             deathTimer = 0f;
@@ -340,19 +303,21 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             deathSoundPlayed = false;
         }
         
-        // Check if player leveled up and show power-up screen
-        if (worldManager.getPlayer().didLevelUpThisFrame()) {
-            worldManager.getPlayer().clearLevelUpFlag();
-            powerUpScreen.show();
-            gamePaused = true; // Pause game when power-up screen appears
-        }
-        
-        // ALWAYS handle input FIRST (before any screen checks) so menus can be closed
-        handleInput();
-        
-        // Only update game world when not paused
-        if (!gamePaused) {
-            update(delta);
+        // Game is running - check game over screen
+        if (gameOverScreen != null && gameOverScreen.isVisible()) {
+            // Render game in background (paused state)
+            renderer.updateCamera();
+            renderer.setDeltaTime(0); // No animation updates while paused
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            renderer.renderPickups(worldManager.getPickups());
+            gameUI.render();
+            
+            // Update and render game over screen on top
+            gameOverScreen.update(delta);
+            gameOverScreen.render();
+            return;
         }
         
         // Game is running - check character stats screen FIRST (takes priority)
@@ -364,33 +329,17 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             renderer.renderPlayer(worldManager.getPlayer());
             renderer.renderMobs(worldManager.getMobs());
             renderer.renderPickups(worldManager.getPickups());
-            renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
             gameUI.render();
             
             // Update and render character stats screen on top
             characterStatsScreen.update(delta);
             characterStatsScreen.render();
-            return; // Don't render anything else
-        }
-        
-        // Game is running - check inventory screen (takes priority over pause)
-        if (inventoryUI != null && inventoryUI.isVisible()) {
-            // Render game in background (paused state)
-            renderer.updateCamera();
-            renderer.setDeltaTime(0); // No animation updates while paused
-            renderer.renderBackground();
-            renderer.renderPlayer(worldManager.getPlayer());
-            renderer.renderMobs(worldManager.getMobs());
-            renderer.renderPickups(worldManager.getPickups());
-            renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
-            gameUI.render();
             
-            // Update and render inventory screen on top
-            inventoryUI.update(delta);
-            inventoryUI.render();
-            return; // Don't render anything else
+            // Handle closing stats screen
+            if (!characterStatsScreen.isVisible()) {
+                gamePaused = false;
+            }
+            return;
         }
         
         // Game is running - check power-up screen FIRST (takes priority over pause)
@@ -402,14 +351,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             renderer.renderPlayer(worldManager.getPlayer());
             renderer.renderMobs(worldManager.getMobs());
             renderer.renderPickups(worldManager.getPickups());
-            renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
             gameUI.render();
             
             // Update and render power-up screen on top
             powerUpScreen.update(delta);
             powerUpScreen.render();
-            return; // Don't render anything else
+            return;
         }
         
         // Game is running - handle pause menu
@@ -420,9 +367,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             renderer.renderBackground();
             renderer.renderPlayer(worldManager.getPlayer());
             renderer.renderMobs(worldManager.getMobs());
-            renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
-            renderer.renderPickups(worldManager.getPickups());
             gameUI.render();
             
             // Update and render pause menu
@@ -440,6 +384,17 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
+        // Check if player leveled up and show power-up screen
+        if (worldManager.getPlayer().didLevelUpThisFrame()) {
+            worldManager.getPlayer().clearLevelUpFlag();
+            powerUpScreen.show();
+            gamePaused = true; // Pause game when power-up screen appears
+        }
+        
+        // Game is running - handle input and update
+        handleInput();
+        update(delta);
+        
         // Update camera
         renderer.updateCamera();
         
@@ -453,7 +408,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         renderer.renderPlayer(worldManager.getPlayer());
         renderer.renderMobs(worldManager.getMobs());
         renderer.renderProjectiles(worldManager.getProjectiles());
-        renderer.renderExplosions(worldManager.getExplosions());
         renderer.renderPickups(worldManager.getPickups());
         
         // Render UI
@@ -462,91 +416,30 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     }
     
     private void handleInput() {
-        // DEBUG: Log when ESC is pressed
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-            Gdx.app.log("BoneChild", "🔑 ESC key pressed! gamePaused=" + gamePaused + 
-                       ", charStats=" + (characterStatsScreen != null && characterStatsScreen.isVisible()) +
-                       ", inventory=" + (inventoryUI != null && inventoryUI.isVisible()) +
-                       ", pauseMenu=" + (pauseMenu != null && pauseMenu.isVisible()) +
-                       ", powerUp=" + (powerUpScreen != null && powerUpScreen.isVisible()));
-        }
-        
-        // Check character stats screen (C key) - handle both opening and closing
+        // Check character stats screen (C key)
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.C)) {
             if (characterStatsScreen != null) {
-                if (characterStatsScreen.isVisible()) {
-                    // Close character stats screen
-                    characterStatsScreen.hide();
-                    gamePaused = false;
-                    Gdx.app.log("BoneChild", "Character stats closed, game resumed");
-                } else {
-                    // Open character stats screen
-                    characterStatsScreen.show();
-                    gamePaused = true;
-                    Gdx.app.log("BoneChild", "Character stats opened, game paused");
-                }
-            }
-            return;
-        }
-        
-        // If character stats screen is open, check for ESC to close it
-        if (characterStatsScreen != null && characterStatsScreen.isVisible()) {
-            if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-                characterStatsScreen.hide();
-                gamePaused = false;
-                Gdx.app.log("BoneChild", "Character stats closed with ESC, game resumed");
-                return;
-            }
-            // Don't process other inputs while character stats is open
-            return;
-        }
-        
-        // If inventory is open, check for ESC or I to close it
-        if (inventoryUI != null && inventoryUI.isVisible()) {
-            if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE) || 
-                Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.I)) {
-                inventoryUI.hide();
-                Gdx.app.log("BoneChild", "Inventory closed");
-                return;
-            }
-            // Don't process other inputs while inventory is open
-            return;
-        }
-        
-        // If power-up screen is open, don't allow pause menu
-        if (powerUpScreen != null && powerUpScreen.isVisible()) {
-            Gdx.app.log("BoneChild", "Power-up screen is open, ignoring other inputs");
-            return;
-        }
-        
-        // Handle ESC key for pause menu (toggle pause)
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-            if (gamePaused && pauseMenu != null && pauseMenu.isVisible()) {
-                // Unpause
-                gamePaused = false;
-                pauseMenu.hide();
-                Gdx.app.log("BoneChild", "✅ Game resumed via ESC");
-            } else if (!gamePaused) {
-                // Pause
+                characterStatsScreen.show();
                 gamePaused = true;
-                if (pauseMenu != null) {
-                    pauseMenu.show();
-                }
-                Gdx.app.log("BoneChild", "✅ Game paused via ESC");
             }
+            return;
+        }
+        
+        // Pause on ESC
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            gamePaused = true;
+            pauseMenu.show();
+            Gdx.app.log("BoneChild", "Game paused");
             return;
         }
         
         // Toggle inventory with I
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.I)) {
             inventoryUI.toggle();
-            return;
         }
         
-        // Only update player input if no menus are open
-        if (!gamePaused) {
-            playerInput.update();
-        }
+        // Update player input
+        playerInput.update();
     }
     
     private void update(float delta) {
@@ -560,18 +453,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     
     @Override
     public void resize(int width, int height) {
-        Gdx.app.log("BoneChild", "Resize called: " + width + "x" + height);
+        camera.setToOrtho(false, width, height);
         
-        // Update camera viewport
-        viewport.update(width, height);
-        camera.update();
-        
-        // Update menu screen (for title screen background scrolling)
         if (menuScreen != null) {
             menuScreen.resize(width, height);
         }
         
-        // Update all UI screens if game has started
         if (gameStarted) {
             if (gameUI != null) {
                 gameUI.resize(width, height);
@@ -579,25 +466,8 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             if (inventoryUI != null) {
                 inventoryUI.resize(width, height);
             }
-            if (pauseMenu != null) {
-                pauseMenu.resize(width, height);
-            }
             if (gameOverScreen != null) {
                 gameOverScreen.resize(width, height);
-            }
-            if (powerUpScreen != null) {
-                powerUpScreen.resize(width, height);
-            }
-            if (characterStatsScreen != null) {
-                characterStatsScreen.resize(width, height);
-            }
-            if (settingsScreen != null) {
-                settingsScreen.resize(width, height);
-            }
-        } else {
-            // Even if game hasn't started, settings screen might be open
-            if (settingsScreen != null) {
-                settingsScreen.resize(width, height);
             }
         }
     }

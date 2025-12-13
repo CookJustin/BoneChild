@@ -116,6 +116,13 @@ public class GameOverScreen {
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
         
+        // Update button positions dynamically based on current screen size
+        float centerX = screenWidth / 2f - buttonWidth / 2f;
+        float startY = screenHeight / 2f - 50f;
+        playAgainButton.set(centerX, startY, buttonWidth, buttonHeight);
+        float exitY = startY - buttonHeight - 20f;
+        exitButton.set(centerX, exitY, buttonWidth, buttonHeight);
+        
         // Draw dark overlay
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.8f);
@@ -255,6 +262,12 @@ public class GameOverScreen {
      */
     public void resize(int width, int height) {
         setupUI();
+        
+        // Update projection matrices for batch and shape renderer
+        com.badlogic.gdx.math.Matrix4 projectionMatrix = new com.badlogic.gdx.math.Matrix4();
+        projectionMatrix.setToOrtho2D(0, 0, width, height);
+        batch.setProjectionMatrix(projectionMatrix);
+        shapeRenderer.setProjectionMatrix(projectionMatrix);
     }
     
     /**
