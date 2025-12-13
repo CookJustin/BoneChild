@@ -8,7 +8,6 @@ import com.bonechild.input.PlayerInput;
 import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
 import com.bonechild.ui.GameUI;
-import com.bonechild.ui.InventoryUI;
 import com.bonechild.ui.MenuScreen;
 import com.bonechild.ui.SettingsScreen;
 import com.bonechild.ui.PauseMenu;
@@ -38,15 +37,13 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     private PowerUpScreen powerUpScreen;
     private CharacterStatsScreen characterStatsScreen;
     private GameUI gameUI;
-    private InventoryUI inventoryUI;
     
     // Game state
     private boolean gameStarted = false;
     private boolean gamePaused = false;
     private float deathTimer = 0f;
     private boolean deathScreenShown = false;
-    private boolean deathSoundPlayed = false;
-    private static final float DEATH_ANIMATION_DELAY = 1.5f; // Delay before showing game over screen
+    private static final float DEATH_ANIMATION_DELAY = 2.0f; // Wait 2 seconds before showing death screen
     
     @Override
     public void create() {
@@ -82,7 +79,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             
             // Create world manager (creates player)
             worldManager = new WorldManager();
-            worldManager.setAssets(assets);
+            worldManager.setAssets(assets); // Pass assets to world manager
             
             // Create renderer
             renderer = new Renderer(camera, assets);
@@ -96,7 +93,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             
             // Create UI
             gameUI = new GameUI(assets, worldManager.getPlayer(), worldManager);
-            inventoryUI = new InventoryUI(assets);
             pauseMenu = new PauseMenu(assets, this);
             gameOverScreen = new GameOverScreen(assets, this);
             powerUpScreen = new PowerUpScreen(assets, this);
@@ -110,7 +106,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             }
             
             gameStarted = true;
-            Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit, I for inventory");
+            Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit");
         }
     }
     
@@ -271,20 +267,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         
         // Check if player is dead and show game over screen
         if (worldManager.getPlayer().isDead()) {
-            // Play death sound once when player first dies
-            if (!deathSoundPlayed) {
-                // Stop background music
-                if (assets.getBackgroundMusic() != null && assets.getBackgroundMusic().isPlaying()) {
-                    assets.getBackgroundMusic().stop();
-                    Gdx.app.log("BoneChild", "Stopped background music");
-                }
-                
-                // Play death sound
-                assets.playSound(assets.getDeathSound());
-                deathSoundPlayed = true;
-                Gdx.app.log("BoneChild", "Playing death sound");
-            }
-            
             // Increment death timer
             deathTimer += delta;
             
@@ -297,10 +279,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
                 }
             }
         } else {
-            // Reset death timer and flags if player is not dead
+            // Reset death timer and flag if player is not dead
             deathTimer = 0f;
             deathScreenShown = false;
-            deathSoundPlayed = false;
         }
         
         // Game is running - check game over screen
@@ -412,7 +393,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         
         // Render UI
         gameUI.render();
-        inventoryUI.render();
     }
     
     private void handleInput() {
@@ -433,11 +413,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
-        // Toggle inventory with I
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.I)) {
-            inventoryUI.toggle();
-        }
-        
         // Update player input
         playerInput.update();
     }
@@ -448,7 +423,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         
         // Update UI
         gameUI.update(delta);
-        inventoryUI.update(delta);
     }
     
     @Override
@@ -459,15 +433,25 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             menuScreen.resize(width, height);
         }
         
+        if (settingsScreen != null) {
+            settingsScreen.resize(width, height);
+        }
+        
         if (gameStarted) {
             if (gameUI != null) {
                 gameUI.resize(width, height);
             }
-            if (inventoryUI != null) {
-                inventoryUI.resize(width, height);
+            if (pauseMenu != null) {
+                pauseMenu.resize(width, height);
             }
             if (gameOverScreen != null) {
                 gameOverScreen.resize(width, height);
+            }
+            if (powerUpScreen != null) {
+                powerUpScreen.resize(width, height);
+            }
+            if (characterStatsScreen != null) {
+                characterStatsScreen.resize(width, height);
             }
         }
     }
@@ -486,9 +470,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             }
             if (gameUI != null) {
                 gameUI.dispose();
-            }
-            if (inventoryUI != null) {
-                inventoryUI.dispose();
             }
             if (pauseMenu != null) {
                 pauseMenu.dispose();

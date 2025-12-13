@@ -74,7 +74,6 @@ public enum AnimationState {
 ## Controls Unchanged
 - **WASD** or **Arrow Keys**: Move (triggers walk animation)
 - **ESC**: Exit game
-- **I**: Toggle inventory
 
 ## Technical Features
 
