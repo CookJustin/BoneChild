@@ -301,14 +301,17 @@ public class UIEffectsManager {
     private void renderWaveBanner(SpriteBatch batch, BitmapFont font) {
         float alpha = waveBannerTimer > 2f ? 1f : waveBannerTimer / 2f;
         
-        // Draw background
+        // Draw background using ShapeRenderer
         float bannerHeight = 150f * bannerScale;
         float bannerY = 360 - bannerHeight / 2f;
         
-        Color bgColor = new Color(0, 0, 0, 0.7f * alpha);
-        batch.setColor(bgColor);
-        batch.draw(batch.getTextures().iterator().next(), 0, bannerY, 1280, bannerHeight);
-        batch.setColor(Color.WHITE);
+        batch.end();
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.7f * alpha);
+        shapeRenderer.rect(0, bannerY, 1280, bannerHeight);
+        shapeRenderer.end();
+        batch.begin();
         
         // Draw text
         font.getData().setScale(3f * bannerScale);
