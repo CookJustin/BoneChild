@@ -151,39 +151,41 @@ public class Assets {
             // Load new player sprite frames (Player1.png to Player6.png)
             playerFrames = new Texture[6];
             for (int i = 0; i < 6; i++) {
-                playerFrames[i] = new Texture(Gdx.files.internal("assets/player/Player " + (i + 1) + ".png"));
+                playerFrames[i] = new Texture(Gdx.files.internal("assets/player/Player" + (i + 1) + ".png"));
             }
-            Gdx.app.log("Assets", "Loaded new player sprite frames (Player 1-6.png)");
+            Gdx.app.log("Assets", "Loaded new player sprite frames (Player1-6.png)");
 
+            // Create animations from skeleton sprite sheets with proper frame selection
+            // Use only the frames that have actual skeleton content (not empty frames)
+            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            int[] goodHurtFrames = {1, 4, 7, 10, 13};
+            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
+            int[] idleFrame = {1};
+
+            // Idle: use first good frame as static pose
+            idleAnimation = new Animation(skeletonIdleSheet, idleFrame, 0, 32, 64, 1.0f, true);
+            
+            // Walk: use only the 10 good frames
+            walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
+            
+            // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
+            hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+            
+            // SkeletonDie: use only the 13 good frames
+            deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+
+            Gdx.app.log("Assets", "Created player animations with 32x64 frames from skeleton sprite sheets (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
+
+            // OLD CODE - Player1-6.png approach (keeping for reference)
             // Create animations from new player sprite frames
-            idleAnimation = new Animation(playerFrames, 0.2f, true);
-            walkAnimation = new Animation(playerFrames, 0.1f, true);
-            hurtAnimation = new Animation(playerFrames, 0.05f, false);
-            deathAnimation = new Animation(playerFrames, 0.1f, false);
-            Gdx.app.log("Assets", "Created player animations from Player 1-6.png sprite frames");
+            // idleAnimation = new Animation(playerFrames, 0.2f, true);
+            // walkAnimation = new Animation(playerFrames, 0.1f, true);
+            // hurtAnimation = new Animation(playerFrames, 0.05f, false);
+            // deathAnimation = new Animation(playerFrames, 0.1f, false);
+            // Gdx.app.log("Assets", "Created player animations from Player 1-6.png sprite frames");
 
             // OLD CODE - commented out, keeping skeleton sheets for potential future use
             // Create animations from sprite sheets
-            // Use only the frames that have actual skeleton content (not empty frames)
-            // Analysis showed only these frames have substantial content at 32px width
-            // int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
-            // int[] goodHurtFrames = {1, 4, 7, 10, 13};
-            // int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
-
-            // Idle: use first good frame as static pose
-            // int[] idleFrame = {1};
-            // idleAnimation = new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
-
-            // Walk: use only the 10 good frames
-            // walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
-
-            // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
-            // hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
-
-            // SkeletonDie: use only the 13 good frames
-            // deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
-
-            // Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
 
             // Load coin sprites
             coin1 = new Texture(Gdx.files.internal("assets/items/coin_1.png"));

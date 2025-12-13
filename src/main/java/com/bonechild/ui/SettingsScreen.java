@@ -30,6 +30,7 @@ public class SettingsScreen {
     }
     
     private MenuState currentState = MenuState.MAIN;
+    private MenuState previousState = MenuState.MAIN; // Track where we came from
     
     // Main menu buttons
     private Rectangle volumeButton;
@@ -96,6 +97,9 @@ public class SettingsScreen {
         // Audio setup
         this.musicVolume = assets.getBackgroundMusic() != null ? assets.getBackgroundMusic().getVolume() : 0.5f;
         this.sfxVolume = 0.6f;
+        
+        // Initialize screen shake setting from global state
+        this.screenShakeEnabled = com.bonechild.rendering.CameraShake.isEnabled();
         
         // Movement keybind setup (left column)
         this.keybindLabels = new String[]{
@@ -222,10 +226,12 @@ public class SettingsScreen {
             
             if (currentState == MenuState.MAIN) {
                 if (volumeButton.contains(mouseX, mouseY)) {
+                    previousState = MenuState.MAIN;
                     currentState = MenuState.VOLUME;
                     return;
                 }
                 if (keybindsButton.contains(mouseX, mouseY)) {
+                    previousState = MenuState.MAIN;
                     currentState = MenuState.KEYBINDS;
                     return;
                 }
@@ -240,6 +246,8 @@ public class SettingsScreen {
                 }
                 if (screenShakeToggle.contains(mouseX, mouseY)) {
                     screenShakeEnabled = !screenShakeEnabled;
+                    com.bonechild.rendering.CameraShake.setEnabled(screenShakeEnabled);
+                    Gdx.app.log("Settings", "Screen shake " + (screenShakeEnabled ? "enabled" : "disabled"));
                     return;
                 }
             } else if (currentState == MenuState.KEYBINDS) {
@@ -267,12 +275,14 @@ public class SettingsScreen {
         // ESC to go back
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             if (currentState == MenuState.MAIN) {
+                // Close settings entirely
                 if (callback != null) {
                     callback.onBack();
                 }
                 isVisible = false;
             } else {
-                currentState = MenuState.MAIN;
+                // Go back to previous menu state
+                currentState = previousState;
             }
         }
     }
@@ -501,7 +511,11 @@ public class SettingsScreen {
     public void show() {
         isVisible = true;
         currentState = MenuState.MAIN;
+        previousState = MenuState.MAIN;
         ignoreInputTimer = 0.1f;
+        
+        // Sync screen shake setting with global state
+        screenShakeEnabled = com.bonechild.rendering.CameraShake.isEnabled();
     }
     
     public void hide() {

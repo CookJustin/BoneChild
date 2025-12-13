@@ -7,6 +7,8 @@ import java.util.Random;
  * Camera shake effect for impactful visual feedback
  */
 public class CameraShake {
+    private static boolean enabled = true; // Global enable/disable flag
+    
     private float intensity;
     private float duration;
     private float timer;
@@ -20,6 +22,20 @@ public class CameraShake {
         this.intensity = 0;
         this.duration = 0;
         this.timer = 0;
+    }
+    
+    /**
+     * Set whether camera shake is enabled globally
+     */
+    public static void setEnabled(boolean enabled) {
+        CameraShake.enabled = enabled;
+    }
+    
+    /**
+     * Check if camera shake is enabled globally
+     */
+    public static boolean isEnabled() {
+        return enabled;
     }
     
     /**
@@ -37,6 +53,18 @@ public class CameraShake {
      * Update the camera shake and apply to camera
      */
     public void update(OrthographicCamera camera, float delta) {
+        if (!enabled) {
+            // If disabled, restore original position and reset
+            if (timer > 0) {
+                camera.position.x = originalX;
+                camera.position.y = originalY;
+                timer = 0;
+                intensity = 0;
+                duration = 0;
+            }
+            return;
+        }
+        
         if (timer < duration) {
             // Save original position on first frame
             if (timer == 0) {

@@ -15,13 +15,13 @@ public class Goblin extends Mob {
     public Goblin(float x, float y, Player player, Assets assets) {
         super(x, y, player);
         
-        // Goblin sprite size - similar to other enemies
-        this.width = 120f;
-        this.height = 120f;
+        // Goblin sprite size - scaled up for better visibility
+        this.width = 160f;
+        this.height = 160f;
         
-        // Center a 60x60 hitbox in the 120x120 sprite
-        float hitboxW = 60f;
-        float hitboxH = 60f;
+        // Center an 80x80 hitbox in the 160x160 sprite
+        float hitboxW = 80f;
+        float hitboxH = 80f;
         float offsetX = (this.width - hitboxW) / 2f;
         float offsetY = (this.height - hitboxH) / 2f;
         setHitbox(hitboxW, hitboxH, offsetX, offsetY);

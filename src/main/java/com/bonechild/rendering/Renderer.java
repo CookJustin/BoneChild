@@ -206,9 +206,9 @@ public class Renderer {
         // Draw health bar above player (unless dead)
         if (!player.isDead()) {
             drawHealthBar(
-                player.getPosition().x - 16,  // Center the 64px bar over the 32px sprite
+                player.getPosition().x,  // Align with the 32px sprite
                 player.getPosition().y + 64 + 5,
-                64,
+                32,  // Match the sprite width
                 5,
                 player.getHealthPercentage()
             );
@@ -275,8 +275,13 @@ public class Renderer {
                     barHeight = 4;
                     // Center above the Christmas Jad's hitbox
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                } else if (mob instanceof com.bonechild.world.Goblin) {
+                    // Goblin gets 80px bar to match hitbox
+                    barWidth = 80f;
+                    barHeight = 4;
+                    hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 } else {
-                    // Skeleton mobs and Goblins
+                    // Skeleton mobs
                     barWidth = mob.getHitboxWidth() * 2;
                     barHeight = 4;
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
