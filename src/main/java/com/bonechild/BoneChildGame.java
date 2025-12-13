@@ -97,6 +97,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             // Create renderer
             renderer = new Renderer(camera, assets);
             
+            // Pass renderer to world manager for camera shake effects
+            worldManager.setRenderer(renderer);
+            
             // Create input handler
             playerInput = new PlayerInput(worldManager.getPlayer());
             
@@ -455,6 +458,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         renderer.renderProjectiles(worldManager.getProjectiles());
         renderer.renderExplosions(worldManager.getExplosions());
         renderer.renderPickups(worldManager.getPickups());
+        
+        // Render particle effects and damage numbers on top of everything
+        renderer.renderEffects();
         
         // Render UI
         gameUI.render();

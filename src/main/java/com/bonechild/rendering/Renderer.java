@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.bonechild.world.Mob;
 import com.bonechild.world.Player;
 import com.bonechild.world.TileMap;
@@ -22,6 +23,10 @@ public class Renderer {
     private Assets assets;
     private float deltaTime;
     private TileMap tileMap;
+    private CameraShake cameraShake;
+    private Array<DamageNumber> damageNumbers;
+    private BitmapFont damageFont;
+    private ParticleSystem particleSystem; // NEW: Particle system
     
     // Separate animation instances for player (not shared with mobs)
     private Animation playerIdleAnimation;
@@ -38,6 +43,13 @@ public class Renderer {
         this.batch = new SpriteBatch();
         this.shapeRenderer = new ShapeRenderer();
         this.deltaTime = 0;
+        this.cameraShake = new CameraShake();
+        this.damageNumbers = new Array<>();
+        this.particleSystem = new ParticleSystem(camera); // Fixed: Pass camera to constructor
+        
+        // Create damage number font with proper scaling for world coordinates
+        this.damageFont = new BitmapFont();
+        this.damageFont.getData().setScale(0.5f); // Smaller scale for world coordinates
         
         // Create tile map when tileset is loaded
         if (assets.getTilesetTexture() != null) {
@@ -247,20 +259,24 @@ public class Renderer {
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
                 float barWidth;
-                float barHeight = 4;
+                float barHeight;
                 float hitboxTop;
                 if (mob instanceof com.bonechild.world.Vampire) {
                     // Use the same bar width as the original mob (30x2=60)
                     barWidth = 60f;
+                    barHeight = 4;
                     // Center above the Vampire's hitbox
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {
                     // Christmas Jad gets a larger health bar (80px wide)
                     barWidth = 80f;
+                    barHeight = 4;
                     // Center above the Christmas Jad's hitbox
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 } else {
+                    // Skeleton mobs
                     barWidth = mob.getHitboxWidth() * 2;
+                    barHeight = 4;
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 }
                 float barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
@@ -453,9 +469,57 @@ public class Renderer {
      * Update camera
      */
     public void updateCamera() {
+        // Update camera shake effect
+        cameraShake.update(camera, deltaTime);
+        
+        // Update damage numbers
+        for (int i = damageNumbers.size - 1; i >= 0; i--) {
+            DamageNumber dn = damageNumbers.get(i);
+            dn.update(deltaTime);
+            if (!dn.isActive()) {
+                damageNumbers.removeIndex(i);
+            }
+        }
+        
+        // NEW: Update particle system
+        particleSystem.update(deltaTime);
+        
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
+    }
+    
+    /**
+     * Render particles and damage numbers (call after rendering entities)
+     */
+    public void renderEffects() {
+        // NEW: Render particle system
+        particleSystem.render(); // Fixed: No parameter needed
+        
+        // Render damage numbers
+        if (damageNumbers.size > 0) {
+            batch.begin();
+            for (DamageNumber dn : damageNumbers) {
+                if (dn.isActive()) {
+                    dn.render(batch, damageFont);
+                }
+            }
+            batch.end();
+        }
+    }
+    
+    /**
+     * Trigger a camera shake effect
+     */
+    public void shake(float intensity, float duration) {
+        cameraShake.shake(intensity, duration);
+    }
+    
+    /**
+     * Get the camera shake instance
+     */
+    public CameraShake getCameraShake() {
+        return cameraShake;
     }
     
     /**
@@ -468,8 +532,55 @@ public class Renderer {
         if (shapeRenderer != null) {
             shapeRenderer.dispose();
         }
+        if (damageFont != null) {
+            damageFont.dispose();
+        }
     }
     
     public SpriteBatch getBatch() { return batch; }
     public ShapeRenderer getShapeRenderer() { return shapeRenderer; }
+    
+    /**
+     * Spawn damage number at location
+     */
+    public void spawnDamageNumber(float x, float y, float damage, boolean isCritical) {
+        damageNumbers.add(new DamageNumber(x, y, damage, isCritical));
+    }
+    
+    // NEW: Particle effect methods
+    
+    /**
+     * Spawn blood particles when enemy is hit
+     */
+    public void spawnBloodParticles(float x, float y, int count) {
+        particleSystem.spawnBlood(x, y, count); // Fixed: Use spawnBlood
+    }
+    
+    /**
+     * Spawn hit spark particles on impact
+     */
+    public void spawnHitSparks(float x, float y, int count) {
+        particleSystem.spawnSparks(x, y, Color.YELLOW, count); // Fixed: Use spawnSparks with color
+    }
+    
+    /**
+     * Spawn celebration particles when player levels up
+     */
+    public void spawnLevelUpParticles(float x, float y) {
+        particleSystem.spawnLevelUp(x, y); // Fixed: Use spawnLevelUp
+    }
+    
+    /**
+     * Spawn celebration particles (alias for level up)
+     */
+    public void spawnCelebrationParticles(float x, float y) {
+        particleSystem.spawnLevelUp(x, y);
+    }
+    
+    /**
+     * Get particle system for direct access
+     */
+    public ParticleSystem getParticleSystem() {
+        return particleSystem;
+    }
 }

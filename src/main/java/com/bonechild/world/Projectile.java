@@ -13,14 +13,16 @@ public class Projectile {
     private float maxDistance;
     private float distanceTraveled;
     private boolean active;
+    private boolean isCritical;
     
-    public Projectile(float startX, float startY, float targetX, float targetY, float damage) {
+    public Projectile(float startX, float startY, float targetX, float targetY, float damage, boolean isCritical) {
         this.position = new Vector2(startX, startY);
         this.radius = 5f; // Smaller fireball size for better visuals
         this.damage = damage;
         this.maxDistance = 1000f; // Max distance before disappearing
         this.distanceTraveled = 0;
         this.active = true;
+        this.isCritical = isCritical;
         
         // Calculate direction to target
         float dx = targetX - startX;
@@ -92,4 +94,5 @@ public class Projectile {
     public float getRadius() { return radius; }
     public float getDamage() { return damage; }
     public boolean isActive() { return active; }
+    public boolean isCritical() { return isCritical; }
 }

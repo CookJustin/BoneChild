@@ -46,6 +46,10 @@ public class SettingsScreen {
     private boolean draggingMusicSlider;
     private boolean draggingSFXSlider;
     
+    // Screen shake toggle
+    private Rectangle screenShakeToggle;
+    private boolean screenShakeEnabled = true;
+    
     // Keybind controls
     private Rectangle[] keybindButtons;
     private Rectangle[] hotbarKeybindButtons; // Second column for hotbar
@@ -132,6 +136,9 @@ public class SettingsScreen {
         float sliderY = screenHeight / 2f - 30f;
         musicVolumeSlider = new Rectangle(sliderX, sliderY, 300f, 20f);
         sfxVolumeSlider = new Rectangle(sliderX, sliderY - 80f, 300f, 20f);
+        
+        // Screen shake toggle
+        screenShakeToggle = new Rectangle(centerX, sliderY - 160f, buttonWidth, buttonHeight);
         
         // Keybind buttons - TWO COLUMNS
         float leftColumnX = screenWidth / 2f - 320f; // Left column
@@ -229,6 +236,10 @@ public class SettingsScreen {
                 }
                 if (sfxVolumeSlider.contains(mouseX, mouseY)) {
                     draggingSFXSlider = true;
+                    return;
+                }
+                if (screenShakeToggle.contains(mouseX, mouseY)) {
+                    screenShakeEnabled = !screenShakeEnabled;
                     return;
                 }
             } else if (currentState == MenuState.KEYBINDS) {
@@ -349,10 +360,13 @@ public class SettingsScreen {
                  musicVolumeSlider.x, musicVolumeSlider.y + 50f);
         font.draw(batch, "SFX: " + String.format("%.0f%%", sfxVolume * 100), 
                  sfxVolumeSlider.x, sfxVolumeSlider.y + 50f);
+        font.draw(batch, "Screen Shake: " + (screenShakeEnabled ? "ON" : "OFF"), 
+                 screenShakeToggle.x, screenShakeToggle.y + 50f);
         batch.end();
         
         drawSlider(musicVolumeSlider, musicVolume);
         drawSlider(sfxVolumeSlider, sfxVolume);
+        drawButton(screenShakeToggle, screenShakeEnabled ? "ON" : "OFF");
     }
     
     private void drawSlider(Rectangle slider, float value) {
@@ -504,5 +518,9 @@ public class SettingsScreen {
     
     public float getSFXVolume() {
         return sfxVolume;
+    }
+    
+    public boolean isScreenShakeEnabled() {
+        return screenShakeEnabled;
     }
 }

@@ -19,6 +19,8 @@ public class Player extends LivingEntity {
     private int maxHpLevel = 0;
     private int xpBoostLevel = 0;
     private int explosionChanceLevel = 0;
+    private int chainLightningLevel = 0;
+    private int lifestealLevel = 0;
     private boolean leveledUpThisFrame = false;
     
     // Animation state
@@ -55,6 +57,25 @@ public class Player extends LivingEntity {
     private float ghostSpawnTimer = 0f;
     private static final float GHOST_SPAWN_INTERVAL = 0.04f; // Spawn ghost every 0.04 seconds during dodge
     
+    // Kill streak system
+    private int killStreak = 0;
+    private float killStreakTimer = 0f;
+    private static final float KILL_STREAK_TIMEOUT = 5.0f; // Reset after 5 seconds without kill
+    private float killStreakMultiplier = 1.0f;
+    
+    // Critical hit system
+    private static final float BASE_CRIT_CHANCE = 0.15f; // 15% base crit chance
+    private static final float CRIT_MULTIPLIER = 2.0f; // Crits deal 2x damage
+    private static final float DAMAGE_VARIANCE = 0.2f; // ±20% damage variance (80-120% of base damage)
+    private java.util.Random critRandom = new java.util.Random();
+    
+    // New cool features!
+    private static final float LIFESTEAL_PERCENT = 0.15f; // Heal 15% of damage dealt on kill
+    private static final float CHAIN_LIGHTNING_CHANCE = 0.20f; // 20% chance to chain to nearby enemies
+    private static final int MAX_CHAIN_TARGETS = 3; // Chain up to 3 additional enemies
+    private static final float CHAIN_RANGE = 200f; // Chain lightning range
+    private static final float CHAIN_DAMAGE_MULTIPLIER = 0.5f; // Chain does 50% damage
+    
     // Attack properties
     private float attackDamage;
     private float attackRange;
@@ -85,6 +106,18 @@ public class Player extends LivingEntity {
         
         // Update attack cooldown
         timeSinceLastAttack += delta;
+        
+        // Update kill streak timer
+        if (killStreak > 0) {
+            killStreakTimer += delta;
+            if (killStreakTimer >= KILL_STREAK_TIMEOUT) {
+                // Reset streak
+                killStreak = 0;
+                killStreakTimer = 0f;
+                updateKillStreakMultiplier();
+                Gdx.app.log("Player", "Kill streak lost!");
+            }
+        }
         
         // Update dodge recharge timer
         if (dodgeCharges < MAX_DODGE_CHARGES) {
@@ -249,14 +282,15 @@ public class Player extends LivingEntity {
         }
         
         super.takeDamage(damage);
+        
+        // Reset kill streak when taking damage
+        resetKillStreak();
+        
         // Trigger hurt animation when taking damage (if not dead)
         if (!isDead()) {
             currentState = AnimationState.HURT;
             hurtAnimationTimer = 0f;
             isPlayingHurtAnimation = true;
-            // Removed: No longer grant invincibility after taking damage
-            // isInvincible = true;
-            // invincibilityTimer = 0f;
         }
     }
     
@@ -299,16 +333,29 @@ public class Player extends LivingEntity {
         // Reset cooldown
         timeSinceLastAttack = 0;
         
+        // Apply damage variance (80-120% of base damage)
+        float damageVariance = 1.0f + (critRandom.nextFloat() * 2.0f - 1.0f) * DAMAGE_VARIANCE;
+        float variedDamage = attackDamage * damageVariance;
+        
+        // Roll for critical hit (applies to the varied damage)
+        boolean isCrit = critRandom.nextFloat() < BASE_CRIT_CHANCE;
+        float finalDamage = isCrit ? variedDamage * CRIT_MULTIPLIER : variedDamage;
+        
         // Create projectile toward target
         Projectile projectile = new Projectile(
             position.x + width / 2f,
             position.y + height / 2f,
             targetMob.getPosition().x + targetMob.getWidth() / 2f,
             targetMob.getPosition().y + targetMob.getHeight() / 2f,
-            attackDamage
+            finalDamage,
+            isCrit
         );
         
-        Gdx.app.log("Player", "Fireball cast! Damage: " + attackDamage);
+        if (isCrit) {
+            Gdx.app.log("Player", "💥 CRITICAL HIT! Damage: " + finalDamage + " (base: " + attackDamage + ")");
+        } else {
+            Gdx.app.log("Player", "Fireball cast! Damage: " + finalDamage + " (base: " + attackDamage + ")");
+        }
         return projectile;
     }
     
@@ -378,7 +425,7 @@ public class Player extends LivingEntity {
         heal(maxHealth * 0.2f);
         
         leveledUpThisFrame = true;
-        Gdx.app.log("Player", "Level up! Now level " + level + ", Next level needs: " + experienceToNextLevel + " XP");
+        Gdx.app.log("Player", "🎉 Level up! Now level " + level + ", Next level needs: " + experienceToNextLevel + " XP");
     }
     
     /**
@@ -422,7 +469,31 @@ public class Player extends LivingEntity {
                 // Each level gives 5% chance for explosions
                 Gdx.app.log("Player", "Explosion Chance upgraded! Level: " + explosionChanceLevel + ", Chance: " + (explosionChanceLevel * 5) + "%");
                 break;
+            case "CHAIN_LIGHTNING":
+                chainLightningLevel++;
+                // Each level gives 20% chance for chain lightning (maxes at 100% at level 5)
+                Gdx.app.log("Player", "Chain Lightning upgraded! Level: " + chainLightningLevel + ", Chance: " + Math.min(100, chainLightningLevel * 20) + "%");
+                break;
+            case "LIFESTEAL":
+                lifestealLevel++;
+                // Each level gives 15% lifesteal on kill
+                Gdx.app.log("Player", "Lifesteal upgraded! Level: " + lifestealLevel + ", Heal: " + (lifestealLevel * 15) + "% damage on kill");
+                break;
         }
+    }
+    
+    /**
+     * Get chain lightning chance (20% per level, max 100%)
+     */
+    public float getChainLightningChance() {
+        return Math.min(1.0f, chainLightningLevel * 0.20f);
+    }
+    
+    /**
+     * Get lifesteal percentage (15% per level)
+     */
+    public float getLifestealPercent() {
+        return lifestealLevel * 0.15f;
     }
     
     /**
@@ -435,12 +506,21 @@ public class Player extends LivingEntity {
     /**
      * Check if player leveled up this frame
      */
+    public boolean hasLeveledUpThisFrame() {
+        boolean result = leveledUpThisFrame;
+        leveledUpThisFrame = false; // Reset flag after checking
+        return result;
+    }
+    
+    /**
+     * Check if player leveled up this frame
+     */
     public boolean didLevelUpThisFrame() {
         return leveledUpThisFrame;
     }
     
     /**
-     * Reset the level-up flag after checking
+     * Clear the level up flag (called after handling level up)
      */
     public void clearLevelUpFlag() {
         leveledUpThisFrame = false;
@@ -450,6 +530,49 @@ public class Player extends LivingEntity {
     protected void onDeath() {
         Gdx.app.log("Player", "Player died!");
         // TODO: Game over logic
+    }
+    
+    /**
+     * Increment kill streak (called when player kills an enemy)
+     */
+    public void incrementKillStreak() {
+        killStreak++;
+        killStreakTimer = 0f; // Reset timer
+        updateKillStreakMultiplier();
+        
+        // Log milestone streaks
+        if (killStreak == 5 || killStreak == 10 || killStreak == 25 || killStreak == 50 || killStreak == 100) {
+            Gdx.app.log("Player", "🔥 KILL STREAK: " + killStreak + "! Multiplier: " + killStreakMultiplier + "x");
+        }
+    }
+    
+    /**
+     * Reset kill streak (called when player takes damage)
+     */
+    public void resetKillStreak() {
+        if (killStreak > 0) {
+            Gdx.app.log("Player", "Kill streak broken at " + killStreak);
+            killStreak = 0;
+            killStreakTimer = 0f;
+            updateKillStreakMultiplier();
+        }
+    }
+    
+    /**
+     * Update the gold multiplier based on streak
+     */
+    private void updateKillStreakMultiplier() {
+        if (killStreak >= 50) {
+            killStreakMultiplier = 3.0f;
+        } else if (killStreak >= 25) {
+            killStreakMultiplier = 2.5f;
+        } else if (killStreak >= 10) {
+            killStreakMultiplier = 2.0f;
+        } else if (killStreak >= 5) {
+            killStreakMultiplier = 1.5f;
+        } else {
+            killStreakMultiplier = 1.0f;
+        }
     }
     
     // Getters
@@ -465,6 +588,8 @@ public class Player extends LivingEntity {
     public int getMaxHpLevel() { return maxHpLevel; }
     public int getXpBoostLevel() { return xpBoostLevel; }
     public int getExplosionChanceLevel() { return explosionChanceLevel; }
+    public int getChainLightningLevel() { return chainLightningLevel; }
+    public int getLifestealLevel() { return lifestealLevel; }
     public float getAttackDamage() { return attackDamage; }
     public int getDodgeCharges() { return dodgeCharges; }
     public int getMaxDodgeCharges() { return MAX_DODGE_CHARGES; }
@@ -472,6 +597,8 @@ public class Player extends LivingEntity {
         return dodgeCharges < MAX_DODGE_CHARGES ? dodgeRechargeTimer / DODGE_CHARGE_COOLDOWN : 0f; 
     }
     public boolean isDodging() { return isDodging; }
+    public int getKillStreak() { return killStreak; }
+    public float getKillStreakMultiplier() { return killStreakMultiplier; }
     
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }

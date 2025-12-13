@@ -5,6 +5,7 @@ import java.util.Random;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
 import com.bonechild.rendering.Assets;
+import com.bonechild.rendering.Renderer;
 
 /**
  * Manages all entities in the game world
@@ -18,6 +19,8 @@ public class WorldManager {
     private Array<Explosion> explosions;
     private Random random;
     private Assets assets;
+    private Renderer renderer;
+    private ComboSystem comboSystem;
     
     // Wave management
     private float waveTimer;
@@ -31,6 +34,7 @@ public class WorldManager {
         this.projectiles = new Array<>();
         this.explosions = new Array<>();
         this.random = new Random();
+        this.comboSystem = new ComboSystem();
         
         // Initialize wave system
         this.waveTimer = 0;
@@ -54,11 +58,33 @@ public class WorldManager {
     }
     
     /**
+     * Set renderer (needed for camera shake effects)
+     */
+    public void setRenderer(Renderer renderer) {
+        this.renderer = renderer;
+    }
+    
+    /**
+     * Get the combo system
+     */
+    public ComboSystem getComboSystem() {
+        return comboSystem;
+    }
+    
+    /**
      * Update all entities
      */
     public void update(float delta) {
         // Update player
         player.update(delta);
+        
+        // 🎉 Check if player leveled up this frame and spawn celebration particles!
+        if (player.hasLeveledUpThisFrame() && renderer != null) {
+            float playerCenterX = player.getPosition().x + player.getWidth() / 2f;
+            float playerCenterY = player.getPosition().y + player.getHeight() / 2f;
+            renderer.spawnLevelUpParticles(playerCenterX, playerCenterY);
+            Gdx.app.log("WorldManager", "🎉 LEVEL UP CELEBRATION PARTICLES!");
+        }
         
         // Update mobs
         for (int i = mobs.size - 1; i >= 0; i--) {
@@ -69,6 +95,9 @@ public class WorldManager {
             if (mob.isDead()) {
                 float mobX = mob.getPosition().x;
                 float mobY = mob.getPosition().y;
+                
+                // Increment kill streak when mob dies
+                player.incrementKillStreak();
                 
                 spawnPickupsFromMob(mob);
                 
@@ -133,7 +162,60 @@ public class WorldManager {
             // Check collision with mobs
             for (Mob mob : mobs) {
                 if (projectile.collidesWith(mob)) {
-                    mob.takeDamage(projectile.getDamage());
+                    float damageDealt = projectile.getDamage();
+                    boolean isCrit = projectile.isCritical();
+                    
+                    // Deal damage to mob
+                    mob.takeDamage(damageDealt);
+                    
+                    // Check if mob died from this hit for lifesteal
+                    boolean mobDied = mob.isDead();
+                    
+                    // LIFESTEAL: Heal player based on lifesteal power-up level
+                    if (mobDied) {
+                        int lifestealLevel = player.getLifestealLevel();
+                        if (lifestealLevel > 0) {
+                            float lifestealPercent = lifestealLevel * 0.10f; // 10% per level
+                            float lifestealAmount = damageDealt * lifestealPercent;
+                            player.heal(lifestealAmount);
+                            Gdx.app.log("WorldManager", "💚 Lifesteal! Healed " + lifestealAmount + " HP (" + (lifestealPercent * 100) + "%)");
+                        }
+                    }
+                    
+                    // Spawn damage number above mob (closer to the mob, not way above it)
+                    if (renderer != null) {
+                        float mobCenterX = mob.getPosition().x + mob.getWidth() / 2f;
+                        // Position damage number just slightly above center of mob instead of at the top
+                        float mobCenterY = mob.getPosition().y + mob.getHeight() / 2f + 20f;
+                        renderer.spawnDamageNumber(mobCenterX, mobCenterY, damageDealt, isCrit);
+                        
+                        // 🩸 BLOOD PARTICLES when mob is hit!
+                        int particleCount = isCrit ? 15 : 8; // More blood on crits
+                        renderer.spawnBloodParticles(mobCenterX, mobCenterY, particleCount);
+                        
+                        // ✨ HIT SPARKS on impact!
+                        renderer.spawnHitSparks(mobCenterX, mobCenterY, isCrit ? 10 : 5);
+                        
+                        // SCREEN SHAKE on critical hits - bigger shake for bigger damage!
+                        if (isCrit) {
+                            float shakeIntensity = Math.min(damageDealt / 10f, 25f); // Scale with damage, max 25
+                            float shakeDuration = 0.15f + (damageDealt / 500f); // Longer shake for bigger hits
+                            renderer.shake(shakeIntensity, shakeDuration);
+                            Gdx.app.log("WorldManager", "💥 SCREEN SHAKE! Intensity: " + shakeIntensity);
+                        }
+                    }
+                    
+                    // CHAIN LIGHTNING: Trigger based on player's chain lightning level
+                    int chainLightningLevel = player.getChainLightningLevel();
+                    if (chainLightningLevel > 0) {
+                        float chainChance = chainLightningLevel * 0.15f; // 15% per level
+                        if (random.nextFloat() < chainChance) {
+                            int maxChains = chainLightningLevel; // More chains with higher level
+                            chainLightning(mob, damageDealt, maxChains, 200f, 0.5f);
+                            Gdx.app.log("WorldManager", "⚡ CHAIN LIGHTNING! Level " + chainLightningLevel + " (" + (chainChance * 100) + "% chance)");
+                        }
+                    }
+                    
                     projectile.deactivate();
                     Gdx.app.log("WorldManager", "Projectile hit mob!");
                     break;
@@ -182,6 +264,9 @@ public class WorldManager {
         float mobCenterX = mobX + 120;
         float mobCenterY = mobY + 120;
         
+        // Apply kill streak multiplier to gold drops
+        float goldMultiplier = player.getKillStreakMultiplier();
+        
         // 70% chance to drop gold coins (1-3 coins)
         if (random.nextFloat() < 0.7f) {
             int coinCount = 1 + random.nextInt(3); // 1-3 coins
@@ -189,11 +274,15 @@ public class WorldManager {
                 float offsetX = (random.nextFloat() - 0.5f) * 40f;
                 float offsetY = (random.nextFloat() - 0.5f) * 40f;
                 
+                // Base gold (2-4) multiplied by streak multiplier
+                float baseGold = random.nextInt(3) + 2f;
+                float bonusGold = baseGold * goldMultiplier;
+                
                 Pickup coin = new Pickup(
                     mobCenterX + offsetX,
                     mobCenterY + offsetY,
                     Pickup.PickupType.GOLD_COIN,
-                    random.nextInt(3) + 2f // 2-4 gold per coin (reduced from 5-10)
+                    bonusGold
                 );
                 pickups.add(coin);
             }
@@ -238,6 +327,11 @@ public class WorldManager {
             float healAmount = player.getMaxHealth() * (pickup.getValue() / 100f);
             player.heal(healAmount);
             Gdx.app.log("WorldManager", "Collected health orb: Healed " + healAmount + " HP");
+        }
+        
+        // Add kill to combo system
+        if (pickup.getType() == Pickup.PickupType.GOLD_COIN || pickup.getType() == Pickup.PickupType.XP_ORB) {
+            comboSystem.addKill();
         }
         
         pickup.collect();
@@ -344,7 +438,52 @@ public class WorldManager {
         );
         
         explosions.add(explosion);
+        
+        // TRIGGER CAMERA SHAKE for explosion impact!
+        if (renderer != null) {
+            renderer.shake(15f, 0.3f); // Intense shake (15 pixels for 0.3 seconds)
+        }
+        
         Gdx.app.log("WorldManager", "✨ Spawned explosion at (" + (x + 70) + ", " + (y + 70) + ") with NEW animation instance");
+    }
+    
+    /**
+     * Chain lightning mechanic
+     */
+    private void chainLightning(Mob initialMob, float initialDamage, int maxChains, float chainRadius, float damageDecay) {
+        Mob currentMob = initialMob;
+        float currentDamage = initialDamage;
+        int chains = 0;
+
+        while (chains < maxChains) {
+            Mob nextMob = null;
+            float closestDistance = Float.MAX_VALUE;
+
+            for (Mob mob : mobs) {
+                if (mob == currentMob || mob.isDead()) continue;
+
+                float distance = currentMob.getPosition().dst(mob.getPosition());
+                if (distance < chainRadius && distance < closestDistance) {
+                    closestDistance = distance;
+                    nextMob = mob;
+                }
+            }
+
+            if (nextMob == null) break;
+
+            nextMob.takeDamage(currentDamage);
+            Gdx.app.log("WorldManager", "⚡ Chain lightning hit mob for " + currentDamage + " damage!");
+
+            if (renderer != null) {
+                renderer.spawnDamageNumber(nextMob.getPosition().x + nextMob.getWidth() / 2f,
+                                           nextMob.getPosition().y + nextMob.getHeight() / 2f + 20f,
+                                           currentDamage, false);
+            }
+
+            currentDamage *= damageDecay;
+            currentMob = nextMob;
+            chains++;
+        }
     }
     
     // Getters

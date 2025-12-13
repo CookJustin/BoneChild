@@ -60,6 +60,9 @@ public class Assets {
     private Texture settingsButton;
     private Texture exitButton;
 
+    // XP bar UI sprite
+    private Texture boneXpTilesheet;
+
     // Animations
     private Animation idleAnimation;
     private Animation walkAnimation;
@@ -228,6 +231,15 @@ public class Assets {
             Gdx.app.log("Assets", "Loaded pause menu UI sprites");
         } catch (Exception e) {
             Gdx.app.error("Assets", "Failed to load pause menu UI sprites: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Load XP bar UI sprite
+        try {
+            boneXpTilesheet = new Texture(Gdx.files.internal("assets/ui/Bone XP.png"));
+            Gdx.app.log("Assets", "Loaded bone XP tilesheet");
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Failed to load bone XP tilesheet: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -483,6 +495,9 @@ public class Assets {
     public Texture getPlayButton() { return playButton; }
     public Texture getSettingsButton() { return settingsButton; }
     public Texture getExitButton() { return exitButton; }
+
+    // XP bar UI getter
+    public Texture getBoneXpTilesheet() { return boneXpTilesheet; }
 
     /**
      * Create a new independent walk animation instance (for mobs)
