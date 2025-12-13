@@ -42,19 +42,6 @@ if %ERRORLEVEL% EQU 0 (
     echo   - Standard JAR: target\bonechild-game-1.0.0.jar
     echo   - Dependencies: target\lib\
     echo.
-    
-    REM Ask if user wants to create native package
-    set /p NATIVE_PACKAGE="Do you want to create a native package? (y/n): "
-    if /i "%NATIVE_PACKAGE%"=="y" (
-        echo.
-        echo Creating native package...
-        call mvn package -Pnative-package
-        echo.
-        echo Native package created successfully!
-        echo Package location: target\dist\
-    )
-    
-    echo.
     echo Done!
 ) else (
     echo.
