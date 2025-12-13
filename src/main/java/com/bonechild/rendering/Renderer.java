@@ -459,6 +459,16 @@ public class Renderer {
     }
     
     /**
+     * Handle window resize - updates projection matrices
+     */
+    public void resize(int width, int height) {
+        // Update projection matrices immediately when window is resized
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+    }
+    
+    /**
      * Dispose renderer resources
      */
     public void dispose() {

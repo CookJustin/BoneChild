@@ -4,6 +4,8 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.bonechild.input.PlayerInput;
 import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
@@ -22,6 +24,9 @@ import com.bonechild.ui.CharacterStatsScreen;
  */
 public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback, GameOverScreen.GameOverCallback, PowerUpScreen.PowerUpCallback {
     private OrthographicCamera camera;
+    private Viewport viewport;
+    private static final float WORLD_WIDTH = 1280f;
+    private static final float WORLD_HEIGHT = 720f;
     
     // Game systems
     private Assets assets;
@@ -49,9 +54,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     public void create() {
         Gdx.app.log("BoneChild", "Initializing game...");
         
-        // Setup camera
+        // Setup camera with fixed viewport
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
+        viewport.apply();
+        camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
+        camera.update();
         
         // Load assets
         assets = new Assets();
@@ -79,7 +87,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             
             // Create world manager (creates player)
             worldManager = new WorldManager();
-            worldManager.setAssets(assets); // Pass assets to world manager
+            worldManager.setAssets(assets);
             
             // Create renderer
             renderer = new Renderer(camera, assets);
@@ -106,7 +114,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             }
             
             gameStarted = true;
-            Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit");
+            Gdx.app.log("BoneChild", "Controls: WASD/Arrow Keys to move, SPACE to attack, ESC to exit, I for inventory");
         }
     }
     
@@ -427,7 +435,8 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     
     @Override
     public void resize(int width, int height) {
-        camera.setToOrtho(false, width, height);
+        // Update viewport - this maintains consistent world view
+        viewport.update(width, height, true);
         
         if (menuScreen != null) {
             menuScreen.resize(width, height);
@@ -438,6 +447,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         }
         
         if (gameStarted) {
+            if (renderer != null) {
+                renderer.resize(width, height);
+            }
             if (gameUI != null) {
                 gameUI.resize(width, height);
             }
