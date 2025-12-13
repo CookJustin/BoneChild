@@ -234,7 +234,9 @@ public class Renderer {
         
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                if (mob instanceof com.bonechild.world.Vampire) {
+                if (mob instanceof com.bonechild.world.Goblin) {
+                    ((com.bonechild.world.Goblin) mob).render(batch, deltaTime);
+                } else if (mob instanceof com.bonechild.world.Vampire) {
                     ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {
                     ((com.bonechild.world.ChristmasJad) mob).render(batch, deltaTime);
@@ -274,7 +276,7 @@ public class Renderer {
                     // Center above the Christmas Jad's hitbox
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                 } else {
-                    // Skeleton mobs
+                    // Skeleton mobs and Goblins
                     barWidth = mob.getHitboxWidth() * 2;
                     barHeight = 4;
                     hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();

@@ -33,8 +33,15 @@ public class Assets {
     private Texture skeletonHurtSheet;
     private Texture skeletonDieSheet;
 
+    // New player sprite frames (Player1.png to Player6.png)
+    private Texture[] playerFrames;
+
     // Orc sprite sheet for mobs
     private Texture orcWalkSheet;
+
+    // Goblin (Enemy_14_B) sprites for mobs
+    private Texture[] goblinWalkFrames;
+    private Texture[] goblinDeathFrames;
 
     // Coin sprites for animation
     private Texture coin1;
@@ -128,27 +135,55 @@ public class Assets {
             orcWalkSheet = new Texture(Gdx.files.internal("assets/enemies/Orc-Walk.png"));
             Gdx.app.log("Assets", "Loaded orc walk sprite sheet");
 
+            // Load goblin (Enemy_14_B) walk and death animation frames
+            goblinWalkFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                goblinWalkFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Walk_" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded goblin walk animation frames (1-6)");
+
+            goblinDeathFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                goblinDeathFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Dead_" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded goblin death animation frames (1-6)");
+
+            // Load new player sprite frames (Player1.png to Player6.png)
+            playerFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                playerFrames[i] = new Texture(Gdx.files.internal("assets/player/Player " + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded new player sprite frames (Player 1-6.png)");
+
+            // Create animations from new player sprite frames
+            idleAnimation = new Animation(playerFrames, 0.2f, true);
+            walkAnimation = new Animation(playerFrames, 0.1f, true);
+            hurtAnimation = new Animation(playerFrames, 0.05f, false);
+            deathAnimation = new Animation(playerFrames, 0.1f, false);
+            Gdx.app.log("Assets", "Created player animations from Player 1-6.png sprite frames");
+
+            // OLD CODE - commented out, keeping skeleton sheets for potential future use
             // Create animations from sprite sheets
             // Use only the frames that have actual skeleton content (not empty frames)
             // Analysis showed only these frames have substantial content at 32px width
-            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
-            int[] goodHurtFrames = {1, 4, 7, 10, 13};
-            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
+            // int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            // int[] goodHurtFrames = {1, 4, 7, 10, 13};
+            // int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
 
             // Idle: use first good frame as static pose
-            int[] idleFrame = {1};
-            idleAnimation = new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
+            // int[] idleFrame = {1};
+            // idleAnimation = new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
 
             // Walk: use only the 10 good frames
-            walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
+            // walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
 
             // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
-            hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+            // hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
 
             // SkeletonDie: use only the 13 good frames
-            deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+            // deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
 
-            Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
+            // Gdx.app.log("Assets", "Created player animations with 32x64 frames (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
 
             // Load coin sprites
             coin1 = new Texture(Gdx.files.internal("assets/items/coin_1.png"));
@@ -550,6 +585,26 @@ public class Assets {
         if (skeletonDieSheet != null) {
             int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
             return new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+        }
+        return null;
+    }
+
+    /**
+     * Create a new goblin walk animation instance (for mobs)
+     */
+    public Animation createGoblinWalkAnimation() {
+        if (goblinWalkFrames != null && goblinWalkFrames.length > 0) {
+            return new Animation(goblinWalkFrames, 0.1f, true);
+        }
+        return null;
+    }
+
+    /**
+     * Create a new goblin death animation instance (for mobs)
+     */
+    public Animation createGoblinDeathAnimation() {
+        if (goblinDeathFrames != null && goblinDeathFrames.length > 0) {
+            return new Animation(goblinDeathFrames, 0.15f, false); // Slightly slower death animation
         }
         return null;
     }

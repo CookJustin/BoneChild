@@ -377,6 +377,23 @@ public class WorldManager {
         }
         mobs.add(new Vampire(vx, vy, player, assets));
         
+        // Spawn 1-2 Goblins every wave starting from wave 2
+        if (currentWave >= 2) {
+            int goblinCount = 1 + random.nextInt(2); // 1-2 goblins
+            for (int i = 0; i < goblinCount; i++) {
+                float gx, gy;
+                if (random.nextBoolean()) {
+                    gx = random.nextBoolean() ? -50 : screenWidth + 50;
+                    gy = random.nextFloat() * screenHeight;
+                } else {
+                    gx = random.nextFloat() * screenWidth;
+                    gy = random.nextBoolean() ? -50 : screenHeight + 50;
+                }
+                mobs.add(new Goblin(gx, gy, player, assets));
+            }
+            Gdx.app.log("WorldManager", "👺 Spawned " + goblinCount + " Goblin(s) on wave " + currentWave + "!");
+        }
+        
         // Spawn one Christmas Jad every 3 waves (on waves 3, 6, 9, etc.)
         if (currentWave % 3 == 0) {
             float cx, cy;
