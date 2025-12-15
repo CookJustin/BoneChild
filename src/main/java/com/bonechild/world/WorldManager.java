@@ -272,16 +272,27 @@ public class WorldManager {
             Gdx.app.log("WorldManager", "🚨 Wave 4 cleared! Boss wave ready!");
         }
         
-        // Normal wave spawning (waves 1-4)
+        // NEW: After boss is defeated (wave 5), continue with wave 6+ immediately
+        if (currentWave == 5 && mobs.size == 0 && bossSpawned) {
+            // Boss defeated! Continue with normal waves immediately
+            Gdx.app.log("WorldManager", "🎉 BOSS DEFEATED! Continuing to wave 6...");
+            spawnWave();
+            waveTimer = 0; // Reset timer for next wave
+            return; // Exit early to prevent double-spawning
+        }
+        
+        // Normal wave spawning (waves 1-4 and 6+)
         if (waveTimer >= waveInterval && currentWave < 4) {
+            spawnWave();
+            waveTimer = 0;
+        } else if (waveTimer >= waveInterval && currentWave >= 6) {
+            // Continue spawning waves after boss (wave 6, 7, 8, etc.)
             spawnWave();
             waveTimer = 0;
         }
         
-        // Boss wave spawning (wave 5) - only after wave 4 is cleared
-        if (bossWaveReady && !bossSpawned) {
-            spawnBossWave();
-        }
+        // Boss wave spawning (wave 5) - DON'T auto-spawn, wait for warning screen dismissal
+        // The boss spawns manually from BoneChildGame after warning is dismissed
     }
     
     /**
@@ -549,13 +560,15 @@ public class WorldManager {
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
         
-        // Spawn Boss08B at top middle of screen
-        float bossX = screenWidth / 2f - 100f; // Center the 200px wide boss
-        float bossY = screenHeight + 100f; // Spawn above screen, will descend
+        // Spawn Boss08B directly above player spawn point (top-middle of screen)
+        // Player spawns at center (screenWidth/2, screenHeight/2)
+        // Boss spawns at same X, but at top of screen
+        float bossX = (screenWidth / 2f) - 100f; // Center X same as player, minus half boss width (200px / 2)
+        float bossY = screenHeight - 250f; // Top of screen, slightly below edge for visibility
         
         if (assets != null) {
             mobs.add(new Boss08B(bossX, bossY, player, assets));
-            Gdx.app.log("WorldManager", "👹 BOSS08B SPAWNED at top-middle!");
+            Gdx.app.log("WorldManager", "👹 BOSS08B SPAWNED directly above player spawn point!");
         }
     }
     
@@ -567,11 +580,13 @@ public class WorldManager {
     }
     
     /**
-     * Acknowledge boss warning has been shown
+     * Acknowledge boss warning has been shown and spawn the boss
      */
     public void acknowledgeBossWarning() {
-        // This will be called after the warning screen is dismissed
-        // The boss will spawn on the next update
+        // Mark boss as spawned so warning doesn't trigger again
+        bossSpawned = true;
+        bossWaveReady = false;
+        Gdx.app.log("WorldManager", "Boss warning acknowledged - boss will spawn");
     }
     
     // Getters

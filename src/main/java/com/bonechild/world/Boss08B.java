@@ -21,6 +21,7 @@ public class Boss08B extends Mob {
     private Animation attack2Animation;
     private Animation attack3Animation;
     private Animation deathAnimation;
+    private Animation damageAnimation; // NEW: Damage animation
     
     private BossState currentState;
     private float stateTimer;
@@ -32,6 +33,17 @@ public class Boss08B extends Mob {
     
     private Player player; // Store player reference for Boss08B
     
+    // Attack damage tracking
+    private boolean hasDealtAttackDamage; // Track if current attack has dealt damage
+    private static final float ATTACK_DAMAGE_TIMING = 0.3f; // Deal damage 0.3s into attack animation
+    
+    // Damage flash effect
+    private boolean showingDamageFlash;
+    private float damageFlashTimer;
+    private float damageFlashCooldown;  // NEW: Cooldown to prevent spam
+    private static final float DAMAGE_FLASH_DURATION = 0.15f; // Reduced from 0.3s - quicker flash
+    private static final float DAMAGE_FLASH_COOLDOWN = 0.5f; // NEW: Can only flash once per 0.5 seconds
+    
     private enum BossState {
         IDLE, WALKING, ATTACK1, ATTACK2, ATTACK3, DYING
     }
@@ -41,10 +53,11 @@ public class Boss08B extends Mob {
         
         this.player = player; // Store player reference
         
-        // Boss stats - much stronger than regular mobs!
-        this.maxHealth = 500f;
-        this.currentHealth = 500f;
-        this.speed = 40f; // Slower but menacing
+        // BOSS STATS - MASSIVELY BUFFED! 💪
+        this.maxHealth = 2000f; // 4x health (was 500)
+        this.currentHealth = 2000f;
+        this.speed = 60f; // Faster and more aggressive (was 40)
+        setDamage(50f); // HIGH DAMAGE! (was 10 by default) - Use setter instead of direct access
         
         // Large hitbox for boss
         this.hitboxWidth = 80f;
@@ -61,6 +74,9 @@ public class Boss08B extends Mob {
         this.attackCooldown = ATTACK_COOLDOWN_TIME;
         this.deathAnimationComplete = false;
         this.deathAnimationTimer = 0f;
+        this.showingDamageFlash = false;
+        this.damageFlashTimer = 0f;
+        this.damageFlashCooldown = 0f; // Initialize cooldown
         
         // Load all animations from Boss08_B sprite sheet
         if (assets != null) {
@@ -70,6 +86,7 @@ public class Boss08B extends Mob {
             this.attack2Animation = assets.createBoss08BAttack2Animation();
             this.attack3Animation = assets.createBoss08BAttack3Animation();
             this.deathAnimation = assets.createBoss08BDeathAnimation();
+            this.damageAnimation = assets.createBoss08BDamageAnimation(); // Load damage animation
         }
     }
     
@@ -91,6 +108,16 @@ public class Boss08B extends Mob {
         
         stateTimer += delta;
         attackCooldown -= delta;
+        damageFlashCooldown -= delta; // Update damage flash cooldown
+        
+        // Update damage flash effect
+        if (showingDamageFlash) {
+            damageFlashTimer += delta;
+            if (damageFlashTimer >= DAMAGE_FLASH_DURATION) {
+                showingDamageFlash = false;
+                damageFlashTimer = 0f;
+            }
+        }
         
         // Get distance to player
         float distanceToPlayer = position.dst(player.getPosition());
@@ -128,17 +155,34 @@ public class Boss08B extends Mob {
                         }
                         stateTimer = 0f;
                         attackCooldown = ATTACK_COOLDOWN_TIME;
+                        hasDealtAttackDamage = false; // Reset damage flag for new attack
                     }
+                }
+                
+                // COLLISION DAMAGE: Deal damage when walking into player
+                if (collidesWith(player)) {
+                    attackPlayer();
                 }
                 break;
                 
             case ATTACK1:
             case ATTACK2:
             case ATTACK3:
+                // Deal damage at the right moment in the attack animation (0.3s in)
+                if (!hasDealtAttackDamage && stateTimer >= ATTACK_DAMAGE_TIMING) {
+                    // Check if player is in range for the attack
+                    if (distanceToPlayer <= 150f) { // Attack has 150px range
+                        attackPlayer();
+                        hasDealtAttackDamage = true;
+                        com.badlogic.gdx.Gdx.app.log("Boss08B", "💥 BOSS ATTACK! Dealt " + getDamage() + " damage!");
+                    }
+                }
+                
                 // Attack animations last about 0.6 seconds (6 frames * 0.1s)
                 if (stateTimer >= 0.6f) {
                     currentState = BossState.WALKING;
                     stateTimer = 0f;
+                    hasDealtAttackDamage = false; // Reset for next attack
                 }
                 break;
         }
@@ -151,6 +195,9 @@ public class Boss08B extends Mob {
     }
     
     private Animation getCurrentAnimation() {
+        if (showingDamageFlash) {
+            return damageAnimation; // Show damage animation during flash
+        }
         switch (currentState) {
             case IDLE:
                 return idleAnimation;
@@ -173,6 +220,13 @@ public class Boss08B extends Mob {
     public void takeDamage(float damage) {
         super.takeDamage(damage);
         
+        // Trigger damage flash effect if cooldown allows
+        if (damageFlashCooldown <= 0f) {
+            showingDamageFlash = true;
+            damageFlashTimer = 0f;
+            damageFlashCooldown = DAMAGE_FLASH_COOLDOWN; // Reset cooldown
+        }
+        
         // Trigger death state when health reaches 0
         if (isDead() && currentState != BossState.DYING) {
             currentState = BossState.DYING;
@@ -191,15 +245,22 @@ public class Boss08B extends Mob {
         TextureRegion frame = currentAnimation.getCurrentFrame();
         if (frame == null) return;
         
-        // Flip sprite to face player
+        // Determine which direction the boss should face
         boolean shouldFaceLeft = player.getPosition().x < position.x;
-        if (shouldFaceLeft && !frame.isFlipX()) {
+        
+        // Only flip if the current facing direction doesn't match what we need
+        boolean isFlippedLeft = frame.isFlipX();
+        
+        if (shouldFaceLeft && !isFlippedLeft) {
+            // Need to face left, currently facing right
             frame.flip(true, false);
-        } else if (!shouldFaceLeft && frame.isFlipX()) {
+        } else if (!shouldFaceLeft && isFlippedLeft) {
+            // Need to face right, currently facing left
             frame.flip(true, false);
         }
         
-        // Draw the boss sprite
+        // Draw the boss sprite aligned at the bottom (same as player)
+        // The character art is at the bottom of the PNG, so align bottom edge with entity position
         batch.draw(frame, position.x, position.y, width, height);
     }
     

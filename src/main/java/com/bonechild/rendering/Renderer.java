@@ -195,15 +195,17 @@ public class Renderer {
             frame.flip(true, false);
         }
         
-        // Draw the sprite at 2x scale for better visibility (128x128)
-        // Hitbox is 20x10, so center the 128x128 sprite on it
-        float spriteScale = 2.0f; // Scale up 2x for good visibility
-        float spriteWidth = 64 * spriteScale;  // 128 pixels
-        float spriteHeight = 64 * spriteScale; // 128 pixels
+        // The 48x48 PNG sprite scaled to 144x144 for visibility
+        // IMPORTANT: The character art appears to be at the BOTTOM of the 48x48 PNG
+        // So we need to align the bottom of the scaled sprite with the bottom of the entity
+        float spriteScale = 3.0f;
+        float spriteWidth = 48 * spriteScale;   // 144 pixels
+        float spriteHeight = 48 * spriteScale;  // 144 pixels
         
-        // Center the large sprite on the 20x10 hitbox position
-        float spriteX = player.getPosition().x - (spriteWidth - 20) / 2;
-        float spriteY = player.getPosition().y - (spriteHeight - 10) / 2;
+        // Draw sprite with bottom-left corner at entity position
+        // This way the character art (at bottom of PNG) aligns with entity position
+        float spriteX = player.getPosition().x + (player.getWidth() - spriteWidth) / 2; // Center horizontally
+        float spriteY = player.getPosition().y; // Align bottom edge with entity bottom
         
         batch.draw(
             frame,
@@ -220,11 +222,17 @@ public class Renderer {
         
         // Draw health bar above player (unless dead)
         if (!player.isDead()) {
+            // Position health bar above the player's actual hitbox (not entity bounds)
+            float healthBarCenterX = player.getPosition().x + player.getHitboxOffsetX() + player.getHitboxWidth() / 2;
+            float hitboxTop = player.getPosition().y + player.getHitboxOffsetY() + player.getHitboxHeight();
+            float barWidth = 64;
+            float barHeight = 5;
+            
             drawHealthBar(
-                player.getPosition().x - 22,  // Center 64px bar over 20px hitbox width
-                player.getPosition().y + 10 + 5, // Position above the 10px hitbox height
-                64,  // Health bar width
-                5,
+                healthBarCenterX - barWidth / 2,  // Center bar over hitbox
+                hitboxTop + 5,                  // Position above the hitbox
+                barWidth,
+                barHeight,
                 player.getHealthPercentage()
             );
         }
@@ -294,59 +302,22 @@ public class Renderer {
         // Draw health bars for mobs (only for alive mobs)
         for (Mob mob : mobs) {
             if (mob.isActive() && !mob.isDead()) {
-                float barWidth;
-                float barHeight;
-                float barX;
-                float barY;
+                // Uniform health bar settings for all mobs
+                float barWidth = 60f;  // Standard width for all mobs
+                float barHeight = 5f;  // Standard height for all mobs
                 
-                if (mob instanceof com.bonechild.world.Vampire) {
-                    // Use the same bar width as the original mob (30x2=60)
-                    barWidth = 60f;
-                    barHeight = 4;
-                    // Center above the Vampire's hitbox
-                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                    barY = hitboxTop + 5;
-                } else if (mob instanceof com.bonechild.world.ChristmasJad) {
-                    // Christmas Jad gets a larger health bar (80px wide)
-                    barWidth = 80f;
-                    barHeight = 4;
-                    // Center above the Christmas Jad's hitbox
-                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                    barY = hitboxTop + 5;
-                } else if (mob instanceof com.bonechild.world.Glob) {
-                    // Glob gets 80px bar to match visual size
-                    barWidth = 80f;
-                    barHeight = 4;
-                    // The Glob sprite is 48x48 rendered at 160x160 scale
-                    // The blob body is in the center-bottom portion
-                    // Position bar above the visible blob (roughly 1/3 up from bottom of 160px sprite)
-                    float hitboxCenterX = mob.getPosition().x + mob.getHitboxOffsetX() + (mob.getHitboxWidth() / 2);
-                    float blobTop = mob.getPosition().y + 60f; // Position above the visible blob
-                    barX = hitboxCenterX - (barWidth / 2);
-                    barY = blobTop;
-                } else if (mob instanceof com.bonechild.world.Enemy17B) {
-                    // Red Demon (Enemy_17_B) gets a higher health bar
-                    barWidth = 40f; // Proportional to the 120px sprite width (about 1/3)
-                    barHeight = 4;
-                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                    barY = hitboxTop + 25; // Raised from +5 to +25 for better visibility above the demon
-                } else if (mob instanceof com.bonechild.world.Boss08B) {
-                    // Boss08B gets a large health bar (100px wide, thicker)
+                // Calculate position - centered above hitbox top
+                float hitboxCenterX = mob.getPosition().x + mob.getHitboxOffsetX() + (mob.getHitboxWidth() / 2);
+                float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                
+                float barX = hitboxCenterX - (barWidth / 2);
+                float barY = hitboxTop + 8;  // Consistent spacing above hitbox
+                
+                // Boss gets a larger health bar
+                if (mob instanceof com.bonechild.world.Boss08B) {
                     barWidth = 100f;
-                    barHeight = 6;
-                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                    barY = hitboxTop + 10;
-                } else {
-                    // Regular mobs (120x120 display, 10x10 hitbox)
-                    barWidth = 40f; // Proportional to the 120px sprite width (about 1/3)
-                    barHeight = 4;
-                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
-                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
-                    barY = hitboxTop + 5;
+                    barHeight = 8f;
+                    barX = hitboxCenterX - (barWidth / 2);
                 }
                 
                 drawHealthBar(barX, barY, barWidth, barHeight, mob.getHealthPercentage());
@@ -665,5 +636,49 @@ public class Renderer {
      */
     public ScreenEffects getScreenEffects() {
         return screenEffects;
+    }
+    
+    /**
+     * DEBUG: Render hitboxes for debugging
+     */
+    public void renderHitboxes(Player player, Array<Mob> mobs) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        
+        // Draw player hitbox in green
+        if (player != null && !player.isDead()) {
+            shapeRenderer.setColor(0f, 1f, 0f, 1f);
+            float hitboxX = player.getPosition().x + player.getHitboxOffsetX();
+            float hitboxY = player.getPosition().y + player.getHitboxOffsetY();
+            shapeRenderer.rect(hitboxX, hitboxY, player.getHitboxWidth(), player.getHitboxHeight());
+            
+            // Draw entity bounds in blue
+            shapeRenderer.setColor(0f, 0f, 1f, 1f);
+            shapeRenderer.rect(player.getPosition().x, player.getPosition().y, player.getWidth(), player.getHeight());
+            
+            // Draw a crosshair at the hitbox center (where mobs should target)
+            float centerX = hitboxX + player.getHitboxWidth() / 2;
+            float centerY = hitboxY + player.getHitboxHeight() / 2;
+            shapeRenderer.setColor(1f, 0f, 0f, 1f);
+            shapeRenderer.line(centerX - 5, centerY, centerX + 5, centerY);
+            shapeRenderer.line(centerX, centerY - 5, centerX, centerY + 5);
+        }
+        
+        // Draw mob hitboxes in red
+        if (mobs != null) {
+            for (Mob mob : mobs) {
+                if (mob.isActive() && !mob.isDead()) {
+                    shapeRenderer.setColor(1f, 0f, 0f, 1f);
+                    float hitboxX = mob.getPosition().x + mob.getHitboxOffsetX();
+                    float hitboxY = mob.getPosition().y + mob.getHitboxOffsetY();
+                    shapeRenderer.rect(hitboxX, hitboxY, mob.getHitboxWidth(), mob.getHitboxHeight());
+                    
+                    // Draw entity bounds in yellow
+                    shapeRenderer.setColor(1f, 1f, 0f, 1f);
+                    shapeRenderer.rect(mob.getPosition().x, mob.getPosition().y, mob.getWidth(), mob.getHeight());
+                }
+            }
+        }
+        
+        shapeRenderer.end();
     }
 }

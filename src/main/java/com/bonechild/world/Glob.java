@@ -21,17 +21,16 @@ public class Glob extends Mob {
         this.width = 160f;
         this.height = 160f;
         
-        // The glob sprite is 48x48 but the actual blob body is only about 16x16
-        // positioned in the center-bottom of the sprite.
-        // Create a SMALL hitbox centered on the blob body.
+        // The glob sprite is 48x48 with the blob body being roughly 1/3 of the sprite
+        // When scaled to 160x160, the blob is about 50-60 pixels
+        // Create a reasonable hitbox centered on the blob body at the bottom
         
-        float hitboxW = 15f;  // Small hitbox matching the blob size
-        float hitboxH = 15f;  // Square hitbox
+        float hitboxW = 50f;  // Increased from 15 to match the visible blob better
+        float hitboxH = 50f;  // Square hitbox matching the blob shape
         
-        // Center the hitbox horizontally: (160 - 15) / 2 = 72.5
-        // Position it at the bottom where the blob actually sits (not 60px up!)
-        float offsetX = (this.width - hitboxW) / 2f;  // Center horizontally
-        float offsetY = 5f;  // Position at the very bottom where the blob body actually is
+        // Center the hitbox horizontally
+        float offsetX = (this.width - hitboxW) / 2f;  // Center horizontally = 55
+        float offsetY = 10f;  // Position at the bottom where the blob sits
         
         setHitbox(hitboxW, hitboxH, offsetX, offsetY);
         

@@ -77,7 +77,12 @@ public class Player extends LivingEntity {
     private float timeSinceLastAttack;
     
     public Player(float x, float y) {
-        super(x, y, 20, 10, 100f, 200f); // Hitbox: 20x10 (original working config)
+        super(x, y, 48, 48, 100f, 200f); // Entity size matches PNG: 48x48
+        
+        // The PNG is 48x48, with visible character art in the center
+        // The character sprite is roughly 20x20 pixels centered in the 48x48 PNG
+        // Set hitbox to 24x24 centered BOTH horizontally and vertically in the 48x48 entity
+        setHitbox(24, 24, 12, 12); // 24x24 hitbox, centered at (12, 12) offset
         
         this.level = 1;
         this.experience = 0;
@@ -88,7 +93,7 @@ public class Player extends LivingEntity {
         this.facingRight = true;
         
         // Attack setup
-        this.attackDamage = 40f;
+        this.attackDamage = 48f; // Increased by 20% from 40f
         this.attackRange = 500f; // Attack range in pixels (projectile range)
         this.attackCooldown = 0.5f; // Can attack twice per second
         this.timeSinceLastAttack = 0;
@@ -340,13 +345,9 @@ public class Player extends LivingEntity {
         float targetHitboxCenterX = targetMob.getPosition().x + targetMob.getHitboxOffsetX() + targetMob.getHitboxWidth() / 2f;
         float targetHitboxCenterY = targetMob.getPosition().y + targetMob.getHitboxOffsetY() + targetMob.getHitboxHeight() / 2f;
         
-        // Spawn from the actual sprite artwork center
-        // Original sprite artwork is ~16px tall in a 32px PNG, scaled 2x = ~32px tall in 128px canvas
-        // The artwork is roughly centered in the bottom half of the sprite
-        // Hitbox is 40x30, sprite renders as 128x128 centered on hitbox
-        // Actual character artwork center is approximately at hitbox center Y position
-        float visualCenterX = position.x + width / 2f; // Horizontal center of 40px hitbox
-        float visualCenterY = position.y + height / 2f; // Use hitbox center since artwork aligns with it
+        // Spawn from the player's hitbox center (where the character's body actually is)
+        float visualCenterX = position.x + getHitboxOffsetX() + getHitboxWidth() / 2f;
+        float visualCenterY = position.y + getHitboxOffsetY() + getHitboxHeight() / 2f;
         
         Projectile projectile = new Projectile(
             visualCenterX,

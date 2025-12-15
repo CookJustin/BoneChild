@@ -490,6 +490,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         renderer.renderExplosions(worldManager.getExplosions());
         renderer.renderPickups(worldManager.getPickups());
         
+        // DEBUG: Render hitboxes to see what's happening
+        renderer.renderHitboxes(worldManager.getPlayer(), worldManager.getMobs());
+        
         // Render particle effects and damage numbers on top of everything
         renderer.renderEffects();
         
@@ -560,8 +563,11 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         if (bossWarningScreen != null && bossWarningScreen.isActive()) {
             if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
                 bossWarningScreen.dismiss();
+                worldManager.acknowledgeBossWarning();
+                // Manually trigger boss spawn using virtual coordinates
+                spawnBossAtCenter();
                 gamePaused = false; // Resume game after dismissing warning
-                Gdx.app.log("BoneChild", "🎮 Boss warning dismissed! Game resumed!");
+                Gdx.app.log("BoneChild", "🎮 Boss warning dismissed! Boss spawning!");
             }
             return; // Don't process other inputs while boss warning is active
         }
@@ -608,6 +614,27 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         // Update UI
         gameUI.update(delta);
         inventoryUI.update(delta);
+    }
+    
+    /**
+     * Spawn the boss at the center top of the VIRTUAL world (not physical screen)
+     */
+    private void spawnBossAtCenter() {
+        // Use VIRTUAL coordinates (1280x720), not physical screen size
+        float bossX = VIRTUAL_WIDTH / 2f - 100f; // Center the 200px wide boss
+        float bossY = VIRTUAL_HEIGHT + 100f; // Spawn above the virtual screen
+        
+        // Manually add the boss to the world
+        com.bonechild.world.Boss08B boss = new com.bonechild.world.Boss08B(
+            bossX, 
+            bossY, 
+            worldManager.getPlayer(), 
+            assets
+        );
+        
+        worldManager.getMobs().add(boss);
+        
+        Gdx.app.log("BoneChild", "👹 BOSS SPAWNED at virtual center-top (" + bossX + ", " + bossY + ")");
     }
     
     @Override

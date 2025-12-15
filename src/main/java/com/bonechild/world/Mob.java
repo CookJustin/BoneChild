@@ -36,9 +36,9 @@ public class Mob extends LivingEntity {
         float myHitboxCenterX = position.x + hitboxOffsetX + hitboxWidth / 2f;
         float myHitboxCenterY = position.y + hitboxOffsetY + hitboxHeight / 2f;
         
-        // Calculate center of player's hitbox (player has default hitbox = full size)
-        float targetHitboxCenterX = target.getPosition().x + target.getWidth() / 2f;
-        float targetHitboxCenterY = target.getPosition().y + target.getHeight() / 2f;
+        // Calculate center of player's ACTUAL hitbox (not entity size)
+        float targetHitboxCenterX = target.getPosition().x + target.getHitboxOffsetX() + target.getHitboxWidth() / 2f;
+        float targetHitboxCenterY = target.getPosition().y + target.getHitboxOffsetY() + target.getHitboxHeight() / 2f;
         
         // Calculate direction from mob's hitbox center to player's hitbox center
         Vector2 direction = new Vector2(
@@ -59,7 +59,7 @@ public class Mob extends LivingEntity {
         }
     }
     
-    private void attackPlayer() {
+    protected void attackPlayer() {
         if (target != null && !target.isDead()) {
             target.takeDamage(damage);
             Gdx.app.log("Mob", "Attacked player for " + damage + " damage");

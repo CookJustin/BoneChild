@@ -3,51 +3,56 @@ package com.bonechild.ui;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 /**
- * Epic retro-style boss warning screen
+ * Retro arcade-style boss warning banner with scrolling text
  */
 public class BossWarningScreen {
     private boolean active;
     private float timer;
-    private float flashTimer;
-    private boolean flashOn;
+    private float scrollOffset;
     
-    private static final float FLASH_SPEED = 0.15f; // Flash every 0.15 seconds
+    private static final float SCROLL_SPEED = 200f; // Pixels per second
     private static final float AUTO_DISMISS_TIME = 3.0f; // Auto-dismiss after 3 seconds
+    private static final float BANNER_HEIGHT = 80f; // Height of the warning banner
     
     private ShapeRenderer shapeRenderer;
     private BitmapFont warningFont;
-    private BitmapFont subtitleFont;
+    private GlyphLayout layout; // Reusable layout for measuring text
     
-    private String bossName;
+    private String warningText;
+    private float repeatWidth; // Width including spacing for seamless loop
     
     public BossWarningScreen() {
         this.active = false;
         this.timer = 0f;
-        this.flashTimer = 0f;
-        this.flashOn = true;
+        this.scrollOffset = 0f;
         this.shapeRenderer = new ShapeRenderer();
         
-        // Create large warning font
+        // Create warning font
         this.warningFont = new BitmapFont();
-        this.warningFont.getData().setScale(4.0f); // HUGE text
-        this.warningFont.setColor(Color.RED);
+        this.warningFont.getData().setScale(3.0f); // Large text
         
-        // Create subtitle font
-        this.subtitleFont = new BitmapFont();
-        this.subtitleFont.getData().setScale(2.0f);
-        this.subtitleFont.setColor(Color.WHITE);
+        // Create reusable layout
+        this.layout = new GlyphLayout();
+        
+        // Calculate the actual rendered width including spacing
+        layout.setText(warningFont, "WARNING:");
+        float warningWidth = layout.width;
+        layout.setText(warningFont, "BOSS FIGHT");
+        float bossFightWidth = layout.width;
+        
+        // Total width: "WARNING:" + gap + "BOSS FIGHT" + extra spacing before next repeat
+        this.repeatWidth = warningWidth + 80f + bossFightWidth + 200f; // Added 200f extra spacing between repeats
     }
     
     public void show(String bossName) {
         this.active = true;
         this.timer = 0f;
-        this.flashTimer = 0f;
-        this.flashOn = true;
-        this.bossName = bossName;
+        this.scrollOffset = 0f;
         
         Gdx.app.log("BossWarningScreen", "🚨 BOSS WARNING: " + bossName);
     }
@@ -56,13 +61,10 @@ public class BossWarningScreen {
         if (!active) return;
         
         timer += delta;
-        flashTimer += delta;
+        scrollOffset += SCROLL_SPEED * delta;
         
-        // Flash effect
-        if (flashTimer >= FLASH_SPEED) {
-            flashOn = !flashOn;
-            flashTimer = 0f;
-        }
+        // Keep scrolling indefinitely without wrapping - we'll handle the wrap in rendering
+        // This prevents glitches from modulo operations
         
         // Auto-dismiss after time
         if (timer >= AUTO_DISMISS_TIME) {
@@ -76,82 +78,66 @@ public class BossWarningScreen {
         float screenWidth = Gdx.graphics.getWidth();
         float screenHeight = Gdx.graphics.getHeight();
         
-        // Draw semi-transparent black background
-        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
-        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE_MINUS_SRC_ALPHA);
+        // Calculate banner position (center of screen)
+        float bannerY = (screenHeight - BANNER_HEIGHT) / 2f;
         
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0f, 0f, 0f, 0.85f); // Dark semi-transparent
-        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
-        shapeRenderer.end();
-        
-        // Draw warning border (flashing red)
-        if (flashOn) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            Gdx.gl.glLineWidth(10f);
-            shapeRenderer.setColor(Color.RED);
-            
-            // Outer border
-            float borderPadding = 20f;
-            shapeRenderer.rect(borderPadding, borderPadding, 
-                             screenWidth - borderPadding * 2, 
-                             screenHeight - borderPadding * 2);
-            
-            // Inner border
-            float innerPadding = 40f;
-            shapeRenderer.rect(innerPadding, innerPadding, 
-                             screenWidth - innerPadding * 2, 
-                             screenHeight - innerPadding * 2);
-            
-            shapeRenderer.end();
-            Gdx.gl.glLineWidth(1f);
-        }
-        
-        // Draw text
-        batch.begin();
-        
-        // "WARNING" text (flashing)
-        if (flashOn) {
-            String warningText = "⚠ WARNING ⚠";
-            warningFont.setColor(Color.RED);
-            float warningWidth = warningFont.draw(batch, warningText, 0, 0).width;
-            warningFont.draw(batch, warningText, 
-                           (screenWidth - warningWidth) / 2, 
-                           screenHeight * 0.7f);
-        }
-        
-        // "BOSS FIGHT" text (always visible, yellow)
-        String bossText = "BOSS FIGHT";
-        subtitleFont.setColor(Color.YELLOW);
-        float bossWidth = subtitleFont.draw(batch, bossText, 0, 0).width;
-        subtitleFont.draw(batch, bossText, 
-                         (screenWidth - bossWidth) / 2, 
-                         screenHeight * 0.5f);
-        
-        // Boss name (white)
-        if (bossName != null) {
-            subtitleFont.setColor(Color.WHITE);
-            float nameWidth = subtitleFont.draw(batch, bossName, 0, 0).width;
-            subtitleFont.draw(batch, bossName, 
-                            (screenWidth - nameWidth) / 2, 
-                            screenHeight * 0.4f);
-        }
-        
-        // Instructions (small, blinking)
-        if (flashOn) {
-            subtitleFont.setColor(Color.LIGHT_GRAY);
-            subtitleFont.getData().setScale(1.5f);
-            String instructions = "Press SPACE to continue...";
-            float instructWidth = subtitleFont.draw(batch, instructions, 0, 0).width;
-            subtitleFont.draw(batch, instructions, 
-                            (screenWidth - instructWidth) / 2, 
-                            screenHeight * 0.25f);
-            subtitleFont.getData().setScale(2.0f); // Reset scale
-        }
-        
+        // End the batch before drawing shapes
         batch.end();
         
-        Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
+        // Draw black background banner
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.BLACK);
+        shapeRenderer.rect(0, bannerY, screenWidth, BANNER_HEIGHT);
+        shapeRenderer.end();
+        
+        // Draw red border on top and bottom
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.RED);
+        shapeRenderer.rect(0, bannerY, screenWidth, 4); // Top border
+        shapeRenderer.rect(0, bannerY + BANNER_HEIGHT - 4, screenWidth, 4); // Bottom border
+        shapeRenderer.end();
+        
+        // Resume batch for text rendering
+        batch.begin();
+        
+        // Draw scrolling text multiple times to fill screen
+        float textY = bannerY + BANNER_HEIGHT / 2f + 15f; // Center text vertically
+        
+        // Calculate how many copies we need to fill the screen
+        int numCopies = (int) Math.ceil(screenWidth / repeatWidth) + 3;
+        
+        // Start position (scrolling from right to left)
+        float baseX = screenWidth - (scrollOffset % repeatWidth);
+        
+        // Draw multiple copies of the text pattern
+        for (int i = -1; i < numCopies; i++) {
+            float x = baseX + (i * repeatWidth);
+            
+            // Only draw if visible on screen
+            if (x + repeatWidth >= 0 && x <= screenWidth) {
+                // Draw "WARNING:" in red
+                warningFont.setColor(Color.RED);
+                layout.setText(warningFont, "WARNING:");
+                warningFont.draw(batch, "WARNING:", x, textY);
+                float warningTextWidth = layout.width;
+                
+                // Draw "BOSS FIGHT" in yellow with spacing
+                warningFont.setColor(Color.YELLOW);
+                layout.setText(warningFont, "BOSS FIGHT");
+                warningFont.draw(batch, "BOSS FIGHT", x + warningTextWidth + 80f, textY);
+            }
+        }
+        
+        // Draw "Press SPACE" instruction at bottom
+        warningFont.getData().setScale(1.5f);
+        warningFont.setColor(Color.WHITE);
+        String instruction = "Press SPACE to continue";
+        layout.setText(warningFont, instruction);
+        float instructWidth = layout.width;
+        warningFont.draw(batch, instruction, 
+                        (screenWidth - instructWidth) / 2f, 
+                        bannerY - 30f);
+        warningFont.getData().setScale(3.0f); // Reset scale
     }
     
     public void dismiss() {
@@ -168,9 +154,6 @@ public class BossWarningScreen {
         }
         if (warningFont != null) {
             warningFont.dispose();
-        }
-        if (subtitleFont != null) {
-            subtitleFont.dispose();
         }
     }
 }

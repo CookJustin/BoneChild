@@ -803,4 +803,21 @@ public class Assets {
         // Combine row 7 (6 frames) and row 8 (6 frames) for 12 frame death animation
         return Animation.fromSpriteSheetMultiRow(sheet, 6, 2, 6, 64, 64, 0.1f, false);
     }
+    
+    /**
+     * Create Boss08_B damage animation (Enemy_12_B damage sprites, 6 frames)
+     */
+    public Animation createBoss08BDamageAnimation() {
+        try {
+            Texture[] damageFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                damageFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_12/Enemy_12_B/Enemy_12_B_Damage_" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded Boss08B damage animation frames (1-6)");
+            return new Animation(damageFrames, 64, 64, 0.05f, false); // Fast flash animation
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Failed to load Boss08B damage animation: " + e.getMessage());
+            return null;
+        }
+    }
 }
