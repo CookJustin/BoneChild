@@ -27,6 +27,7 @@ public class Renderer {
     private Array<DamageNumber> damageNumbers;
     private BitmapFont damageFont;
     private ParticleSystem particleSystem; // NEW: Particle system
+    private ScreenEffects screenEffects; // EPIC: Screen effects for maximum juice!
     
     // Separate animation instances for player (not shared with mobs)
     private Animation playerIdleAnimation;
@@ -46,6 +47,7 @@ public class Renderer {
         this.cameraShake = new CameraShake();
         this.damageNumbers = new Array<>();
         this.particleSystem = new ParticleSystem(camera); // Fixed: Pass camera to constructor
+        this.screenEffects = new ScreenEffects(camera); // EPIC: Initialize screen effects!
         
         // Create damage number font with proper scaling for world coordinates
         this.damageFont = new BitmapFont();
@@ -135,6 +137,10 @@ public class Renderer {
         if (ghostTrail != null && !ghostTrail.isEmpty()) {
             var frame = currentAnimation.getCurrentFrame();
             
+            float spriteScale = 2.0f; // Match player sprite scale (2x instead of 3x)
+            float ghostWidth = 64 * spriteScale;
+            float ghostHeight = 64 * spriteScale;
+            
             for (var ghost : ghostTrail) {
                 // Set ghost opacity
                 batch.setColor(1f, 1f, 1f, ghost.getOpacity());
@@ -147,13 +153,16 @@ public class Renderer {
                     frame.flip(true, false);
                 }
                 
-                // Draw ghost sprite
+                // Draw ghost sprite - centered on ghost position (which is 64x64 hitbox)
+                float ghostX = ghost.getX() - (ghostWidth - 64) / 2;
+                float ghostY = ghost.getY() - (ghostHeight - 64) / 2;
+                
                 batch.draw(
                     frame,
-                    ghost.getX(),
-                    ghost.getY(),
-                    32,
-                    64
+                    ghostX,
+                    ghostY,
+                    ghostWidth,
+                    ghostHeight
                 );
                 
                 // Flip back if needed
@@ -186,16 +195,22 @@ public class Renderer {
             frame.flip(true, false);
         }
         
-        // Draw the sprite at 32x64 size (adjusted for new frame dimensions)
-        float spriteX = player.getPosition().x;
-        float spriteY = player.getPosition().y;
+        // Draw the sprite at 2x scale for better visibility (128x128)
+        // Hitbox is 20x10, so center the 128x128 sprite on it
+        float spriteScale = 2.0f; // Scale up 2x for good visibility
+        float spriteWidth = 64 * spriteScale;  // 128 pixels
+        float spriteHeight = 64 * spriteScale; // 128 pixels
+        
+        // Center the large sprite on the 20x10 hitbox position
+        float spriteX = player.getPosition().x - (spriteWidth - 20) / 2;
+        float spriteY = player.getPosition().y - (spriteHeight - 10) / 2;
         
         batch.draw(
             frame,
             spriteX,
             spriteY,
-            32,  // New sprite width (32 pixels)
-            64   // Sprite height (still 64)
+            spriteWidth,
+            spriteHeight
         );
         
         // Reset batch color to default white to prevent color tinting issues
@@ -206,9 +221,9 @@ public class Renderer {
         // Draw health bar above player (unless dead)
         if (!player.isDead()) {
             drawHealthBar(
-                player.getPosition().x,  // Align with the 32px sprite
-                player.getPosition().y + 64 + 5,
-                32,  // Match the sprite width
+                player.getPosition().x - 22,  // Center 64px bar over 20px hitbox width
+                player.getPosition().y + 10 + 5, // Position above the 10px hitbox height
+                64,  // Health bar width
                 5,
                 player.getHealthPercentage()
             );
@@ -233,25 +248,36 @@ public class Renderer {
         batch.begin();
         
         for (Mob mob : mobs) {
-            // Allow Globs to render when dead (for death animation)
+            // Allow Globs, Enemy17B, and Boss08B to render when dead (for death animation)
             boolean shouldRender = mob.isActive() && !mob.isDead();
             if (mob instanceof com.bonechild.world.Glob) {
                 com.bonechild.world.Glob glob = (com.bonechild.world.Glob) mob;
                 // Render if active and either alive OR death animation not complete
                 shouldRender = mob.isActive() && (!mob.isDead() || !glob.isDeathAnimationComplete());
+            } else if (mob instanceof com.bonechild.world.Enemy17B) {
+                com.bonechild.world.Enemy17B enemy17b = (com.bonechild.world.Enemy17B) mob;
+                // Render if active and either alive OR death animation not complete
+                shouldRender = mob.isActive() && (!mob.isDead() || !enemy17b.isDeathAnimationComplete());
+            } else if (mob instanceof com.bonechild.world.Boss08B) {
+                com.bonechild.world.Boss08B boss08b = (com.bonechild.world.Boss08B) mob;
+                // Render if active and either alive OR death animation not complete
+                shouldRender = mob.isActive() && (!mob.isDead() || !boss08b.isDeathAnimationComplete());
             }
             
             if (shouldRender) {
-                if (mob instanceof com.bonechild.world.Glob) {
+                if (mob instanceof com.bonechild.world.Boss08B) {
+                    ((com.bonechild.world.Boss08B) mob).render(batch, deltaTime);
+                } else if (mob instanceof com.bonechild.world.Enemy17B) {
+                    ((com.bonechild.world.Enemy17B) mob).render(batch, deltaTime);
+                } else if (mob instanceof com.bonechild.world.Glob) {
                     ((com.bonechild.world.Glob) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.Vampire) {
                     ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {
                     ((com.bonechild.world.ChristmasJad) mob).render(batch, deltaTime);
                 } else {
-                    // Get current frame
+                    // Fallback for other mob types
                     var frame = mobWalkAnimation.getCurrentFrame();
-                    // Draw the animated sprite (mobs use skeleton sprite)
                     batch.draw(
                         frame,
                         mob.getPosition().x,
@@ -300,9 +326,23 @@ public class Renderer {
                     float blobTop = mob.getPosition().y + 60f; // Position above the visible blob
                     barX = hitboxCenterX - (barWidth / 2);
                     barY = blobTop;
+                } else if (mob instanceof com.bonechild.world.Enemy17B) {
+                    // Red Demon (Enemy_17_B) gets a higher health bar
+                    barWidth = 40f; // Proportional to the 120px sprite width (about 1/3)
+                    barHeight = 4;
+                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                    barY = hitboxTop + 25; // Raised from +5 to +25 for better visibility above the demon
+                } else if (mob instanceof com.bonechild.world.Boss08B) {
+                    // Boss08B gets a large health bar (100px wide, thicker)
+                    barWidth = 100f;
+                    barHeight = 6;
+                    float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
+                    barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
+                    barY = hitboxTop + 10;
                 } else {
-                    // Skeleton mobs
-                    barWidth = mob.getHitboxWidth() * 2;
+                    // Regular mobs (120x120 display, 10x10 hitbox)
+                    barWidth = 40f; // Proportional to the 120px sprite width (about 1/3)
                     barHeight = 4;
                     float hitboxTop = mob.getPosition().y + mob.getHitboxOffsetY() + mob.getHitboxHeight();
                     barX = mob.getPosition().x + (mob.getWidth() / 2) - (barWidth / 2);
@@ -512,6 +552,11 @@ public class Renderer {
         // NEW: Update particle system
         particleSystem.update(deltaTime);
         
+        // EPIC: Update screen effects!
+        screenEffects.update(deltaTime);
+        
+        camera.update();
+        
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
@@ -534,6 +579,9 @@ public class Renderer {
             }
             batch.end();
         }
+        
+        // EPIC: Render screen effects last (on top of everything!)
+        screenEffects.render();
     }
     
     /**
@@ -610,5 +658,12 @@ public class Renderer {
      */
     public ParticleSystem getParticleSystem() {
         return particleSystem;
+    }
+    
+    /**
+     * EPIC: Get screen effects for maximum juice!
+     */
+    public ScreenEffects getScreenEffects() {
+        return screenEffects;
     }
 }

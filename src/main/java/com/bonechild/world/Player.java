@@ -6,6 +6,7 @@ import com.badlogic.gdx.Gdx;
  * Player character
  */
 public class Player extends LivingEntity {
+    // Player stats
     private int level;
     private float experience;
     private float experienceToNextLevel;
@@ -31,50 +32,43 @@ public class Player extends LivingEntity {
     private AnimationState currentState;
     private AnimationState previousState;
     private boolean facingRight;
+    
+    // Hurt animation
+    private static final float HURT_ANIMATION_DURATION = 0.25f;
     private float hurtAnimationTimer = 0f;
     private boolean isPlayingHurtAnimation = false;
-    private static final float HURT_ANIMATION_DURATION = 0.25f; // 5 frames * 0.05s
     
     // Invincibility frames
+    private static final float INVINCIBILITY_DURATION = 0.375f;
     private float invincibilityTimer = 0f;
     private boolean isInvincible = false;
-    private static final float INVINCIBILITY_DURATION = 0.375f; // 0.375 seconds of invincibility after getting hit (reduced from 1.0s -> 0.5s -> 0.375s)
     
     // Dodge mechanic
     private static final int MAX_DODGE_CHARGES = 3;
-    private static final float DODGE_CHARGE_COOLDOWN = 2.0f; // 2 seconds to recharge one dodge
-    private static final float DODGE_DURATION = 0.25f; // Dodge lasts 0.25 seconds
-    private static final float DODGE_DISTANCE = 150f; // Distance to dash
+    private static final float DODGE_CHARGE_COOLDOWN = 2.0f;
+    private static final float DODGE_DURATION = 0.25f;
+    private static final float DODGE_DISTANCE = 150f;
+    private static final float GHOST_SPAWN_INTERVAL = 0.04f;
     private int dodgeCharges = MAX_DODGE_CHARGES;
     private float dodgeRechargeTimer = 0f;
     private boolean isDodging = false;
     private float dodgeTimer = 0f;
     private float dodgeDirectionX = 0f;
     private float dodgeDirectionY = 0f;
-    
-    // Ghost trail for dodge effect
     private java.util.ArrayList<GhostSprite> ghostTrail = new java.util.ArrayList<>();
     private float ghostSpawnTimer = 0f;
-    private static final float GHOST_SPAWN_INTERVAL = 0.04f; // Spawn ghost every 0.04 seconds during dodge
     
     // Kill streak system
+    private static final float KILL_STREAK_TIMEOUT = 5.0f;
     private int killStreak = 0;
     private float killStreakTimer = 0f;
-    private static final float KILL_STREAK_TIMEOUT = 5.0f; // Reset after 5 seconds without kill
     private float killStreakMultiplier = 1.0f;
     
-    // Critical hit system
-    private static final float BASE_CRIT_CHANCE = 0.15f; // 15% base crit chance
-    private static final float CRIT_MULTIPLIER = 2.0f; // Crits deal 2x damage
-    private static final float DAMAGE_VARIANCE = 0.2f; // ±20% damage variance (80-120% of base damage)
+    // Combat stats
+    private static final float BASE_CRIT_CHANCE = 0.15f;
+    private static final float CRIT_MULTIPLIER = 2.0f;
+    private static final float DAMAGE_VARIANCE = 0.2f;
     private java.util.Random critRandom = new java.util.Random();
-    
-    // New cool features!
-    private static final float LIFESTEAL_PERCENT = 0.15f; // Heal 15% of damage dealt on kill
-    private static final float CHAIN_LIGHTNING_CHANCE = 0.20f; // 20% chance to chain to nearby enemies
-    private static final int MAX_CHAIN_TARGETS = 3; // Chain up to 3 additional enemies
-    private static final float CHAIN_RANGE = 200f; // Chain lightning range
-    private static final float CHAIN_DAMAGE_MULTIPLIER = 0.5f; // Chain does 50% damage
     
     // Attack properties
     private float attackDamage;
@@ -83,7 +77,8 @@ public class Player extends LivingEntity {
     private float timeSinceLastAttack;
     
     public Player(float x, float y) {
-        super(x, y, 64, 64, 100f, 200f); // Changed size to 64x64 for sprite
+        super(x, y, 20, 10, 100f, 200f); // Hitbox: 20x10 (original working config)
+        
         this.level = 1;
         this.experience = 0;
         this.experienceToNextLevel = 100;
@@ -345,9 +340,17 @@ public class Player extends LivingEntity {
         float targetHitboxCenterX = targetMob.getPosition().x + targetMob.getHitboxOffsetX() + targetMob.getHitboxWidth() / 2f;
         float targetHitboxCenterY = targetMob.getPosition().y + targetMob.getHitboxOffsetY() + targetMob.getHitboxHeight() / 2f;
         
+        // Spawn from the actual sprite artwork center
+        // Original sprite artwork is ~16px tall in a 32px PNG, scaled 2x = ~32px tall in 128px canvas
+        // The artwork is roughly centered in the bottom half of the sprite
+        // Hitbox is 40x30, sprite renders as 128x128 centered on hitbox
+        // Actual character artwork center is approximately at hitbox center Y position
+        float visualCenterX = position.x + width / 2f; // Horizontal center of 40px hitbox
+        float visualCenterY = position.y + height / 2f; // Use hitbox center since artwork aligns with it
+        
         Projectile projectile = new Projectile(
-            position.x + width / 2f,
-            position.y + height / 2f,
+            visualCenterX,
+            visualCenterY,
             targetHitboxCenterX,
             targetHitboxCenterY,
             finalDamage,
@@ -513,13 +516,6 @@ public class Player extends LivingEntity {
         boolean result = leveledUpThisFrame;
         leveledUpThisFrame = false; // Reset flag after checking
         return result;
-    }
-    
-    /**
-     * Check if player leveled up this frame
-     */
-    public boolean didLevelUpThisFrame() {
-        return leveledUpThisFrame;
     }
     
     /**

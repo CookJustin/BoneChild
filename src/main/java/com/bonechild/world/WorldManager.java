@@ -27,6 +27,8 @@ public class WorldManager {
     private float waveInterval;
     private int currentWave;
     private int mobsPerWave;
+    private boolean bossWaveReady; // NEW: Track if boss wave is ready to spawn
+    private boolean bossSpawned; // NEW: Track if boss has been spawned
     
     public WorldManager() {
         this.mobs = new Array<>();
@@ -41,6 +43,8 @@ public class WorldManager {
         this.waveInterval = 0f; // Start at 0 so wave 1 spawns immediately
         this.currentWave = 0;
         this.mobsPerWave = 3;
+        this.bossWaveReady = false; // NEW: Initialize boss wave flags
+        this.bossSpawned = false;
         
         // Create player at center of screen
         float centerX = Gdx.graphics.getWidth() / 2f;
@@ -93,11 +97,16 @@ public class WorldManager {
             
             // Remove dead mobs and spawn pickups
             if (mob.isDead()) {
-                // For Globs, wait for death animation to complete before removing
+                // For Globs and Enemy17B, wait for death animation to complete before removing
                 if (mob instanceof Glob) {
                     Glob glob = (Glob) mob;
                     if (!glob.isDeathAnimationComplete()) {
                         continue; // Keep the glob alive until animation finishes
+                    }
+                } else if (mob instanceof Enemy17B) {
+                    Enemy17B enemy17b = (Enemy17B) mob;
+                    if (!enemy17b.isDeathAnimationComplete()) {
+                        continue; // Keep the Enemy17B alive until animation finishes
                     }
                 }
                 
@@ -255,9 +264,23 @@ public class WorldManager {
         
         // Wave spawning
         waveTimer += delta;
-        if (waveTimer >= waveInterval) {
+        
+        // NEW: Check if wave 4 is complete and boss wave should be triggered
+        if (currentWave == 4 && mobs.size == 0 && !bossWaveReady && !bossSpawned) {
+            // All wave 4 mobs defeated - boss wave is ready!
+            bossWaveReady = true;
+            Gdx.app.log("WorldManager", "🚨 Wave 4 cleared! Boss wave ready!");
+        }
+        
+        // Normal wave spawning (waves 1-4)
+        if (waveTimer >= waveInterval && currentWave < 4) {
             spawnWave();
             waveTimer = 0;
+        }
+        
+        // Boss wave spawning (wave 5) - only after wave 4 is cleared
+        if (bossWaveReady && !bossSpawned) {
+            spawnBossWave();
         }
     }
     
@@ -371,7 +394,15 @@ public class WorldManager {
                 y = random.nextBoolean() ? -50 : screenHeight + 50;
             }
             
-            mobs.add(new Mob(x, y, player));
+            // Spawn Enemy17B with death animation support
+            if (assets != null) {
+                com.bonechild.rendering.Animation walkAnim = assets.createWalkAnimation();
+                com.bonechild.rendering.Animation deathAnim = assets.createEnemy17BDeathAnimation();
+                mobs.add(new Enemy17B(x, y, player, walkAnim, deathAnim));
+            } else {
+                // Fallback to basic mob if assets not loaded
+                mobs.add(new Mob(x, y, player));
+            }
         }
 
         // Spawn one Vampire per wave for testing
@@ -402,18 +433,12 @@ public class WorldManager {
             Gdx.app.log("WorldManager", "💧 Spawned " + globCount + " Glob(s) on wave " + currentWave + "!");
         }
         
-        // Spawn one Christmas Jad every 3 waves (on waves 3, 6, 9, etc.)
-        if (currentWave % 3 == 0) {
-            float cx, cy;
-            if (random.nextBoolean()) {
-                cx = random.nextBoolean() ? -50 : screenWidth + 50;
-                cy = random.nextFloat() * screenHeight;
-            } else {
-                cx = random.nextFloat() * screenWidth;
-                cy = random.nextBoolean() ? -50 : screenHeight + 50;
-            }
-            mobs.add(new ChristmasJad(cx, cy, player, assets));
-            Gdx.app.log("WorldManager", "🎄 Spawned Christmas Jad boss on wave " + currentWave + "!");
+        // Spawn Boss08B at top middle on wave 5
+        if (currentWave == 5) {
+            float bossX = screenWidth / 2f;
+            float bossY = screenHeight + 100f; // Spawn above screen
+            mobs.add(new Boss08B(bossX, bossY, player, assets));
+            Gdx.app.log("WorldManager", "👹 BOSS SPAWNED! Boss08B enters the arena on wave " + currentWave + "!");
         }
         
         // After wave 1 spawns, set interval to 7 seconds for all subsequent waves
@@ -509,6 +534,44 @@ public class WorldManager {
             currentMob = nextMob;
             chains++;
         }
+    }
+    
+    /**
+     * Spawn the boss wave (wave 5) - only called after wave 4 is cleared
+     */
+    private void spawnBossWave() {
+        currentWave = 5;
+        bossSpawned = true;
+        bossWaveReady = false; // Reset the ready flag
+        
+        Gdx.app.log("WorldManager", "🚨 SPAWNING BOSS WAVE 5! 👹");
+        
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        
+        // Spawn Boss08B at top middle of screen
+        float bossX = screenWidth / 2f - 100f; // Center the 200px wide boss
+        float bossY = screenHeight + 100f; // Spawn above screen, will descend
+        
+        if (assets != null) {
+            mobs.add(new Boss08B(bossX, bossY, player, assets));
+            Gdx.app.log("WorldManager", "👹 BOSS08B SPAWNED at top-middle!");
+        }
+    }
+    
+    /**
+     * Check if boss wave should trigger the warning screen
+     */
+    public boolean shouldShowBossWarning() {
+        return bossWaveReady && !bossSpawned;
+    }
+    
+    /**
+     * Acknowledge boss warning has been shown
+     */
+    public void acknowledgeBossWarning() {
+        // This will be called after the warning screen is dismissed
+        // The boss will spawn on the next update
     }
     
     // Getters

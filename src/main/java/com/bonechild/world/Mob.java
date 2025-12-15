@@ -9,26 +9,21 @@ import com.badlogic.gdx.math.Vector2;
 public class Mob extends LivingEntity {
     private Player target;
     private float damage;
-
-    public void setDamage(float damage) {
-        this.damage = damage;
-    }
-
-
-
     private float attackCooldown;
     private float timeSinceLastAttack;
     
     public Mob(float x, float y, Player target) {
-        super(x, y, 240, 240, 50f, 100f); // Increased from 48x48 to 240x240 (5x size)
+        super(x, y, 120, 120, 50f, 100f); // Reduced from 240x240 to 120x120 (50% smaller, 2.5x the 48px sprite)
         this.target = target;
         this.damage = 10f;
         this.attackCooldown = 1f; // Attack once per second
         this.timeSinceLastAttack = 0;
         
-        // Set smaller hitbox (20x20) centered on the large sprite for better accuracy
-        // Offset: (240 - 20) / 2 = 110 pixels from bottom-left to center the hitbox
-        setHitbox(20, 20, 110, 110);
+        // Set hitbox (24x24) positioned at the chest/body area - larger for easier hits
+        // X: Centered horizontally (120 - 24) / 2 = 48
+        // Y: Positioned at body area (lower portion of sprite)
+        // 24x24 is about 20% of the 120px sprite, making it easier to hit
+        setHitbox(24, 24, 48, 15);
     }
     
     @Override
@@ -78,4 +73,8 @@ public class Mob extends LivingEntity {
     }
     
     public float getDamage() { return damage; }
+    
+    public void setDamage(float damage) { 
+        this.damage = damage; 
+    }
 }

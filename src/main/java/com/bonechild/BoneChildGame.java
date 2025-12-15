@@ -16,6 +16,7 @@ import com.bonechild.ui.SettingsScreen;
 import com.bonechild.ui.PauseMenu;
 import com.bonechild.ui.GameOverScreen;
 import com.bonechild.ui.PowerUpScreen;
+import com.bonechild.ui.BossWarningScreen; // NEW: Boss warning screen
 import com.bonechild.world.WorldManager;
 import com.bonechild.ui.CharacterStatsScreen;
 
@@ -44,6 +45,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     private GameOverScreen gameOverScreen;
     private PowerUpScreen powerUpScreen;
     private CharacterStatsScreen characterStatsScreen;
+    private BossWarningScreen bossWarningScreen; // NEW: Boss warning screen
     private GameUI gameUI;
     private InventoryUI inventoryUI;
     
@@ -115,6 +117,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             powerUpScreen = new PowerUpScreen(assets, this);
             powerUpScreen.setPlayer(worldManager.getPlayer()); // Pass player reference for reroll
             characterStatsScreen = new CharacterStatsScreen(assets, worldManager.getPlayer());
+            bossWarningScreen = new BossWarningScreen(); // NEW: Initialize boss warning screen
             
             // Start background music
             if (assets.getBackgroundMusic() != null) {
@@ -344,10 +347,17 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         }
         
         // Check if player leveled up and show power-up screen
-        if (worldManager.getPlayer().didLevelUpThisFrame()) {
+        if (worldManager.getPlayer().hasLeveledUpThisFrame()) {
             worldManager.getPlayer().clearLevelUpFlag();
             powerUpScreen.show();
             gamePaused = true; // Pause game when power-up screen appears
+        }
+        
+        // NEW: Check if boss wave warning should be shown
+        if (worldManager.shouldShowBossWarning() && !bossWarningScreen.isActive()) {
+            bossWarningScreen.show("BOSS08_B");
+            gamePaused = true; // Pause game for boss warning
+            Gdx.app.log("BoneChild", "🚨 BOSS WARNING TRIGGERED!");
         }
         
         // ALWAYS handle input FIRST (before any screen checks) so menus can be closed
@@ -412,6 +422,27 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             // Update and render power-up screen on top
             powerUpScreen.update(delta);
             powerUpScreen.render();
+            return; // Don't render anything else
+        }
+        
+        // NEW: Boss warning screen (takes priority over pause menu)
+        if (bossWarningScreen != null && bossWarningScreen.isActive()) {
+            // Render game in background (paused state)
+            renderer.updateCamera();
+            renderer.setDeltaTime(0); // No animation updates while paused
+            renderer.renderBackground();
+            renderer.renderPlayer(worldManager.getPlayer());
+            renderer.renderMobs(worldManager.getMobs());
+            renderer.renderPickups(worldManager.getPickups());
+            renderer.renderProjectiles(worldManager.getProjectiles());
+            renderer.renderExplosions(worldManager.getExplosions());
+            gameUI.render();
+            
+            // Update and render boss warning screen on top
+            bossWarningScreen.update(delta);
+            renderer.getBatch().begin();
+            bossWarningScreen.render(renderer.getBatch());
+            renderer.getBatch().end();
             return; // Don't render anything else
         }
         
@@ -525,6 +556,16 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
+        // NEW: If boss warning screen is active, check for SPACE to dismiss
+        if (bossWarningScreen != null && bossWarningScreen.isActive()) {
+            if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
+                bossWarningScreen.dismiss();
+                gamePaused = false; // Resume game after dismissing warning
+                Gdx.app.log("BoneChild", "🎮 Boss warning dismissed! Game resumed!");
+            }
+            return; // Don't process other inputs while boss warning is active
+        }
+        
         // If settings screen is open, don't process ESC for pause menu (let settings handle it)
         if (settingsScreen != null && settingsScreen.isVisible()) {
             return;
@@ -636,6 +677,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             }
             if (gameOverScreen != null) {
                 gameOverScreen.dispose();
+            }
+            if (bossWarningScreen != null) {
+                bossWarningScreen.dispose();
             }
         }
         

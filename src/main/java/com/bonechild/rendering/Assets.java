@@ -35,9 +35,12 @@ public class Assets {
 
     // New player sprite frames (Player1.png to Player6.png)
     private Texture[] playerFrames;
+    private Texture[] playerIdleFrames;
+    private Texture[] playerDeathFrames; // NEW: Separate death animation frames
 
-    // Orc sprite sheet for mobs
-    private Texture orcWalkSheet;
+    // Enemy_17_B sprite frames for mobs (replacing Orc sprite sheet)
+    private Texture[] enemy17BWalkFrames;
+    private Texture[] enemy17BDeathFrames; // NEW: Death animation frames
 
     // Glob (Enemy_14_B) sprites for mobs
     private Texture[] globWalkFrames;
@@ -131,9 +134,19 @@ public class Assets {
             skeletonDieSheet = new Texture(Gdx.files.internal("assets/player/SkeletonDie.png"));
             Gdx.app.log("Assets", "Loaded skeleton sprite sheets");
 
-            // Load orc sprite sheet for mobs from the enemies folder
-            orcWalkSheet = new Texture(Gdx.files.internal("assets/enemies/Orc-Walk.png"));
-            Gdx.app.log("Assets", "Loaded orc walk sprite sheet");
+            // Load Enemy_17_B walk animation frames for mobs
+            enemy17BWalkFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                enemy17BWalkFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_17/Enemy_17_B/Enemy_17_B_Walk_" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded Enemy_17_B walk animation frames (1-6)");
+
+            // Load Enemy_17_B death animation frames for mobs
+            enemy17BDeathFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                enemy17BDeathFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_17/Enemy_17_B/Enemy_17_B_Dead_" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded Enemy_17_B death animation frames (1-6)");
 
             // Load glob (Enemy_14_B) walk and death animation frames
             globWalkFrames = new Texture[6];
@@ -155,34 +168,48 @@ public class Assets {
             }
             Gdx.app.log("Assets", "Loaded new player sprite frames (Player1-6.png)");
 
+            // Load player idle sprite frames (PlayerIdle1.png to PlayerIdle6.png)
+            playerIdleFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                playerIdleFrames[i] = new Texture(Gdx.files.internal("assets/player/PlayerIdle" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded player idle sprite frames (PlayerIdle1-6.png)");
+
+            // Load player death sprite frames (PlayerDeath1.png to PlayerDeath6.png)
+            playerDeathFrames = new Texture[6];
+            for (int i = 0; i < 6; i++) {
+                playerDeathFrames[i] = new Texture(Gdx.files.internal("assets/player/PlayerDeath" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded player death sprite frames (PlayerDeath1-6.png)");
+
+            // Create animations from new player sprite frames
+            idleAnimation = new Animation(playerIdleFrames, 0.2f, true);  // Use idle frames for idle
+            walkAnimation = new Animation(playerFrames, 0.1f, true);
+            hurtAnimation = new Animation(playerFrames, 0.05f, false);
+            deathAnimation = new Animation(playerDeathFrames, 0.15f, false); // Use death frames for death animation
+            Gdx.app.log("Assets", "Created player animations (Idle: PlayerIdle1-6, Walk/Hurt: Player1-6, Death: PlayerDeath1-6)");
+
+            // OLD CODE - Skeleton sprite sheet approach (keeping for reference)
             // Create animations from skeleton sprite sheets with proper frame selection
             // Use only the frames that have actual skeleton content (not empty frames)
-            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
-            int[] goodHurtFrames = {1, 4, 7, 10, 13};
-            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
-            int[] idleFrame = {1};
+            // int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
+            // int[] goodHurtFrames = {1, 4, 7, 10, 13};
+            // int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
+            // int[] idleFrame = {1};
 
             // Idle: use first good frame as static pose
-            idleAnimation = new Animation(skeletonIdleSheet, idleFrame, 0, 32, 64, 1.0f, true);
+            // idleAnimation = new Animation(skeletonIdleSheet, idleFrame, 0, 32, 64, 1.0f, true);
             
             // Walk: use only the 10 good frames
-            walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
+            // walkAnimation = new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
             
             // SkeletonHurt: use only the 5 good frames - faster to avoid stun lock
-            hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+            // hurtAnimation = new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
             
             // SkeletonDie: use only the 13 good frames
-            deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+            // deathAnimation = new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
 
-            Gdx.app.log("Assets", "Created player animations with 32x64 frames from skeleton sprite sheets (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
-
-            // OLD CODE - Player1-6.png approach (keeping for reference)
-            // Create animations from new player sprite frames
-            // idleAnimation = new Animation(playerFrames, 0.2f, true);
-            // walkAnimation = new Animation(playerFrames, 0.1f, true);
-            // hurtAnimation = new Animation(playerFrames, 0.05f, false);
-            // deathAnimation = new Animation(playerFrames, 0.1f, false);
-            // Gdx.app.log("Assets", "Created player animations from Player 1-6.png sprite frames");
+            // Gdx.app.log("Assets", "Created player animations with 32x64 frames from skeleton sprite sheets (Idle: 1f, Walk: 10f, Hurt: 5f, Death: 13f)");
 
             // OLD CODE - commented out, keeping skeleton sheets for potential future use
             // Create animations from sprite sheets
@@ -396,8 +423,67 @@ public class Assets {
             skeletonDieSheet.dispose();
         }
 
-        if (orcWalkSheet != null) {
-            orcWalkSheet.dispose();
+        // Dispose Enemy_17_B walk frames
+        if (enemy17BWalkFrames != null) {
+            for (Texture frame : enemy17BWalkFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose Enemy_17_B death frames
+        if (enemy17BDeathFrames != null) {
+            for (Texture frame : enemy17BDeathFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose glob walk frames
+        if (globWalkFrames != null) {
+            for (Texture frame : globWalkFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose glob death frames
+        if (globDeathFrames != null) {
+            for (Texture frame : globDeathFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose player frames
+        if (playerFrames != null) {
+            for (Texture frame : playerFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose player idle frames
+        if (playerIdleFrames != null) {
+            for (Texture frame : playerIdleFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose player death frames
+        if (playerDeathFrames != null) {
+            for (Texture frame : playerDeathFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
         }
 
         // Dispose vampire textures
@@ -537,12 +623,12 @@ public class Assets {
     public Texture getBoneXpTilesheet() { return boneXpTilesheet; }
 
     /**
-     * Create a new independent walk animation instance (for mobs)
+     * Create a new independent walk animation instance (for mobs using Enemy_17_B)
      */
     public Animation createWalkAnimation() {
-        if (orcWalkSheet != null) {
-            // Orc-Walk sprite sheet is 800x100, meaning 8 frames of 100x100 pixels
-            return new Animation(orcWalkSheet, 8, 0, 100, 100, 0.1f, true);
+        if (enemy17BWalkFrames != null && enemy17BWalkFrames.length > 0) {
+            // Enemy_17_B sprites are 48x48, using 6 frames for walk animation
+            return new Animation(enemy17BWalkFrames, 48, 48, 0.1f, true);
         }
         return null;
     }
@@ -551,9 +637,8 @@ public class Assets {
      * Create a new independent player idle animation instance
      */
     public Animation createPlayerIdleAnimation() {
-        if (skeletonWalkSheet != null) {
-            int[] idleFrame = {1};
-            return new Animation(skeletonWalkSheet, idleFrame, 0, 32, 64, 1.0f, true);
+        if (playerIdleFrames != null) {
+            return new Animation(playerIdleFrames, 0.2f, true);
         }
         return null;
     }
@@ -562,9 +647,8 @@ public class Assets {
      * Create a new independent player walk animation instance
      */
     public Animation createPlayerWalkAnimation() {
-        if (skeletonWalkSheet != null) {
-            int[] goodWalkFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28};
-            return new Animation(skeletonWalkSheet, goodWalkFrames, 0, 32, 64, 0.1f, true);
+        if (playerFrames != null) {
+            return new Animation(playerFrames, 0.1f, true);
         }
         return null;
     }
@@ -573,9 +657,8 @@ public class Assets {
      * Create a new independent player hurt animation instance
      */
     public Animation createPlayerHurtAnimation() {
-        if (skeletonHurtSheet != null) {
-            int[] goodHurtFrames = {1, 4, 7, 10, 13};
-            return new Animation(skeletonHurtSheet, goodHurtFrames, 0, 32, 64, 0.05f, false);
+        if (playerFrames != null) {
+            return new Animation(playerFrames, 0.05f, false);
         }
         return null;
     }
@@ -584,9 +667,8 @@ public class Assets {
      * Create a new independent player death animation instance
      */
     public Animation createPlayerDeathAnimation() {
-        if (skeletonDieSheet != null) {
-            int[] goodDeathFrames = {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37};
-            return new Animation(skeletonDieSheet, goodDeathFrames, 0, 32, 64, 0.1f, false);
+        if (playerDeathFrames != null) {
+            return new Animation(playerDeathFrames, 0.15f, false);
         }
         return null;
     }
@@ -607,6 +689,16 @@ public class Assets {
     public Animation createGlobDeathAnimation() {
         if (globDeathFrames != null && globDeathFrames.length > 0) {
             return new Animation(globDeathFrames, 48, 48, 0.15f, false); // Slightly slower death animation
+        }
+        return null;
+    }
+
+    /**
+     * Create a new Enemy_17_B death animation instance (for mobs)
+     */
+    public Animation createEnemy17BDeathAnimation() {
+        if (enemy17BDeathFrames != null && enemy17BDeathFrames.length > 0) {
+            return new Animation(enemy17BDeathFrames, 48, 48, 0.1f, false); // Death animation at 10 FPS
         }
         return null;
     }
@@ -661,5 +753,54 @@ public class Assets {
         }
         // Create a new Animation instance with the same frames but independent state
         return new Animation(explosionFrames, 0.01f, false);
+    }
+    
+    /**
+     * Create Boss08_B idle animation (row 1, 6 frames)
+     */
+    public Animation createBoss08BIdleAnimation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        return Animation.fromSpriteSheet(sheet, 0, 6, 64, 64, 0.15f, true);
+    }
+    
+    /**
+     * Create Boss08_B walk animation (row 2, 6 frames)
+     */
+    public Animation createBoss08BWalkAnimation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        return Animation.fromSpriteSheet(sheet, 1, 6, 64, 64, 0.12f, true);
+    }
+    
+    /**
+     * Create Boss08_B attack 1 animation (row 3, 6 frames)
+     */
+    public Animation createBoss08BAttack1Animation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        return Animation.fromSpriteSheet(sheet, 2, 6, 64, 64, 0.1f, false);
+    }
+    
+    /**
+     * Create Boss08_B attack 2 animation (row 4, 6 frames)
+     */
+    public Animation createBoss08BAttack2Animation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        return Animation.fromSpriteSheet(sheet, 3, 6, 64, 64, 0.1f, false);
+    }
+    
+    /**
+     * Create Boss08_B attack 3 animation (row 5, 6 frames)
+     */
+    public Animation createBoss08BAttack3Animation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        return Animation.fromSpriteSheet(sheet, 4, 6, 64, 64, 0.1f, false);
+    }
+    
+    /**
+     * Create Boss08_B death animation (rows 7-8, 12 frames total)
+     */
+    public Animation createBoss08BDeathAnimation() {
+        Texture sheet = new Texture(Gdx.files.internal("assets/Bosses/Boss08_B.png"));
+        // Combine row 7 (6 frames) and row 8 (6 frames) for 12 frame death animation
+        return Animation.fromSpriteSheetMultiRow(sheet, 6, 2, 6, 64, 64, 0.1f, false);
     }
 }

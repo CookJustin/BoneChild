@@ -130,4 +130,50 @@ public class Animation {
     public TextureRegion[] getFrames() {
         return frames;
     }
+    
+    /**
+     * Create animation from sprite sheet - single row
+     */
+    public static Animation fromSpriteSheet(Texture sheet, int row, int frameCount, int frameWidth, int frameHeight, float frameDuration, boolean looping) {
+        TextureRegion[] frames = new TextureRegion[frameCount];
+        
+        for (int i = 0; i < frameCount; i++) {
+            int x = i * frameWidth;
+            int y = row * frameHeight;
+            frames[i] = new TextureRegion(sheet, x, y, frameWidth, frameHeight);
+        }
+        
+        return new Animation(frames, frameDuration, looping);
+    }
+    
+    /**
+     * Create animation from sprite sheet - multiple rows
+     * Used for animations that span multiple rows (like Boss08_B death animation)
+     */
+    public static Animation fromSpriteSheetMultiRow(Texture sheet, int startRow, int rowCount, int framesPerRow, int frameWidth, int frameHeight, float frameDuration, boolean looping) {
+        int totalFrames = rowCount * framesPerRow;
+        TextureRegion[] frames = new TextureRegion[totalFrames];
+        
+        int frameIndex = 0;
+        for (int row = startRow; row < startRow + rowCount; row++) {
+            for (int col = 0; col < framesPerRow; col++) {
+                int x = col * frameWidth;
+                int y = row * frameHeight;
+                frames[frameIndex] = new TextureRegion(sheet, x, y, frameWidth, frameHeight);
+                frameIndex++;
+            }
+        }
+        
+        return new Animation(frames, frameDuration, looping);
+    }
+    
+    /**
+     * Constructor for pre-made frames (used by static factory methods)
+     */
+    private Animation(TextureRegion[] frames, float frameDuration, boolean looping) {
+        this.frames = frames;
+        this.frameDuration = frameDuration;
+        this.stateTime = 0;
+        this.looping = looping;
+    }
 }
