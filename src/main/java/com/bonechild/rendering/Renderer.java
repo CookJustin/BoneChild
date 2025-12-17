@@ -256,7 +256,7 @@ public class Renderer {
         batch.begin();
         
         for (Mob mob : mobs) {
-            // Allow Globs, Enemy17B, and Boss08B to render when dead (for death animation)
+            // Allow Globs, Enemy17B, Orcs, and Boss08B to render when dead (for death animation)
             boolean shouldRender = mob.isActive() && !mob.isDead();
             if (mob instanceof com.bonechild.world.Glob) {
                 com.bonechild.world.Glob glob = (com.bonechild.world.Glob) mob;
@@ -266,6 +266,10 @@ public class Renderer {
                 com.bonechild.world.Enemy17B enemy17b = (com.bonechild.world.Enemy17B) mob;
                 // Render if active and either alive OR death animation not complete
                 shouldRender = mob.isActive() && (!mob.isDead() || !enemy17b.isDeathAnimationComplete());
+            } else if (mob instanceof com.bonechild.world.Orc) {
+                com.bonechild.world.Orc orc = (com.bonechild.world.Orc) mob;
+                // Render if active and either alive OR death animation not complete
+                shouldRender = mob.isActive() && (!mob.isDead() || !orc.isDeathAnimationComplete());
             } else if (mob instanceof com.bonechild.world.Boss08B) {
                 com.bonechild.world.Boss08B boss08b = (com.bonechild.world.Boss08B) mob;
                 // Render if active and either alive OR death animation not complete
@@ -279,6 +283,8 @@ public class Renderer {
                     ((com.bonechild.world.Enemy17B) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.Glob) {
                     ((com.bonechild.world.Glob) mob).render(batch, deltaTime);
+                } else if (mob instanceof com.bonechild.world.Orc) {
+                    ((com.bonechild.world.Orc) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.Vampire) {
                     ((com.bonechild.world.Vampire) mob).render(batch, deltaTime);
                 } else if (mob instanceof com.bonechild.world.ChristmasJad) {

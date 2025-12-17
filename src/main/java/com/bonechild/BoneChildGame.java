@@ -360,6 +360,13 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             Gdx.app.log("BoneChild", "🚨 BOSS WARNING TRIGGERED!");
         }
         
+        // NEW: Check if ORC boss wave warning should be shown
+        if (worldManager.shouldShowOrcBossWarning() && !bossWarningScreen.isActive()) {
+            bossWarningScreen.show("ORC_BOSS");
+            gamePaused = true; // Pause game for orc boss warning
+            Gdx.app.log("BoneChild", "🚨 ORC BOSS WARNING TRIGGERED!");
+        }
+        
         // ALWAYS handle input FIRST (before any screen checks) so menus can be closed
         handleInput();
         
@@ -562,12 +569,21 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         // NEW: If boss warning screen is active, check for SPACE to dismiss
         if (bossWarningScreen != null && bossWarningScreen.isActive()) {
             if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
+                String bossType = bossWarningScreen.getBossType();
                 bossWarningScreen.dismiss();
-                worldManager.acknowledgeBossWarning();
-                // Manually trigger boss spawn using virtual coordinates
-                spawnBossAtCenter();
+                
+                // Check which boss to spawn based on the warning type
+                if ("ORC_BOSS".equals(bossType)) {
+                    worldManager.acknowledgeOrcBossWarning();
+                    spawnOrcBossAtCenter();
+                    Gdx.app.log("BoneChild", "🎮 Orc Boss warning dismissed! Orc Boss spawning!");
+                } else {
+                    worldManager.acknowledgeBossWarning();
+                    spawnBossAtCenter();
+                    Gdx.app.log("BoneChild", "🎮 Boss warning dismissed! Boss spawning!");
+                }
+                
                 gamePaused = false; // Resume game after dismissing warning
-                Gdx.app.log("BoneChild", "🎮 Boss warning dismissed! Boss spawning!");
             }
             return; // Don't process other inputs while boss warning is active
         }
@@ -635,6 +651,21 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         worldManager.getMobs().add(boss);
         
         Gdx.app.log("BoneChild", "👹 BOSS SPAWNED at virtual center-top (" + bossX + ", " + bossY + ")");
+    }
+    
+    /**
+     * Spawn the Orc boss at the center top of the VIRTUAL world (not physical screen)
+     */
+    private void spawnOrcBossAtCenter() {
+        // Use VIRTUAL coordinates (1280x720), not physical screen size
+        // Orc sprite is 157x195 at 80% scale = ~125x156
+        float bossX = VIRTUAL_WIDTH / 2f - 62.5f; // Center the ~125px wide orc (half of 125)
+        float bossY = VIRTUAL_HEIGHT + 100f; // Spawn above the virtual screen
+        
+        // Manually call the WorldManager's spawn method which creates the boss Orc
+        worldManager.spawnOrcBossWave();
+        
+        Gdx.app.log("BoneChild", "⚔️👹 ORC BOSS SPAWNED at virtual center-top!");
     }
     
     @Override

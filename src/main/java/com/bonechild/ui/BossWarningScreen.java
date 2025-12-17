@@ -14,6 +14,7 @@ public class BossWarningScreen {
     private boolean active;
     private float timer;
     private float scrollOffset;
+    private String bossType; // NEW: Store the boss type
     
     private static final float SCROLL_SPEED = 200f; // Pixels per second
     private static final float AUTO_DISMISS_TIME = 3.0f; // Auto-dismiss after 3 seconds
@@ -53,6 +54,7 @@ public class BossWarningScreen {
         this.active = true;
         this.timer = 0f;
         this.scrollOffset = 0f;
+        this.bossType = bossName; // Store the boss type
         
         Gdx.app.log("BossWarningScreen", "🚨 BOSS WARNING: " + bossName);
     }
@@ -146,6 +148,13 @@ public class BossWarningScreen {
     
     public boolean isActive() {
         return active;
+    }
+    
+    /**
+     * Get the type of boss being warned about
+     */
+    public String getBossType() {
+        return bossType;
     }
     
     public void dispose() {

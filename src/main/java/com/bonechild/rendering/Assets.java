@@ -46,6 +46,9 @@ public class Assets {
     private Texture[] globWalkFrames;
     private Texture[] globDeathFrames;
 
+    // Orc sprites for mobs (18 frames total)
+    private Texture[] orcFrames;
+
     // Coin sprites for animation
     private Texture coin1;
     private Texture coin2;
@@ -160,6 +163,13 @@ public class Assets {
                 globDeathFrames[i] = new Texture(Gdx.files.internal("assets/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Dead_" + (i + 1) + ".png"));
             }
             Gdx.app.log("Assets", "Loaded glob death animation frames (1-6)");
+
+            // Load Orc animation frames (18 frames total from Orc for Nate1.png to Orc for Nate18.png)
+            orcFrames = new Texture[18];
+            for (int i = 0; i < 18; i++) {
+                orcFrames[i] = new Texture(Gdx.files.internal("assets/enemies/Orc for Nate" + (i + 1) + ".png"));
+            }
+            Gdx.app.log("Assets", "Loaded Orc animation frames (1-18)");
 
             // Load new player sprite frames (Player1.png to Player6.png)
             playerFrames = new Texture[6];
@@ -453,6 +463,15 @@ public class Assets {
         // Dispose glob death frames
         if (globDeathFrames != null) {
             for (Texture frame : globDeathFrames) {
+                if (frame != null) {
+                    frame.dispose();
+                }
+            }
+        }
+
+        // Dispose orc frames
+        if (orcFrames != null) {
+            for (Texture frame : orcFrames) {
                 if (frame != null) {
                     frame.dispose();
                 }
@@ -819,5 +838,31 @@ public class Assets {
             Gdx.app.error("Assets", "Failed to load Boss08B damage animation: " + e.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Create a new Orc walk animation instance (uses first 12 frames for walking)
+     */
+    public Animation createOrcWalkAnimation() {
+        if (orcFrames != null && orcFrames.length >= 12) {
+            // Use first 12 frames for walk animation
+            Texture[] walkFrames = new Texture[12];
+            System.arraycopy(orcFrames, 0, walkFrames, 0, 12);
+            return new Animation(walkFrames, 157, 195, 0.08f, true); // Orc sprites are 157x195
+        }
+        return null;
+    }
+    
+    /**
+     * Create a new Orc death animation instance (uses last 6 frames for death)
+     */
+    public Animation createOrcDeathAnimation() {
+        if (orcFrames != null && orcFrames.length >= 18) {
+            // Use last 6 frames (13-18) for death animation
+            Texture[] deathFrames = new Texture[6];
+            System.arraycopy(orcFrames, 12, deathFrames, 0, 6);
+            return new Animation(deathFrames, 157, 195, 0.12f, false); // Orc sprites are 157x195, death animation is slower and non-looping
+        }
+        return null;
     }
 }

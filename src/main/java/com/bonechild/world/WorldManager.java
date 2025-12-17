@@ -27,8 +27,10 @@ public class WorldManager {
     private float waveInterval;
     private int currentWave;
     private int mobsPerWave;
-    private boolean bossWaveReady; // NEW: Track if boss wave is ready to spawn
-    private boolean bossSpawned; // NEW: Track if boss has been spawned
+    private boolean bossWaveReady; // Track if wave 5 boss wave is ready to spawn
+    private boolean bossSpawned; // Track if wave 5 boss has been spawned
+    private boolean orcBossWaveReady; // NEW: Track if wave 10 orc boss wave is ready to spawn
+    private boolean orcBossSpawned; // NEW: Track if wave 10 orc boss has been spawned
     
     public WorldManager() {
         this.mobs = new Array<>();
@@ -43,8 +45,10 @@ public class WorldManager {
         this.waveInterval = 0f; // Start at 0 so wave 1 spawns immediately
         this.currentWave = 0;
         this.mobsPerWave = 3;
-        this.bossWaveReady = false; // NEW: Initialize boss wave flags
+        this.bossWaveReady = false; // Initialize boss wave flags
         this.bossSpawned = false;
+        this.orcBossWaveReady = false; // Initialize orc boss wave flags
+        this.orcBossSpawned = false;
         
         // Create player at center of screen
         float centerX = Gdx.graphics.getWidth() / 2f;
@@ -97,7 +101,7 @@ public class WorldManager {
             
             // Remove dead mobs and spawn pickups
             if (mob.isDead()) {
-                // For Globs and Enemy17B, wait for death animation to complete before removing
+                // For Globs, Enemy17B, and Orcs, wait for death animation to complete before removing
                 if (mob instanceof Glob) {
                     Glob glob = (Glob) mob;
                     if (!glob.isDeathAnimationComplete()) {
@@ -107,6 +111,11 @@ public class WorldManager {
                     Enemy17B enemy17b = (Enemy17B) mob;
                     if (!enemy17b.isDeathAnimationComplete()) {
                         continue; // Keep the Enemy17B alive until animation finishes
+                    }
+                } else if (mob instanceof Orc) {
+                    Orc orc = (Orc) mob;
+                    if (!orc.isDeathAnimationComplete()) {
+                        continue; // Keep the Orc alive until animation finishes
                     }
                 }
                 
@@ -272,6 +281,13 @@ public class WorldManager {
             Gdx.app.log("WorldManager", "🚨 Wave 4 cleared! Boss wave ready!");
         }
         
+        // NEW: Check if wave 9 is complete and orc boss wave should be triggered
+        if (currentWave == 9 && mobs.size == 0 && !orcBossWaveReady && !orcBossSpawned) {
+            // All wave 9 mobs defeated - orc boss wave is ready!
+            orcBossWaveReady = true;
+            Gdx.app.log("WorldManager", "🚨 Wave 9 cleared! ORC BOSS wave ready!");
+        }
+        
         // NEW: After boss is defeated (wave 5), continue with wave 6+ immediately
         if (currentWave == 5 && mobs.size == 0 && bossSpawned) {
             // Boss defeated! Continue with normal waves immediately
@@ -281,12 +297,25 @@ public class WorldManager {
             return; // Exit early to prevent double-spawning
         }
         
-        // Normal wave spawning (waves 1-4 and 6+)
+        // NEW: After orc boss is defeated (wave 10), continue with wave 11+ immediately
+        if (currentWave == 10 && mobs.size == 0 && orcBossSpawned) {
+            // Orc Boss defeated! Continue with normal waves immediately
+            Gdx.app.log("WorldManager", "🎉 ORC BOSS DEFEATED! Continuing to wave 11...");
+            spawnWave();
+            waveTimer = 0; // Reset timer for next wave
+            return; // Exit early to prevent double-spawning
+        }
+        
+        // Normal wave spawning (waves 1-4, 6-9, and 11+)
         if (waveTimer >= waveInterval && currentWave < 4) {
             spawnWave();
             waveTimer = 0;
-        } else if (waveTimer >= waveInterval && currentWave >= 6) {
-            // Continue spawning waves after boss (wave 6, 7, 8, etc.)
+        } else if (waveTimer >= waveInterval && currentWave >= 6 && currentWave < 9) {
+            // Continue spawning waves after first boss (waves 6-9)
+            spawnWave();
+            waveTimer = 0;
+        } else if (waveTimer >= waveInterval && currentWave >= 11) {
+            // Continue spawning waves after second boss (wave 11+)
             spawnWave();
             waveTimer = 0;
         }
@@ -444,6 +473,23 @@ public class WorldManager {
             Gdx.app.log("WorldManager", "💧 Spawned " + globCount + " Glob(s) on wave " + currentWave + "!");
         }
         
+        // Spawn 1-2 Orcs every wave starting from wave 3
+        if (currentWave >= 3) {
+            int orcCount = 1 + random.nextInt(2); // 1-2 orcs
+            for (int i = 0; i < orcCount; i++) {
+                float ox, oy;
+                if (random.nextBoolean()) {
+                    ox = random.nextBoolean() ? -50 : screenWidth + 50;
+                    oy = random.nextFloat() * screenHeight;
+                } else {
+                    ox = random.nextFloat() * screenWidth;
+                    oy = random.nextBoolean() ? -50 : screenHeight + 50;
+                }
+                mobs.add(new Orc(ox, oy, player, assets));
+            }
+            Gdx.app.log("WorldManager", "⚔️ Spawned " + orcCount + " Orc(s) on wave " + currentWave + "!");
+        }
+        
         // Spawn Boss08B at top middle on wave 5
         if (currentWave == 5) {
             float bossX = screenWidth / 2f;
@@ -573,10 +619,52 @@ public class WorldManager {
     }
     
     /**
+     * Spawn the ORC BOSS wave (wave 10) - only called after wave 9 is cleared
+     */
+    public void spawnOrcBossWave() {
+        currentWave = 10;
+        orcBossSpawned = true;
+        orcBossWaveReady = false; // Reset the ready flag
+        
+        Gdx.app.log("WorldManager", "🚨 SPAWNING ORC BOSS WAVE 10! ⚔️👹");
+        
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        
+        // Spawn ORC BOSS directly above player spawn point (top-middle of screen)
+        // Player spawns at center (screenWidth/2, screenHeight/2)
+        // Boss spawns at same X, but at top of screen
+        // Orc sprite is 157x195, so offset by half width (157/2 = 78.5)
+        float bossX = (screenWidth / 2f) - 78.5f; // Center X same as player, minus half orc width
+        float bossY = screenHeight - 250f; // Top of screen, slightly below edge for visibility
+        
+        if (assets != null) {
+            // Create a BOSS version of the Orc - much stronger!
+            Orc orcBoss = new Orc(bossX, bossY, player, assets);
+            
+            // Make the Orc BOSS much stronger!
+            orcBoss.setHealth(500f); // 5x normal Orc health (100 -> 500)
+            orcBoss.setMaxHealth(500f);
+            orcBoss.setDamage(40f); // 4x normal Orc damage (10 -> 40)
+            orcBoss.setSpeed(100f); // Slightly faster than normal (80 -> 100)
+            
+            mobs.add(orcBoss);
+            Gdx.app.log("WorldManager", "⚔️👹 ORC BOSS SPAWNED! HP: 500, Damage: 40, Speed: 100");
+        }
+    }
+    
+    /**
      * Check if boss wave should trigger the warning screen
      */
     public boolean shouldShowBossWarning() {
         return bossWaveReady && !bossSpawned;
+    }
+    
+    /**
+     * Check if ORC boss wave should trigger the warning screen
+     */
+    public boolean shouldShowOrcBossWarning() {
+        return orcBossWaveReady && !orcBossSpawned;
     }
     
     /**
@@ -587,6 +675,16 @@ public class WorldManager {
         bossSpawned = true;
         bossWaveReady = false;
         Gdx.app.log("WorldManager", "Boss warning acknowledged - boss will spawn");
+    }
+    
+    /**
+     * Acknowledge ORC boss warning has been shown
+     */
+    public void acknowledgeOrcBossWarning() {
+        // Mark orc boss as spawned so warning doesn't trigger again
+        orcBossSpawned = true;
+        orcBossWaveReady = false;
+        Gdx.app.log("WorldManager", "Orc Boss warning acknowledged - orc boss will spawn");
     }
     
     // Getters
