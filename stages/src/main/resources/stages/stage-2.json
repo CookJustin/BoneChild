@@ -1,0 +1,64 @@
+{
+  "stageId": "stage_2",
+  "name": "The Beginning",
+  "description": "Your first challenge. Survive the goblin horde and defeat the boss!",
+  "waves": [
+    {
+      "waveNumber": 1,
+      "spawns": [
+        {
+          "mobType": "goblin",
+          "count": 5,
+          "spawnDelay": 1.0
+        }
+      ]
+    },
+    {
+      "waveNumber": 2,
+      "spawns": [
+        {
+          "mobType": "goblin",
+          "count": 8,
+          "spawnDelay": 0.8
+        }
+      ]
+    },
+    {
+      "waveNumber": 3,
+      "spawns": [
+        {
+          "mobType": "goblin",
+          "count": 10,
+          "spawnDelay": 0.6
+        }
+      ]
+    },
+    {
+      "waveNumber": 4,
+      "spawns": [
+        {
+          "mobType": "goblin",
+          "count": 6,
+          "spawnDelay": 0.5
+        },
+        {
+          "mobType": "mob",
+          "count": 3,
+          "spawnDelay": 1.5
+        }
+      ]
+    },
+    {
+      "waveNumber": 5,
+      "spawns": [
+        {
+          "mobType": "boss08b",
+          "count": 1,
+          "spawnDelay": 0
+        }
+      ],
+      "isBossWave": true
+    }
+  ]
+}
+

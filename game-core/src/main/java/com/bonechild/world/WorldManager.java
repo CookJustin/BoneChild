@@ -38,6 +38,12 @@ public class WorldManager {
     private MobFactory mobFactory;
     private StageSpawner stageSpawner;
 
+    private static final String[] STAGE_FILES = {
+        "stages/stage-1.json",
+        "stages/stage-2.json"
+    };
+    private int currentStageIndex = 0;
+
     public WorldManager(Player player) {
         this.player = player;
         this.mobs = new Array<>();
@@ -58,13 +64,22 @@ public class WorldManager {
 
         // Initialize stage spawner
         this.stageSpawner = new StageSpawner(mobFactory);
-        this.stageSpawner.loadStage("stages/stage-1.json");
+        this.currentStageIndex = 0;
+        loadCurrentStage();
         this.stageSpawner.setSpawnBounds(100, 1820, 100, 980);
 
         // Set up player's projectile spawner callback
         player.setProjectileSpawner(projectile -> projectiles.add(projectile));
 
         Gdx.app.log("WorldManager", "Loaded stage: " + stageSpawner.getStageName());
+    }
+
+    private void loadCurrentStage() {
+        if (currentStageIndex < STAGE_FILES.length) {
+            stageSpawner.loadStage(STAGE_FILES[currentStageIndex]);
+        } else {
+            Gdx.app.log("WorldManager", "No more stages to load!");
+        }
     }
 
     /**
@@ -157,6 +172,15 @@ public class WorldManager {
                 stageSpawner.nextWave();
             } else {
                 Gdx.app.log("WorldManager", "🎉 STAGE COMPLETE!");
+                // Advance to next stage if available
+                if (currentStageIndex + 1 < STAGE_FILES.length) {
+                    currentStageIndex++;
+                    loadCurrentStage();
+                    startWave();
+                    Gdx.app.log("WorldManager", "➡️ Proceeding to next stage: " + stageSpawner.getStageName());
+                } else {
+                    Gdx.app.log("WorldManager", "🏆 All stages complete! Game over or victory screen here.");
+                }
             }
         }
     }
