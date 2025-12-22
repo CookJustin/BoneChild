@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.bonechild</groupId>
+        <artifactId>bonechild-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>bonechild-monsters</artifactId>
+    <packaging>jar</packaging>
+
+    <name>BoneChild Monsters</name>
+    <description>Monster interfaces, factory, and implementations for BoneChild</description>
+
+    <dependencies>
+        <!-- Depend on the shared assets module for textures/animations -->
+        <dependency>
+            <groupId>com.bonechild</groupId>
+            <artifactId>bonechild-assets</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- LibGDX Core for vector/math used in SpawnContext -->
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx</artifactId>
+            <version>${gdx.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

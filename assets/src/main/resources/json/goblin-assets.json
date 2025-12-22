@@ -1,0 +1,17 @@
+{
+  "animations": {
+    "goblin_walk": {
+      "type": "frame_sequence",
+      "pattern": "asset/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Walk_{1-6}.png",
+      "frameTime": 0.1,
+      "loop": true
+    },
+    "goblin_death": {
+      "type": "frame_sequence",
+      "pattern": "asset/Monsters/Enemy_14/Enemy_14_B/Enemy_14_B_Dead_{1-6}.png",
+      "frameTime": 0.15,
+      "loop": false
+    }
+  }
+}
+

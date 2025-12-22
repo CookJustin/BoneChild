@@ -1,0 +1,11 @@
+{
+  "textures": {
+    "ui_menu_bg": "asset/ui/ExitScreenMenu.png",
+    "ui_play_button": "asset/ui/PlayButton.png",
+    "ui_settings_button": "asset/ui/SettingsButton.png",
+    "ui_exit_button": "asset/ui/ExitButton.png",
+    "ui_bone_xp": "asset/ui/Bone XP.png"
+  },
+  "animations": {}
+}
+

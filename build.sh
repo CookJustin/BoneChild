@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # BoneChild Build Script
-# This script builds the game and creates native packages
+# This script builds the game and creates the executable JAR
 
 set -e
 
@@ -36,17 +36,22 @@ echo ""
 echo -e "${YELLOW}Cleaning previous builds...${NC}"
 mvn clean
 
-# Build the project
+# Build and install all modules
 echo ""
-echo -e "${YELLOW}Building project...${NC}"
-mvn package
+echo -e "${YELLOW}Building all modules...${NC}"
+mvn install -DskipTests
 
 echo ""
 echo -e "${GREEN}Build completed successfully!${NC}"
 echo ""
 echo "Output files:"
-echo "  - JAR with dependencies: target/bonechild-game-1.0.0-all.jar"
-echo "  - Standard JAR: target/bonechild-game-1.0.0.jar"
-echo "  - Dependencies: target/lib/"
+echo "  - Executable JAR: engine/target/bonechild-engine-1.0.0-all.jar"
+echo "  - Engine JAR: engine/target/bonechild-engine-1.0.0.jar"
+echo "  - Module JARs installed to ~/.m2/repository/com/bonechild/"
+echo ""
+echo "To run the game:"
+echo "  ./run.sh"
+echo "  OR"
+echo "  java -XstartOnFirstThread -jar engine/target/bonechild-engine-1.0.0-all.jar"
 echo ""
 echo -e "${GREEN}Done!${NC}"
