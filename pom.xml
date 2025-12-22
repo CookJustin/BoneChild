@@ -6,12 +6,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.bonechild</groupId>
-    <artifactId>bonechild-game</artifactId>
+    <artifactId>bonechild-parent</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
-    <name>BoneChild</name>
-    <description>A top-down survival action game built with LibGDX</description>
+    <name>BoneChild Parent</name>
+    <description>Parent project for BoneChild game modules</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,214 +23,54 @@
         <app.version>1.0.0</app.version>
     </properties>
 
-    <dependencies>
-        <!-- LibGDX Core -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx</artifactId>
-            <version>${gdx.version}</version>
-        </dependency>
-
-        <!-- LibGDX Backend for Desktop (LWJGL3) -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-backend-lwjgl3</artifactId>
-            <version>${gdx.version}</version>
-        </dependency>
-
-        <!-- LibGDX Platform Natives for Desktop -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-platform</artifactId>
-            <version>${gdx.version}</version>
-            <classifier>natives-desktop</classifier>
-        </dependency>
-
-        <!-- LibGDX Box2D (Physics Engine) -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-box2d</artifactId>
-            <version>${gdx.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-box2d-platform</artifactId>
-            <version>${gdx.version}</version>
-            <classifier>natives-desktop</classifier>
-        </dependency>
-
-        <!-- LibGDX FreeType (Font Rendering) -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-freetype</artifactId>
-            <version>${gdx.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-freetype-platform</artifactId>
-            <version>${gdx.version}</version>
-            <classifier>natives-desktop</classifier>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>assets</module>
+        <module>monsters</module>
+        <module>stages</module>
+        <module>game-core</module>
+        <module>playable-characters</module>
+        <module>ui</module>
+        <module>engine</module>
+    </modules>
 
     <build>
-        <plugins>
-            <!-- Maven Compiler Plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                </configuration>
-            </plugin>
-
-            <!-- Maven Jar Plugin - Create executable JAR -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>${main.class}</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <!-- Maven Dependency Plugin - Copy dependencies to lib folder -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                            <includeScope>runtime</includeScope>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- JPackage Plugin - Create native installers -->
-            <plugin>
-                <groupId>org.panteleyev</groupId>
-                <artifactId>jpackage-maven-plugin</artifactId>
-                <version>1.6.0</version>
-                <configuration>
-                    <name>${app.name}</name>
-                    <appVersion>${app.version}</appVersion>
-                    <vendor>BoneChild Studios</vendor>
-                    <destination>target/dist</destination>
-                    <module>${main.class}</module>
-                    <runtimeImage>target/java-runtime</runtimeImage>
-                    <javaOptions>
-                        <option>-Dfile.encoding=UTF-8</option>
-                    </javaOptions>
-                    <icon>src/main/resources/icon.png</icon>
-                    
-                    <!-- macOS specific options -->
-                    <macPackageName>${app.name}</macPackageName>
-                    <macPackageIdentifier>com.bonechild.game</macPackageIdentifier>
-                    
-                    <!-- Windows specific options -->
-                    <winDirChooser>true</winDirChooser>
-                    <winMenu>true</winMenu>
-                    <winShortcut>true</winShortcut>
-                    
-                    <!-- Linux specific options -->
-                    <linuxShortcut>true</linuxShortcut>
-                </configuration>
-            </plugin>
-
-            <!-- jlink plugin to create custom JRE -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jlink-plugin</artifactId>
-                <version>3.1.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <compress>2</compress>
-                    <noHeaderFiles>true</noHeaderFiles>
-                    <noManPages>true</noManPages>
-                    <stripDebug>true</stripDebug>
-                    <addModules>
-                        <addModule>java.base</addModule>
-                        <addModule>java.desktop</addModule>
-                        <addModule>java.logging</addModule>
-                        <addModule>jdk.unsupported</addModule>
-                    </addModules>
-                    <output>${project.build.directory}/java-runtime</output>
-                </configuration>
-            </plugin>
-
-            <!-- Maven Shade Plugin - Create fat JAR with all dependencies -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>${main.class}</mainClass>
-                                </transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <finalName>${project.artifactId}-${project.version}-all</finalName>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.panteleyev</groupId>
+                    <artifactId>jpackage-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jlink-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
-
-    <profiles>
-        <!-- Profile for building native packages -->
-        <profile>
-            <id>native-package</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.panteleyev</groupId>
-                        <artifactId>jpackage-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>jpackage</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

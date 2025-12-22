@@ -1,0 +1,29 @@
+{
+  "animations": {
+    "explosion": {
+      "type": "frame_sequence",
+      "pattern": "asset/effects/explode{0000-0081}.png",
+      "frameTime": 0.01,
+      "loop": false
+    },
+    "coin": {
+      "type": "frame_sequence",
+      "pattern": "asset/items/coin_{1-4}.png",
+      "frameTime": 0.2,
+      "loop": true
+    },
+    "health_orb": {
+      "type": "frame_sequence",
+      "pattern": "asset/items/flasks_1_{1-4}.png",
+      "frameTime": 0.2,
+      "loop": true
+    },
+    "fireball": {
+      "type": "frame_sequence",
+      "pattern": "asset/projectiles/Fireball{1-60}.png",
+      "frameTime": 0.01,
+      "loop": true
+    }
+  }
+}
+

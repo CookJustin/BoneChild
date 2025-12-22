@@ -1,0 +1,75 @@
+{
+  "textures": {
+    "boss08b_sheet": "asset/bosses/boss08b/Boss08_B.png"
+  },
+  "animations": {
+    "boss08b_idle": {
+      "type": "sprite_sheet",
+      "texture": "boss08b_sheet",
+      "row": 0,
+      "frames": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.15,
+      "loop": true
+    },
+    "boss08b_walk": {
+      "type": "sprite_sheet",
+      "texture": "boss08b_sheet",
+      "row": 1,
+      "frames": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.12,
+      "loop": true
+    },
+    "boss08b_attack1": {
+      "type": "sprite_sheet",
+      "texture": "boss08b_sheet",
+      "row": 2,
+      "frames": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.1,
+      "loop": false
+    },
+    "boss08b_attack2": {
+      "type": "sprite_sheet",
+      "texture": "boss08b_sheet",
+      "row": 3,
+      "frames": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.1,
+      "loop": false
+    },
+    "boss08b_attack3": {
+      "type": "sprite_sheet",
+      "texture": "boss08b_sheet",
+      "row": 4,
+      "frames": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.1,
+      "loop": false
+    },
+    "boss08b_death": {
+      "type": "sprite_sheet_multi_row",
+      "texture": "boss08b_sheet",
+      "startRow": 6,
+      "rows": 2,
+      "framesPerRow": 6,
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameTime": 0.1,
+      "loop": false
+    },
+    "boss08b_damage": {
+      "type": "frame_sequence",
+      "pattern": "asset/bosses/boss08b/Boss08B_Damage_{1-6}.png",
+      "frameTime": 0.05,
+      "loop": false
+    }
+  }
+}
+

@@ -1,186 +1,177 @@
 # BoneChild
 
-A top-down survival action game built with LibGDX and packaged with jpackage.
+A modular roguelike action game built with LibGDX.
 
-## 🎮 About
+## Project Structure
 
-BoneChild is a fast-paced top-down survival game. Fight off waves of enemies, collect experience, level up, and upgrade your abilities to survive as long as possible!
-
-## 🛠️ Technology Stack
-
-- **LibGDX** - Game framework
-- **Scene2D UI** - User interface
-- **Maven** - Build tool
-- **jpackage** - Native packaging (Java 17+)
-
-## 📋 Prerequisites
-
-- Java 17 or higher
-- Maven 3.6+
-- (Optional) For native packaging: Platform-specific tools
-  - macOS: Xcode Command Line Tools
-  - Windows: WiX Toolset or Inno Setup
-  - Linux: rpm-build or fakeroot
-
-## 🚀 Getting Started
-
-### Building the Project
-
-**On macOS/Linux:**
-```bash
-./build.sh
-```
-
-**On Windows:**
-```cmd
-build.bat
-```
-
-**Using Maven directly:**
-```bash
-# Build JAR with dependencies
-mvn clean package
-
-# Build native package
-mvn clean package -Pnative-package
-```
-
-### Running the Game
-
-**On macOS (requires -XstartOnFirstThread flag):**
-```bash
-java -XstartOnFirstThread -jar target/bonechild-game-1.0.0-all.jar
-```
-
-**On Windows/Linux:**
-```bash
-java -jar target/bonechild-game-1.0.0-all.jar
-```
-
-**Or use the run script:**
-```bash
-./run.sh     # macOS/Linux
-run.bat      # Windows
-```
-
-**Run with Maven:**
-```bash
-mvn exec:java -Dexec.mainClass="com.bonechild.Main"
-```
-
-## 📦 Packaging
-
-### Create Native Installers
-
-The project uses jpackage to create native installers for your platform:
-
-```bash
-mvn clean package -Pnative-package
-```
-
-This will create:
-- **macOS**: `.dmg` or `.pkg` installer in `target/dist/`
-- **Windows**: `.msi` or `.exe` installer in `target/dist/`
-- **Linux**: `.deb` or `.rpm` package in `target/dist/`
-
-### Distribution
-
-The packaged installers include:
-- The game JAR and all dependencies
-- A custom Java runtime (via jlink)
-- Platform-specific launcher
-- Application icon (configure in `src/main/resources/icon.png`)
-
-## 🎯 Project Structure
+BoneChild is organized into independent Maven modules:
 
 ```
 BoneChild/
-├── src/
-│   └── main/
-│       ├── java/
-│       │   └── com/
-│       │       └── bonechild/
-│       │           ├── Main.java              # Entry point
-│       │           ├── BoneChildGame.java     # Main game class
-│       │           └── [game classes]         # Game entities, systems, etc.
-│       └── resources/
-│           ├── icon.png                       # Application icon
-│           └── [assets]                       # Sprites, sounds, etc.
-├── pom.xml                                    # Maven configuration
-├── build.sh                                   # Build script (Unix)
-├── build.bat                                  # Build script (Windows)
-└── README.md
+├── pom.xml                 # Parent POM
+├── docs/                   # Project-level documentation
+│   └── DOCUMENTATION.md   # Documentation structure guide
+├── assets/                 # Asset management module
+│   ├── docs/              
+│   │   ├── README.md      # Asset module guide
+│   │   └── ASSET_SYSTEM.md # Asset system documentation
+│   └── src/
+│       ├── main/java/     # AssetRegistry, AssetLoader, Animation
+│       └── main/resources/
+│           ├── player-assets.json
+│           ├── effects-assets.json
+│           └── monsters/  # Per-monster asset files
+├── monsters/               # Monster entities and behavior
+│   ├── docs/
+│   │   └── README.md      # Monster module guide
+│   └── src/main/java/
+│       ├── api/           # MobEntity, MobFactory interfaces
+│       ├── core/          # DefaultMobFactory
+│       └── impl/          # Concrete monsters (Boss08B, Orc, etc.)
+├── game-core/              # Core game logic and domain models
+│   ├── docs/
+│   │   └── README.md      # Game-core module guide
+│   └── src/main/java/
+│       ├── world/         # Player, WorldManager, entities
+│       └── input/         # PlayerInput
+├── ui/                     # User interface screens and HUD
+│   ├── docs/
+│   │   └── README.md      # UI module guide
+│   └── src/main/java/
+│       └── ui/            # GameUI, menus, screens
+└── engine/                 # Game engine orchestration
+    ├── docs/
+    │   └── README.md      # Engine module guide
+    └── src/main/java/
+        ├── Main.java
+        ├── BoneChildGame.java
+        ├── rendering/     # Renderer, effects, camera
+        └── world/         # TileMap, GhostSprite (rendering-specific)
 ```
 
-## 🎨 Game Features (To Implement)
+## Module Dependencies
 
-- [ ] Player character with movement
-- [ ] Auto-attacking weapons
-- [ ] Enemy waves with increasing difficulty
-- [ ] Experience gems and leveling system
-- [ ] Upgrade selection system
-- [ ] Multiple weapon types
-- [ ] Special abilities
-- [ ] Power-ups and collectibles
-- [ ] Boss fights
-- [ ] Character selection
-- [ ] Persistent unlocks
+```
+         ┌─────────┐
+         │ assets  │
+         └────┬────┘
+              │
+        ┌─────┴─────┬─────────┐
+        │           │         │
+   ┌────▼────┐ ┌───▼────┐    │
+   │monsters │ │game-   │    │
+   │         │ │core    │◄───┘
+   └────┬────┘ └───┬────┘
+        │          │
+    ┌───▼────┐ ┌──┴───────┐
+    │stages  │ │playable- │
+    └───┬────┘ │characters│
+        │      └──┬───────┘
+        │         │
+        │      ┌──┴───┐
+        │      │  ui  │
+        │      └──┬───┘
+        │         │
+        └─────┬───┴───┐
+              │       │
+          ┌───▼───────▼──┐
+          │    engine    │
+          └──────────────┘
+```
 
-## 🔧 Development
+**Key:**
+- `assets` → Foundation (textures, animations)
+- `monsters` → Monster entities (depends on assets)
+- `game-core` → Game logic interfaces (depends on assets, monsters)
+- `stages` → Wave spawning (depends on monsters)
+- `playable-characters` → Character implementations (depends on game-core)
+- `ui` → User interface (depends on game-core, assets)
+- `engine` → Orchestration (depends on everything)
 
-### Adding Assets
+**No circular dependencies!** ✅
 
-Place your assets in `src/main/resources/`:
-- Sprites: `textures/`
-- Sounds: `sounds/`
-- Music: `music/`
-- Fonts: `fonts/`
+## Quick Start
 
-### Key Classes to Implement
+### Build
+```bash
+mvn clean package
+```
 
-1. **Player.java** - Player character with health, movement, and weapons
-2. **Enemy.java** - Base enemy class
-3. **Weapon.java** - Weapon system with auto-targeting
-4. **Projectile.java** - Bullet/projectile management
-5. **WaveManager.java** - Enemy wave spawning
-6. **UpgradeSystem.java** - Level-up and upgrade selection
-7. **GameScreen.java** - Main gameplay screen
-8. **MenuScreen.java** - Main menu and UI
+### Run
+```bash
+java -jar engine/target/bonechild-engine-1.0.0-all.jar
+```
 
-## 📝 Build Configuration
+### Development
+Each module can be developed independently. See module documentation:
+- [Assets Module](assets/docs/README.md) - Asset system
+- [Monsters Module](monsters/docs/README.md) - Monster entities
+- [Stages Module](stages/docs/README.md) - Wave spawning & stages
+- [Game Core Module](game-core/docs/README.md) - Core game logic
+- [UI Module](ui/docs/README.md) - User interface
+- [Engine Module](engine/docs/README.md) - Game orchestration
+- [Documentation Guide](docs/DOCUMENTATION.md) - How docs are organized
 
-The `pom.xml` includes:
-- LibGDX core and desktop backend (LWJGL3)
-- Scene2D for UI components
-- Box2D for physics (optional)
-- FreeType for font rendering
-- Maven Shade Plugin for fat JAR creation
-- jpackage Maven Plugin for native installers
-- jlink for custom JRE creation
+## Key Features
 
-## 🐛 Troubleshooting
+### Data-Driven Assets
+- No code changes to add sprites/animations
+- Modular JSON manifests per module
+- See [Asset System Guide](assets/docs/ASSET_SYSTEM.md)
 
-### "Maven not found"
-Install Maven: `brew install maven` (macOS) or download from [maven.apache.org](https://maven.apache.org)
+### Modular Monster System
+- Mobs spawned via factory by type ID
+- Each monster defined in separate class
+- Easy to add new monsters
 
-### "Java version error"
-Ensure Java 17+ is installed and set as JAVA_HOME
+### Wave-Based Combat
+- Progressive difficulty
+- Boss waves with warning screens
+- Power-up selection on level up
 
-### "jpackage fails"
-- Ensure you're using JDK 17+ (not JRE)
-- Install platform-specific packaging tools (see Prerequisites)
+## Technology Stack
+- **Language**: Java 17
+- **Framework**: LibGDX 1.12.1
+- **Build**: Maven
+- **Physics**: Box2D
+- **Backend**: LWJGL3
 
-### Game doesn't start
-Check the logs in the terminal for LibGDX errors
+## Architecture Goals
 
-## 📄 License
+✅ **Modular** - Independent modules with clear boundaries  
+✅ **Data-driven** - Game content in JSON, not Java  
+✅ **Maintainable** - Small, focused files  
+✅ **Extensible** - Easy to add monsters, stages, items  
 
-MIT License - Feel free to use this template for your own projects!
+## Roadmap
 
-## 🤝 Contributing
+### Completed
+- [x] Modular asset system with JSON manifests
+- [x] Monster module with factory pattern
+- [x] Type-based mob spawning
+- [x] Basic combat and wave system
+- [x] Game-core module (domain logic separation)
+- [x] UI module extraction
 
-This is a template project. Fork it and make it your own!
+### In Progress
+- [ ] Clean up unused assets
+- [ ] Renderer refactor (remove instanceof checks)
 
----
+### Future
+- [ ] Stage/progression module
+- [ ] Items/equipment system
+- [ ] Skill tree
+- [ ] Multiple stages with portals
+- [ ] Data-driven wave definitions
 
-Built with ❤️ using LibGDX and jpackage
+## Contributing
+
+When adding new features:
+1. Choose the appropriate module (or create a new one)
+2. Update the module's README
+3. Add documentation to module's `docs/` folder
+4. Keep modules loosely coupled
+
+## License
+[Add license here]
+
