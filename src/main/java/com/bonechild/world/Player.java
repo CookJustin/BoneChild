@@ -70,6 +70,12 @@ public class Player extends LivingEntity {
     private static final float DAMAGE_VARIANCE = 0.2f;
     private java.util.Random critRandom = new java.util.Random();
     
+    // Temporary grab boost on level up
+    private boolean tempGrabBoostActive = false;
+    private float tempGrabBoostTimer = 0f;
+    private static final float TEMP_GRAB_BOOST_DURATION = 5.0f; // 5 seconds of max grab on level up
+    private static final int TEMP_GRAB_BOOST_LEVEL = 10; // Temporarily max out grab to level 10
+    
     // Attack properties
     private float attackDamage;
     private float attackRange;
@@ -170,6 +176,16 @@ public class Player extends LivingEntity {
             if (invincibilityTimer >= INVINCIBILITY_DURATION) {
                 invincibilityTimer = 0f;
                 isInvincible = false;
+            }
+        }
+        
+        // Update temporary grab boost timer
+        if (tempGrabBoostActive) {
+            tempGrabBoostTimer += delta;
+            if (tempGrabBoostTimer >= TEMP_GRAB_BOOST_DURATION) {
+                tempGrabBoostActive = false;
+                tempGrabBoostTimer = 0f;
+                Gdx.app.log("Player", "Temporary grab boost expired!");
             }
         }
         
@@ -431,6 +447,11 @@ public class Player extends LivingEntity {
         // Heal player on level up
         heal(maxHealth * 0.2f);
         
+        // Activate temporary grab boost
+        tempGrabBoostActive = true;
+        tempGrabBoostTimer = 0f;
+        Gdx.app.log("Player", "🌟 GRAB BOOST ACTIVATED! Max pickup range for " + TEMP_GRAB_BOOST_DURATION + " seconds!");
+        
         leveledUpThisFrame = true;
         Gdx.app.log("Player", "🎉 Level up! Now level " + level + ", Next level needs: " + experienceToNextLevel + " XP");
     }
@@ -583,7 +604,10 @@ public class Player extends LivingEntity {
     public int getGold() { return gold; }
     public int getSpeedLevel() { return speedLevel; }
     public int getStrengthLevel() { return strengthLevel; }
-    public int getGrabLevel() { return grabLevel; }
+    public int getGrabLevel() { 
+        // Return boosted level if temporary boost is active
+        return tempGrabBoostActive ? TEMP_GRAB_BOOST_LEVEL : grabLevel; 
+    }
     public int getAttackSpeedLevel() { return attackSpeedLevel; }
     public int getMaxHpLevel() { return maxHpLevel; }
     public int getXpBoostLevel() { return xpBoostLevel; }
@@ -599,10 +623,21 @@ public class Player extends LivingEntity {
     public boolean isDodging() { return isDodging; }
     public int getKillStreak() { return killStreak; }
     public float getKillStreakMultiplier() { return killStreakMultiplier; }
-    
+    public boolean isTempGrabBoostActive() { return tempGrabBoostActive; }
+    public float getTempGrabBoostTimeRemaining() { 
+        return tempGrabBoostActive ? (TEMP_GRAB_BOOST_DURATION - tempGrabBoostTimer) : 0f; 
+    }
+
     // Animation getters
     public AnimationState getCurrentState() { return currentState; }
     public boolean isFacingRight() { return facingRight; }
     public boolean isInvincible() { return isInvincible; }
     public float getInvincibilityTimer() { return invincibilityTimer; }
+
+    /**
+     * Backwards-compatible alias for hasLeveledUpThisFrame used by BoneChildGame
+     */
+    public boolean didLevelUpThisFrame() {
+        return hasLeveledUpThisFrame();
+    }
 }

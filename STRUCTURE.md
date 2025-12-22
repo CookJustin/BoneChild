@@ -25,8 +25,7 @@ com.bonechild
 │   └── PlayerInput.java       # WASD/Arrow key movement, action buttons
 │
 ├── ui/                         # User interface
-│   ├── GameUI.java            # HUD with health, level, exp, wave info
-│   └── InventoryUI.java       # Placeholder for upgrade system
+│   └── GameUI.java            # HUD with health, level, exp, wave info
 │
 └── util/                       # Utility functions
     └── MathUtils.java         # Math helpers (clamp, lerp, distance, etc.)
@@ -70,7 +69,6 @@ com.bonechild
 ### 🎮 Controls
 - **WASD** or **Arrow Keys**: Move player
 - **ESC**: Exit game
-- **I**: Toggle inventory (placeholder)
 
 ## Assets
 

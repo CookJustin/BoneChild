@@ -533,19 +533,17 @@ public class Renderer {
         screenEffects.update(deltaTime);
         
         camera.update();
-        
-        camera.update();
         batch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
     }
     
     /**
-     * Render particles and damage numbers (call after rendering entities)
+     * Render particles, damage numbers, and screen effects (call after entities)
      */
     public void renderEffects() {
         // NEW: Render particle system
-        particleSystem.render(); // Fixed: No parameter needed
-        
+        particleSystem.render();
+
         // Render damage numbers
         if (damageNumbers.size > 0) {
             batch.begin();
@@ -561,6 +559,16 @@ public class Renderer {
         screenEffects.render();
     }
     
+    /**
+     * Handle window resize - updates projection matrices
+     */
+    public void resize(int width, int height) {
+        // In case viewport changes camera parameters, ensure matrices are refreshed
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+    }
+
     /**
      * Trigger a camera shake effect
      */

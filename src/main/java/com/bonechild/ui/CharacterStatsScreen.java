@@ -57,8 +57,13 @@ public class CharacterStatsScreen {
     public void update(float delta) {
         if (!isVisible) return;
         
-        // Input handling is now done in BoneChildGame.handleInput() to avoid conflicts
-        // Only handle page navigation here - use ONLY arrow keys, not WASD
+        // Close stats screen with C or ESC
+        if (Gdx.input.isKeyJustPressed(Input.Keys.C) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            hide();
+            return;
+        }
+        
+        // Handle page navigation - use ONLY arrow keys, not WASD
         if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) {
             currentPage = (currentPage + 1) % TOTAL_PAGES;
         }

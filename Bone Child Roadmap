@@ -1,0 +1,77 @@
+Bone Child Roadmap
+
+1. Foundations & Technical Infrastructure
+Save/Meta-progression System:
+Implement persistent data for meta-progression (milk, unlocks, story flags).
+Dialogue & Narrative System:
+Create a flexible system for displaying narration, dialogue, and environmental storytelling.
+Cutscene/Scripted Event System:
+Allow for in-game scripted events (e.g., awakening, boss intros, transformations).
+
+2. ACT 0 — AWAKENING (Tutorial/First Run)
+Scene 0.1: Bone Pile
+Black screen, heartbeat, fade-in, first movement/attack tutorial.
+Minimal UI, cryptic narration.
+Scene 0.2: The Whisper
+Implement sigil visual and ghostly voice.
+Short, optional dialogue system.
+
+3. ACT I — UNDERWORLD STAGES
+Procedural Stage Generation:
+3–5 unique stage motifs (Marrow Fields, Ash Nursery, etc.).
+Each stage = a failed attempt at becoming human.
+Enemy/Fragment System:
+Enemies drop fragments for temporary upgrades.
+Visual feedback for Bonechild’s physical changes (limbs, cracks, etc.).
+Environmental Storytelling:
+Place visual cues and lore objects in levels.
+
+4. ACT II — UNDERWORLD BOSS
+Boss Design & Implementation:
+Design and code at least one boss (Collector, Midwife, Hollow Knight).
+Integrate boss defeat cutscene and sigil transition.
+
+5. ACT III — SURFACE STAGES
+Surface Level Generation:
+New tilesets, hostile environment, and unique enemies.
+Surface Rejection Mechanic:
+Implement mechanics showing Bonechild doesn’t belong (e.g., environmental damage, hostile animals).
+Environmental Storytelling:
+Add craftsman/milk imagery, effigies, and clues.
+
+6. ACT IV — GEPETTO, THE MAKER
+Final Boss Design:
+Multi-phase fight, constructs, forced debuffs/transformations.
+Visuals: workshop, milk tubes, etc.
+Narrative Integration:
+Dialogue and cutscenes for Gepetto’s philosophy.
+
+7. ACT V — THE MILK (META-PROGRESSION)
+Meta-progression Unlocks:
+Implement upgrades: flesh overlays, new abilities, clearer voice, etc.
+Visual and mechanical feedback for each meta-progression step.
+
+8. ACT VI — THE LOOP CONTINUES
+Loop & Replayability:
+On death, return to underworld with new dialogue, NPCs, and paths.
+Track and unlock new content across runs.
+
+9. ENDGAME & EXPANSION
+True Ending & Choices:
+Allow for reaching the surface without a sigil.
+Implement final choice: remain new or become “real.”
+Dynamic changes to Gepetto and world across runs.
+
+Things to Consider
+Narrative Integration:
+Tie story beats to gameplay progression (not just cutscenes).
+Visual Feedback:
+Show Bonechild’s transformation visually and mechanically.
+Replayability:
+Ensure each run feels meaningful (new dialogue, paths, abilities).
+Accessibility:
+Allow for skipping cutscenes, readable fonts, colorblind options.
+Testing:
+Playtest each act for pacing, difficulty, and narrative clarity.
+
+

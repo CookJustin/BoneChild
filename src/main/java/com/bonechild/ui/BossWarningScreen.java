@@ -83,47 +83,28 @@ public class BossWarningScreen {
         // Calculate banner position (center of screen)
         float bannerY = (screenHeight - BANNER_HEIGHT) / 2f;
         
-        // End the batch before drawing shapes
-        batch.end();
-        
-        // Draw black background banner
+        // Draw black background banner with its own ShapeRenderer
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.BLACK);
         shapeRenderer.rect(0, bannerY, screenWidth, BANNER_HEIGHT);
-        shapeRenderer.end();
-        
-        // Draw red border on top and bottom
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.RED);
         shapeRenderer.rect(0, bannerY, screenWidth, 4); // Top border
         shapeRenderer.rect(0, bannerY + BANNER_HEIGHT - 4, screenWidth, 4); // Bottom border
         shapeRenderer.end();
         
-        // Resume batch for text rendering
-        batch.begin();
-        
-        // Draw scrolling text multiple times to fill screen
+        // Assume batch is already begun by caller; just draw text
         float textY = bannerY + BANNER_HEIGHT / 2f + 15f; // Center text vertically
-        
-        // Calculate how many copies we need to fill the screen
         int numCopies = (int) Math.ceil(screenWidth / repeatWidth) + 3;
-        
-        // Start position (scrolling from right to left)
         float baseX = screenWidth - (scrollOffset % repeatWidth);
         
-        // Draw multiple copies of the text pattern
         for (int i = -1; i < numCopies; i++) {
             float x = baseX + (i * repeatWidth);
-            
-            // Only draw if visible on screen
             if (x + repeatWidth >= 0 && x <= screenWidth) {
-                // Draw "WARNING:" in red
                 warningFont.setColor(Color.RED);
                 layout.setText(warningFont, "WARNING:");
                 warningFont.draw(batch, "WARNING:", x, textY);
                 float warningTextWidth = layout.width;
                 
-                // Draw "BOSS FIGHT" in yellow with spacing
                 warningFont.setColor(Color.YELLOW);
                 layout.setText(warningFont, "BOSS FIGHT");
                 warningFont.draw(batch, "BOSS FIGHT", x + warningTextWidth + 80f, textY);
@@ -136,9 +117,9 @@ public class BossWarningScreen {
         String instruction = "Press SPACE to continue";
         layout.setText(warningFont, instruction);
         float instructWidth = layout.width;
-        warningFont.draw(batch, instruction, 
-                        (screenWidth - instructWidth) / 2f, 
-                        bannerY - 30f);
+        warningFont.draw(batch, instruction,
+                         (screenWidth - instructWidth) / 2f,
+                         bannerY - 30f);
         warningFont.getData().setScale(3.0f); // Reset scale
     }
     

@@ -126,12 +126,21 @@ public class GameOverScreen {
     public void render() {
         if (!isVisible) return;
 
-        // Update camera and set projection matrices
+        // Update camera and set projection matrices for virtual coordinates
         uiCamera.update();
         batch.setProjectionMatrix(uiCamera.combined);
         shapeRenderer.setProjectionMatrix(uiCamera.combined);
 
-        // Draw dark overlay
+        // Also update button positions based on current screen size so they stay centered
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        float centerX = screenWidth / 2f - buttonWidth / 2f;
+        float startY = screenHeight / 2f - 50f;
+        playAgainButton.set(centerX, startY, buttonWidth, buttonHeight);
+        float exitY = startY - buttonHeight - 20f;
+        exitButton.set(centerX, exitY, buttonWidth, buttonHeight);
+
+        // Draw dark overlay using virtual resolution
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.8f);
         shapeRenderer.rect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
@@ -155,10 +164,8 @@ public class GameOverScreen {
 
         batch.end();
 
-        // Draw stats box
+        // Draw stats box and buttons
         drawStatsBox();
-
-        // Draw buttons
         drawButton(playAgainButton, "PLAY AGAIN");
         drawButton(exitButton, "EXIT TO MENU");
     }
@@ -275,6 +282,12 @@ public class GameOverScreen {
         // Keep using fixed virtual resolution
         uiCamera.setToOrtho(false, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
         setupUI();
+        
+        // Update projection matrices for batch and shape renderer
+        com.badlogic.gdx.math.Matrix4 projectionMatrix = new com.badlogic.gdx.math.Matrix4();
+        projectionMatrix.setToOrtho2D(0, 0, width, height);
+        batch.setProjectionMatrix(projectionMatrix);
+        shapeRenderer.setProjectionMatrix(projectionMatrix);
     }
 
     /**
