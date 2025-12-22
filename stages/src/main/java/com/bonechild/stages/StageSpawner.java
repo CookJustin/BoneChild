@@ -117,7 +117,7 @@ public class StageSpawner {
             if (waveTimer >= spawn.spawnTime) {
                 // Spawn the mob!
                 Vector2 spawnPos = getRandomSpawnPosition();
-                SpawnContext ctx = new SpawnContext(spawnPos);
+                SpawnContext ctx = new SpawnContext(spawnPos.x, spawnPos.y);
                 MobEntity mob = mobFactory.create(spawn.mobType, ctx);
                 mobs.add(mob);
 
@@ -175,17 +175,36 @@ public class StageSpawner {
     }
 
     // Getters
-    public int getCurrentWave() { return currentWaveIndex + 1; }
-    public int getTotalWaves() { return currentStage != null ? currentStage.waves.size : 0; }
-    public boolean isWaveActive() { return waveActive; }
-    public boolean isStageComplete() { return currentWaveIndex >= currentStage.waves.size; }
-    public WaveDefinition getCurrentWaveDefinition() {
-        if (currentStage != null && currentWaveIndex < currentStage.waves.size) {
-            return currentStage.waves.get(currentWaveIndex);
-        }
-        return null;
+    public int getCurrentWave() { 
+        return currentWaveIndex + 1; 
     }
-    public String getStageName() { return currentStage != null ? currentStage.name : ""; }
+    
+    public int getTotalWaves() { 
+        return currentStage != null ? currentStage.waves.size : 0; 
+    }
+    
+    public boolean isWaveActive() { 
+        return waveActive; 
+    }
+    
+    public boolean isStageComplete() { 
+        return currentWaveIndex >= currentStage.waves.size; 
+    }
+    
+    public String getStageName() { 
+        return currentStage != null ? currentStage.name : ""; 
+    }
+
+    /**
+     * Get current wave definition (used by WorldManager to check if boss wave)
+     */
+    public WaveDefinition getCurrentWaveDefinition() {
+        if (currentStage == null || currentWaveIndex >= currentStage.waves.size) {
+            return null;
+        }
+        return currentStage.waves.get(currentWaveIndex);
+    }
+
 
     // Data classes for JSON parsing
     public static class StageDefinition {
@@ -212,4 +231,3 @@ public class StageSpawner {
         float spawnTime;
     }
 }
-

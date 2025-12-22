@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
-import com.bonechild.input.PlayerInput;
+import com.bonechild.playablecharacters.PlayerInput;
 import com.bonechild.rendering.Assets;
 
 /**
@@ -98,9 +98,10 @@ public class SettingsScreen {
         this.musicVolume = assets.getBackgroundMusic() != null ? assets.getBackgroundMusic().getVolume() : 0.5f;
         this.sfxVolume = 0.6f;
         
-        // Initialize screen shake setting from global state
-        this.screenShakeEnabled = com.bonechild.rendering.CameraShake.isEnabled();
-        
+        // Screen shake initial state
+        // NOTE: Temporarily local-only until settings are wired through engine.
+        this.screenShakeEnabled = true;
+
         // Movement keybind setup (left column)
         this.keybindLabels = new String[]{
             "Move Up", "Move Down", "Move Left", "Move Right", "Stats", "Dodge"
@@ -258,8 +259,7 @@ public class SettingsScreen {
             } else if (currentState == MenuState.DISPLAY) {
                 if (screenShakeToggle.contains(mouseX, mouseY)) {
                     screenShakeEnabled = !screenShakeEnabled;
-                    com.bonechild.rendering.CameraShake.setEnabled(screenShakeEnabled);
-                    Gdx.app.log("Settings", "Screen shake " + (screenShakeEnabled ? "enabled" : "disabled"));
+                    Gdx.app.log("Settings", "Screen shake " + (screenShakeEnabled ? "enabled" : "disabled") + " (pending engine wiring)");
                     return;
                 }
             } else if (currentState == MenuState.KEYBINDS) {
@@ -547,8 +547,9 @@ public class SettingsScreen {
         currentState = MenuState.MAIN;
         ignoreInputTimer = 0.1f;
         
-        // Sync screen shake setting with global state
-        screenShakeEnabled = com.bonechild.rendering.CameraShake.isEnabled();
+        // Refresh UI state
+        // NOTE: Temporarily local-only until settings are wired through engine.
+        screenShakeEnabled = this.screenShakeEnabled;
     }
     
     public void hide() {

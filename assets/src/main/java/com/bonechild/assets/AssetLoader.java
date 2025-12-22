@@ -54,14 +54,20 @@ public class AssetLoader {
 
         JsonValue root = jsonReader.parse(file);
 
-        // Load textures first
+        // Load textures first (check if not empty)
         if (root.has("textures")) {
-            loadTextures(root.get("textures"));
+            JsonValue texturesNode = root.get("textures");
+            if (texturesNode != null && texturesNode.child != null) {
+                loadTextures(texturesNode);
+            }
         }
 
-        // Then load animations (may reference textures)
+        // Then load animations (may reference textures, check if not empty)
         if (root.has("animations")) {
-            loadAnimations(root.get("animations"));
+            JsonValue animationsNode = root.get("animations");
+            if (animationsNode != null && animationsNode.child != null) {
+                loadAnimations(animationsNode);
+            }
         }
 
         Gdx.app.log("AssetLoader", "Loaded assets from: " + jsonPath);
@@ -78,8 +84,12 @@ public class AssetLoader {
         loadFromJson("json/effects-assets.json");
         loadFromJson("json/ui-assets.json");
         loadFromJson("json/stages-assets.json");
+        
+        // Load monster assets
+        loadFromJson("json/goblin-assets.json");
+        loadFromJson("json/boss08b-assets.json");
 
-        // Load all monster asset files from json/monsters/ directory
+        // Load all monster asset files from json/monsters/ directory (if any remain)
         loadFromDirectory("json/monsters/");
 
         Gdx.app.log("AssetLoader", "Module loading complete: " + registry.getStats());

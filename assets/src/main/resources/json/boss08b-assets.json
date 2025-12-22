@@ -1,6 +1,6 @@
 {
   "textures": {
-    "boss08b_sheet": "asset/bosses/boss08b/Boss08_B.png"
+    "boss08b_sheet": "asset/Bosses/boss08b/Boss08_B.png"
   },
   "animations": {
     "boss08b_idle": {
@@ -66,8 +66,8 @@
     },
     "boss08b_damage": {
       "type": "frame_sequence",
-      "pattern": "asset/bosses/boss08b/Boss08B_Damage_{1-6}.png",
-      "frameTime": 0.05,
+      "pattern": "asset/Bosses/boss08b/Boss08B_Damage_{1-6}.png",
+      "frameTime": 0.08,
       "loop": false
     }
   }

@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.bonechild.rendering.Assets;
-import com.bonechild.world.Player;
+import com.bonechild.playablecharacters.Player;
 
 /**
  * Minimal inventory UI stub to satisfy BoneChildGame and provide a hook
@@ -64,4 +64,3 @@ public class InventoryUI {
         stage.dispose();
     }
 }
-

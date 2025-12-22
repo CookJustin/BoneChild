@@ -9,7 +9,9 @@ import com.bonechild.monsters.core.DefaultMobFactory;
 import com.bonechild.stages.StageSpawner;
 import com.bonechild.playablecharacters.Player;
 import com.bonechild.playablecharacters.Pickup;
-
+import com.bonechild.playablecharacters.Projectile;
+import com.bonechild.saves.SaveState;
+import com.bonechild.saves.SaveStateManager;
 /**
  * Manages all entities in the game world
  *
@@ -59,6 +61,9 @@ public class WorldManager {
         this.stageSpawner.loadStage("stages/stage-1.json");
         this.stageSpawner.setSpawnBounds(100, 1820, 100, 980);
 
+        // Set up player's projectile spawner callback
+        player.setProjectileSpawner(projectile -> projectiles.add(projectile));
+
         Gdx.app.log("WorldManager", "Loaded stage: " + stageSpawner.getStageName());
     }
 
@@ -72,10 +77,31 @@ public class WorldManager {
     }
 
     /**
+     * Skip to a specific wave (for loading saved games)
+     */
+    public void skipToWave(int waveNumber) {
+        if (stageSpawner == null) return;
+
+        // Clear any existing mobs
+        mobs.clear();
+
+        // Advance to the target wave
+        int currentWave = stageSpawner.getCurrentWave();
+        for (int i = currentWave; i < waveNumber; i++) {
+            stageSpawner.nextWave();
+        }
+
+        Gdx.app.log("WorldManager", "Skipped to wave " + waveNumber);
+    }
+
+    /**
      * Update all entities
      */
     public void update(float delta) {
-        // Update player
+        // Inject targetable mobs into player for auto-targeting
+        player.setTargetableMobs(mobs);
+        
+        // Update player (player handles its own auto-attack logic)
         player.update(delta);
 
         // Update stage spawner (spawns mobs at scheduled times)
@@ -133,6 +159,22 @@ public class WorldManager {
                 Gdx.app.log("WorldManager", "🎉 STAGE COMPLETE!");
             }
         }
+    }
+
+    /**
+     * Check if current wave is a boss wave (for UI banner)
+     */
+    public boolean isCurrentWaveBossWave() {
+        if (stageSpawner == null) return false;
+        StageSpawner.WaveDefinition wave = stageSpawner.getCurrentWaveDefinition();
+        return wave != null && wave.isBossWave;
+    }
+
+    /**
+     * Get pickup adder callback for CollisionSystem
+     */
+    public java.util.function.Consumer<Pickup> getPickupAdder() {
+        return pickup -> pickups.add(pickup);
     }
 
     /**
@@ -201,5 +243,36 @@ public class WorldManager {
     public int getTotalWaves() { return stageSpawner != null ? stageSpawner.getTotalWaves() : 0; }
     public int getMobCount() { return mobs.size; }
     public String getStageName() { return stageSpawner != null ? stageSpawner.getStageName() : ""; }
-}
+    // Save System
+    private SaveStateManager saveStateManager = new SaveStateManager();
+    public void saveGame() {
+        SaveState state = new SaveState();
+        state.level = player.getLevel();
+        state.experience = player.getExperience();
+        state.experienceToNextLevel = player.getExperienceToNextLevel();
+        state.gold = player.getGold();
+        state.currentHealth = player.getCurrentHealth();
+        state.maxHealth = player.getMaxHealth();
+        state.speedLevel = player.getSpeedLevel();
+        state.strengthLevel = player.getStrengthLevel();
+        state.grabLevel = player.getGrabLevel();
+        state.attackSpeedLevel = player.getAttackSpeedLevel();
+        state.maxHpLevel = player.getMaxHpLevel();
+        state.xpBoostLevel = player.getXpBoostLevel();
+        state.explosionChanceLevel = player.getExplosionChanceLevel();
+        state.chainLightningLevel = player.getChainLightningLevel();
+        state.lifestealLevel = player.getLifestealLevel();
+        state.currentStageId = "stage_1";
+        state.currentWave = getCurrentWave();
+        state.saveTime = System.currentTimeMillis();
+        saveStateManager.saveGame(state);
+    }
 
+    public SaveState loadGame() {
+        return saveStateManager.loadGame();
+    }
+
+    public boolean hasSaveFile() {
+        return saveStateManager.hasSaveFile();
+    }
+}

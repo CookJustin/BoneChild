@@ -2,7 +2,7 @@
   "animations": {
     "explosion": {
       "type": "frame_sequence",
-      "pattern": "asset/effects/explode{0000-0081}.png",
+      "pattern": "asset/effects/explode/explode{0000-0081}.png",
       "frameTime": 0.01,
       "loop": false
     },
@@ -20,7 +20,7 @@
     },
     "fireball": {
       "type": "frame_sequence",
-      "pattern": "asset/projectiles/Fireball{1-60}.png",
+      "pattern": "asset/projectiles/fireball/Fireball{1-60}.png",
       "frameTime": 0.01,
       "loop": true
     }

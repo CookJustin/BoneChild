@@ -189,27 +189,26 @@ public class PauseMenu {
     public void render() {
         if (!isVisible) return;
 
-        // Check if textures are loaded, if not, try to load them
+        // Load textures if not already loaded
         if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
             bgTexture = assets.getExitScreenMenuBg();
             playButtonTexture = assets.getPlayButton();
             settingsButtonTexture = assets.getSettingsButton();
             exitButtonTexture = assets.getExitButton();
 
-            // If still null, can't render yet
-            if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
-                Gdx.app.log("PauseMenu", "Textures not loaded yet - cannot render");
-                return;
+            // Setup UI once textures are loaded
+            if (bgTexture != null && playButtonTexture != null && settingsButtonTexture != null && exitButtonTexture != null) {
+                setupUI();
             }
-
-            // Setup UI now that textures are loaded
-            Gdx.app.log("PauseMenu", "Textures loaded, setting up UI");
-            setupUI();
         }
 
-        // Check if hitboxes are set up
+        // If textures still not loaded, skip rendering (assets not ready yet)
+        if (bgTexture == null || playButtonTexture == null || settingsButtonTexture == null || exitButtonTexture == null) {
+            return;
+        }
+
+        // If hitboxes not set up, skip rendering
         if (playButtonHitbox == null || settingsButtonHitbox == null || exitButtonHitbox == null) {
-            Gdx.app.log("PauseMenu", "Hitboxes not initialized - cannot render");
             return;
         }
 
@@ -227,16 +226,16 @@ public class PauseMenu {
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA, com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        // Draw semi-transparent overlay (low opacity - lets game show through)
+        // Draw semi-transparent overlay
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.35f);
+        shapeRenderer.setColor(0, 0, 0, 0.5f);
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
-        // Draw background image
+        // Draw UI textures
         batch.begin();
 
-        // Calculate background size and position (centered, scaled to 50% for smaller menu)
+        // Calculate background size and position (centered, scaled appropriately)
         float bgScale = Math.min(screenWidth / bgTexture.getWidth(), screenHeight / bgTexture.getHeight()) * 0.5f;
         float bgWidth = bgTexture.getWidth() * bgScale;
         float bgHeight = bgTexture.getHeight() * bgScale;
@@ -245,7 +244,7 @@ public class PauseMenu {
 
         batch.draw(bgTexture, bgX, bgY, bgWidth, bgHeight);
 
-        // Check which button is hovered - convert screen to virtual coordinates
+        // Check which button is hovered
         float mouseX = Gdx.input.getX();
         float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
         float virtualX = (mouseX / Gdx.graphics.getWidth()) * VIRTUAL_WIDTH;
@@ -254,29 +253,28 @@ public class PauseMenu {
         boolean settingsHovered = settingsButtonHitbox.contains(virtualX, virtualY);
         boolean exitHovered = exitButtonHitbox.contains(virtualX, virtualY);
 
-        // Draw buttons with tint if hovered (darker tint for subtle effect)
-        // Play button
+        // Draw buttons with hover effect
         if (playHovered) {
-            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+            batch.setColor(0.8f, 0.8f, 0.8f, 1f);
         }
         batch.draw(playButtonTexture, playButtonHitbox.x, playButtonHitbox.y, playButtonHitbox.width, playButtonHitbox.height);
         batch.setColor(1f, 1f, 1f, 1f);
 
-        // Settings button
         if (settingsHovered) {
-            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+            batch.setColor(0.8f, 0.8f, 0.8f, 1f);
         }
         batch.draw(settingsButtonTexture, settingsButtonHitbox.x, settingsButtonHitbox.y, settingsButtonHitbox.width, settingsButtonHitbox.height);
         batch.setColor(1f, 1f, 1f, 1f);
 
-        // Exit button
         if (exitHovered) {
-            batch.setColor(0.7f, 0.7f, 0.7f, 1f);
+            batch.setColor(0.8f, 0.8f, 0.8f, 1f);
         }
         batch.draw(exitButtonTexture, exitButtonHitbox.x, exitButtonHitbox.y, exitButtonHitbox.width, exitButtonHitbox.height);
         batch.setColor(1f, 1f, 1f, 1f);
 
         batch.end();
+
+        Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
     }
 
     /**

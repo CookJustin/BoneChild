@@ -87,6 +87,7 @@ public class Mob implements MobEntity {
     /**
      * Take damage
      */
+    @Override
     public void takeDamage(float damage) {
         if (dead) return;
 
@@ -114,7 +115,10 @@ public class Mob implements MobEntity {
 
     // Getters
     public Vector2 getPosition() { return position; }
+
+    @Override
     public float getDamage() { return damage; }
+
     public float getCurrentHealth() { return currentHealth; }
     public float getMaxHealth() { return maxHealth; }
     public float getSpeed() { return speed; }
@@ -188,4 +192,3 @@ public class Mob implements MobEntity {
         return false;
     }
 }
-

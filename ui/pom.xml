@@ -17,10 +17,17 @@
     <description>User interface screens and HUD for BoneChild</description>
 
     <dependencies>
-        <!-- UI depends on game-core for Player, WorldManager -->
+        <!-- UI depends on game-core for WorldManager -->
         <dependency>
             <groupId>com.bonechild</groupId>
             <artifactId>bonechild-game-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- UI depends on playable-characters for Player + PlayerInput -->
+        <dependency>
+            <groupId>com.bonechild</groupId>
+            <artifactId>bonechild-playable-characters</artifactId>
             <version>1.0.0</version>
         </dependency>
 
@@ -48,4 +55,3 @@
         </plugins>
     </build>
 </project>
-

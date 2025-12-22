@@ -11,8 +11,8 @@ import com.bonechild.monsters.api.MobEntity;
 import com.bonechild.playablecharacters.Player;
 import com.bonechild.playablecharacters.Pickup;
 import com.bonechild.playablecharacters.GhostSprite;
+import com.bonechild.playablecharacters.Projectile;
 import com.bonechild.world.TileMap;
-import com.bonechild.world.Projectile;
 
 /**
  * Handles rendering of all game objects
@@ -282,9 +282,9 @@ public class Renderer {
      */
     public void renderPickups(Array<Pickup> pickups) {
         if (pickups == null || pickups.size == 0) return;
-        
+
         for (Pickup pickup : pickups) {
-            if (pickup.isActive() && !pickup.isCollected()) {
+            if (pickup != null && !pickup.isCollected()) {
                 renderPickup(pickup);
             }
         }
@@ -349,52 +349,21 @@ public class Renderer {
     }
     
     /**
-     * Render all projectiles (fireballs)
+     * Render all projectiles (data-driven)
      */
     public void renderProjectiles(Array<Projectile> projectiles) {
         if (projectiles == null || projectiles.size == 0) return;
-        
-        // Get the fireball animation
-        Animation fireballAnim = assets.getFireballAnimation();
-        if (fireballAnim == null) return;
-        
-        // Update the fireball animation
-        fireballAnim.update(deltaTime);
-        
+
+        var registry = assets.getRegistry();
+        if (registry == null) return;
+
         batch.begin();
-        
         for (Projectile projectile : projectiles) {
-            if (projectile.isActive()) {
-                // Get current frame
-                var frame = fireballAnim.getCurrentFrame();
-                
-                float x = projectile.getPosition().x;
-                float y = projectile.getPosition().y;
-                float size = projectile.getRadius() * 8; // Increased from 4 to 8 for better visibility
-                
-                // Calculate rotation angle based on velocity direction
-                // atan2 returns angle in radians, convert to degrees
-                float angle = (float) Math.toDegrees(Math.atan2(
-                    projectile.getVelocity().y, 
-                    projectile.getVelocity().x
-                ));
-                
-                // Draw fireball sprite centered and rotated to face direction of travel
-                batch.draw(
-                    frame,
-                    x - size / 2,  // X position (centered)
-                    y - size / 2,  // Y position (centered)
-                    size / 2,      // Origin X (center of sprite for rotation)
-                    size / 2,      // Origin Y (center of sprite for rotation)
-                    size,          // Width
-                    size,          // Height
-                    1f,            // Scale X
-                    1f,            // Scale Y
-                    angle          // Rotation angle in degrees
-                );
+            if (projectile != null && projectile.isActive()) {
+                projectile.render(batch, registry, deltaTime);
             }
         }
-        
+
         batch.end();
     }
     
@@ -577,18 +546,18 @@ public class Renderer {
      */
     public void renderHitboxes(Player player, Array<MobEntity> mobs) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        
+
         // Draw player hitbox in green
         if (player != null && !player.isDead()) {
             shapeRenderer.setColor(0f, 1f, 0f, 1f);
             float hitboxX = player.getPosition().x + player.getHitboxOffsetX();
             float hitboxY = player.getPosition().y + player.getHitboxOffsetY();
             shapeRenderer.rect(hitboxX, hitboxY, player.getHitboxWidth(), player.getHitboxHeight());
-            
+
             // Draw entity bounds in blue
             shapeRenderer.setColor(0f, 0f, 1f, 1f);
             shapeRenderer.rect(player.getPosition().x, player.getPosition().y, player.getWidth(), player.getHeight());
-            
+
             // Draw a crosshair at the hitbox center (where mobs should target)
             float centerX = hitboxX + player.getHitboxWidth() / 2;
             float centerY = hitboxY + player.getHitboxHeight() / 2;
@@ -596,23 +565,23 @@ public class Renderer {
             shapeRenderer.line(centerX - 5, centerY, centerX + 5, centerY);
             shapeRenderer.line(centerX, centerY - 5, centerX, centerY + 5);
         }
-        
+
         // Draw mob hitboxes in red
         if (mobs != null) {
             for (MobEntity mob : mobs) {
-                if (mob.isActive() && !mob.isDead()) {
+                if (mob != null && mob.isActive() && !mob.isDead()) {
                     shapeRenderer.setColor(1f, 0f, 0f, 1f);
-                    float hitboxX = mob.getPosition().x + mob.getHitboxOffsetX();
-                    float hitboxY = mob.getPosition().y + mob.getHitboxOffsetY();
+                    float hitboxX = mob.getX() + mob.getHitboxOffsetX();
+                    float hitboxY = mob.getY() + mob.getHitboxOffsetY();
                     shapeRenderer.rect(hitboxX, hitboxY, mob.getHitboxWidth(), mob.getHitboxHeight());
-                    
+
                     // Draw entity bounds in yellow
                     shapeRenderer.setColor(1f, 1f, 0f, 1f);
-                    shapeRenderer.rect(mob.getPosition().x, mob.getPosition().y, mob.getWidth(), mob.getHeight());
+                    shapeRenderer.rect(mob.getX(), mob.getY(), mob.getWidth(), mob.getHeight());
                 }
             }
         }
-        
+
         shapeRenderer.end();
     }
 }

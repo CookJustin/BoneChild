@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.bonechild.rendering.Assets;
-import com.bonechild.world.Player;
+import com.bonechild.playablecharacters.Player;
 
 /**
  * Character stats screen shown when C is pressed

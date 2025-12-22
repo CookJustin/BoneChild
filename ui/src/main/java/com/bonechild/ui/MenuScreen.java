@@ -36,17 +36,21 @@ public class MenuScreen {
     private Rectangle startButton;
     private Rectangle settingsButton;
     private Rectangle exitButton;
+    private Rectangle continueButton; // Add this field for the continue button
     private float buttonWidth;
     private float buttonHeight;
     private float padding;
     
     private boolean isVisible;
+    private boolean hasSaveFile;      // Add this field for save file detection
     private MenuCallback callback;
     
     public interface MenuCallback {
-        void onStartGame();
+        void onContinueGame();
+        void onNewGame();
         void onSettings();
         void onExit();
+        boolean hasSaveFile(); // Add this method to the interface
     }
     
     public MenuScreen(Assets assets, MenuCallback callback) {
@@ -56,7 +60,10 @@ public class MenuScreen {
         this.glyphLayout = new GlyphLayout();
         this.callback = callback;
         this.isVisible = true;
-        
+        this.hasSaveFile = callback.hasSaveFile();
+
+        Gdx.app.log("MenuScreen", "Save file exists: " + hasSaveFile);
+
         // Load background texture
         try {
             this.backgroundTexture = new Texture(Gdx.files.internal("assets/backgrounds/TitleScreen.png"));
@@ -112,6 +119,12 @@ public class MenuScreen {
         // Exit Game button (below Settings)
         float exitY = settingsY - buttonHeight - padding;
         exitButton = new Rectangle(centerX, exitY, buttonWidth, buttonHeight);
+
+        // Continue Game button (above Start Game, if needed)
+        if (hasSaveFile) {
+            float continueY = startY + buttonHeight + padding;
+            continueButton = new Rectangle(centerX, continueY, buttonWidth, buttonHeight);
+        }
     }
     
     /**
@@ -148,9 +161,18 @@ public class MenuScreen {
             float mouseX = Gdx.input.getX() * (VIRTUAL_WIDTH / Gdx.graphics.getWidth());
             float mouseY = (Gdx.graphics.getHeight() - Gdx.input.getY()) * (VIRTUAL_HEIGHT / Gdx.graphics.getHeight());
             
-            if (startButton.contains(mouseX, mouseY)) {
+            if (continueButton != null && continueButton.contains(mouseX, mouseY)) {
                 if (callback != null) {
-                    callback.onStartGame();
+                    callback.onContinueGame();
+                }
+                isVisible = false;
+            } else if (startButton.contains(mouseX, mouseY)) {
+                if (callback != null) {
+                    if (hasSaveFile) {
+                        callback.onNewGame();
+                    } else {
+                        callback.onNewGame(); // Same as Start Game when no save
+                    }
                 }
                 isVisible = false;
             } else if (settingsButton.contains(mouseX, mouseY)) {
@@ -164,10 +186,14 @@ public class MenuScreen {
             }
         }
         
-        // Allow keyboard shortcut (ENTER only, no SPACE)
+        // Allow keyboard shortcut (ENTER only)
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ENTER)) {
             if (callback != null) {
-                callback.onStartGame();
+                if (hasSaveFile && continueButton != null) {
+                    callback.onContinueGame(); // ENTER continues if save exists
+                } else {
+                    callback.onNewGame();
+                }
             }
             isVisible = false;
         }
@@ -235,7 +261,12 @@ public class MenuScreen {
         batch.end();
         
         // Draw buttons
-        drawButton(startButton, "START GAME", true);
+        if (hasSaveFile && continueButton != null) {
+            drawButton(continueButton, "CONTINUE", true);
+            drawButton(startButton, "NEW GAME", false);
+        } else {
+            drawButton(startButton, "START GAME", true);
+        }
         drawButton(settingsButton, "SETTINGS", false);
         drawButton(exitButton, "EXIT GAME", false);
     }

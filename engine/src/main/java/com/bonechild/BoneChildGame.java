@@ -6,7 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.bonechild.input.PlayerInput;
+import com.bonechild.playablecharacters.Player;
+import com.bonechild.playablecharacters.PlayerInput;
+import com.bonechild.collision.CollisionSystem;
 import com.bonechild.rendering.Assets;
 import com.bonechild.rendering.Renderer;
 import com.bonechild.ui.GameUI;
@@ -25,19 +27,18 @@ import com.bonechild.ui.InventoryUI;
  * A top-down survival action game built with LibGDX
  */
 public class BoneChildGame extends ApplicationAdapter implements MenuScreen.MenuCallback, SettingsScreen.SettingsCallback, PauseMenu.PauseCallback, GameOverScreen.GameOverCallback, PowerUpScreen.PowerUpCallback {
+
     private OrthographicCamera camera;
     private Viewport viewport;
     private static final float WORLD_WIDTH = 1280f;
     private static final float WORLD_HEIGHT = 720f;
-    // Virtual dimensions used for boss spawning and world logic
-    private static final float VIRTUAL_WIDTH = 1280f;
-    private static final float VIRTUAL_HEIGHT = 720f;
 
     // Game systems
     private Assets assets;
     private WorldManager worldManager;
     private Renderer renderer;
     private PlayerInput playerInput;
+    private CollisionSystem collisionSystem;
     
     // UI
     private MenuScreen menuScreen;
@@ -53,6 +54,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
     // Game state
     private boolean gameStarted = false;
     private boolean gamePaused = false;
+    private int lastBossWarningWave = -1;  // Track which wave showed boss warning
     private float deathTimer = 0f;
     private boolean deathScreenShown = false;
     private boolean deathSoundPlayed = false;
@@ -76,15 +78,52 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         // Create menu screen (shown first)
         menuScreen = new MenuScreen(assets, this);
         
+        // Initialize collision system
+        collisionSystem = new CollisionSystem();
+        
         Gdx.app.log("BoneChild", "Game initialized successfully!");
         Gdx.app.log("BoneChild", "Showing menu screen...");
     }
     
     /**
-     * Called when player clicks "Start Game" in menu
+     * Check if save file exists (for menu to show Continue button)
      */
     @Override
-    public void onStartGame() {
+    public boolean hasSaveFile() {
+        // Directly check if the save file exists using LibGDX
+        try {
+            com.badlogic.gdx.files.FileHandle saveFile = Gdx.files.local("bonechild_save.json");
+            boolean exists = saveFile.exists();
+            Gdx.app.log("BoneChild", "Save file check: " + exists);
+            return exists;
+        } catch (Exception e) {
+            Gdx.app.error("BoneChild", "Error checking save file: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Called when player clicks "Continue" in menu
+     */
+    @Override
+    public void onContinueGame() {
+        Gdx.app.log("BoneChild", "Continue game selected");
+        startGameWithSave(true);
+    }
+    
+    /**
+     * Called when player clicks "New Game" in menu
+     */
+    @Override
+    public void onNewGame() {
+        Gdx.app.log("BoneChild", "New game selected");
+        startGameWithSave(false);
+    }
+    
+    /**
+     * Start game with or without loading save
+     */
+    private void startGameWithSave(boolean loadSave) {
         if (!gameStarted) {
             Gdx.app.log("BoneChild", "Starting game...");
             
@@ -93,15 +132,78 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
                 settingsScreen = new SettingsScreen(assets, this, null);
             }
             
-            // Create world manager (creates player)
-            worldManager = new WorldManager();
-            worldManager.setAssets(assets);
+            // Create player at center of world
+            Player player = new Player(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f);
+            
+            // Create world manager with player and initialize stage system
+            worldManager = new WorldManager(player);
+            worldManager.initialize(assets);
+            
+            // Check if we should load save file
+            if (loadSave && worldManager.hasSaveFile()) {
+                Gdx.app.log("BoneChild", "📁 Loading saved game...");
+                com.bonechild.saves.SaveState saveState = worldManager.loadGame();
+                
+                if (saveState != null) {
+                    // Restore player stats
+                    player.setLevel(saveState.level);
+                    player.setExperience(saveState.experience);
+                    player.setExperienceToNextLevel(saveState.experienceToNextLevel);
+                    player.setGold(saveState.gold);
+                    player.setCurrentHealth(saveState.currentHealth);
+                    player.setMaxHealth(saveState.maxHealth);
+                    
+                    // Restore power-up levels
+                    for (int i = 0; i < saveState.speedLevel; i++) {
+                        player.applyPowerUp("SPEED");
+                    }
+                    for (int i = 0; i < saveState.strengthLevel; i++) {
+                        player.applyPowerUp("STRENGTH");
+                    }
+                    for (int i = 0; i < saveState.grabLevel; i++) {
+                        player.applyPowerUp("GRAB");
+                    }
+                    for (int i = 0; i < saveState.attackSpeedLevel; i++) {
+                        player.applyPowerUp("ATTACK_SPEED");
+                    }
+                    for (int i = 0; i < saveState.maxHpLevel; i++) {
+                        player.applyPowerUp("MAX_HP");
+                    }
+                    for (int i = 0; i < saveState.xpBoostLevel; i++) {
+                        player.applyPowerUp("XP_BOOST");
+                    }
+                    for (int i = 0; i < saveState.explosionChanceLevel; i++) {
+                        player.applyPowerUp("EXPLOSION_CHANCE");
+                    }
+                    for (int i = 0; i < saveState.chainLightningLevel; i++) {
+                        player.applyPowerUp("CHAIN_LIGHTNING");
+                    }
+                    for (int i = 0; i < saveState.lifestealLevel; i++) {
+                        player.applyPowerUp("LIFESTEAL");
+                    }
+                    
+                    // Skip to saved wave
+                    if (saveState.currentWave > 1) {
+                        Gdx.app.log("BoneChild", "⏩ Skipping to wave " + saveState.currentWave);
+                        worldManager.skipToWave(saveState.currentWave);
+                    }
+                    
+                    Gdx.app.log("BoneChild", "✅ Save loaded! Level " + saveState.level + ", Wave " + saveState.currentWave);
+                } else {
+                    Gdx.app.log("BoneChild", "⚠️ Failed to load save - starting new game");
+                }
+            } else {
+                Gdx.app.log("BoneChild", "No save file found - starting new game");
+            }
+            
+            worldManager.startWave();
+            
+            // Wire up collision system to spawn loot
+            // Wire up collision system to spawn loot
+            collisionSystem.setPickupSpawner(worldManager.getPickupAdder()::accept);
             
             // Create renderer
             renderer = new Renderer(camera, assets);
-            
-            // Pass renderer to world manager for camera shake effects
-            worldManager.setRenderer(renderer);
             
             // Create input handler
             playerInput = new PlayerInput(worldManager.getPlayer());
@@ -241,7 +343,7 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
         }
         
         // Restart game
-        onStartGame();
+        onContinueGame();
     }
     
     /**
@@ -356,15 +458,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             renderer.renderMobs(worldManager.getMobs());
             renderer.renderPickups(worldManager.getPickups());
             renderer.renderProjectiles(worldManager.getProjectiles());
-            renderer.renderExplosions(worldManager.getExplosions());
             gameUI.render();
             
             bossWarningScreen.update(delta);
-            // Begin/end batch explicitly around boss warning text draw
+            // BossWarningScreen manages its own batch state (ends/restarts for shapes)
             com.badlogic.gdx.graphics.g2d.SpriteBatch batch = renderer.getBatch();
-            batch.begin();
             bossWarningScreen.render(batch);
-            batch.end();
             return; // Don't render anything else while warning active
         }
         
@@ -395,19 +494,21 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             gamePaused = true;
         }
         
-        // Boss warning triggers
-        if (worldManager.shouldShowBossWarning() && !bossWarningScreen.isActive()) {
-            bossWarningScreen.show("BOSS08_B");
-            gamePaused = true;
-            Gdx.app.log("BoneChild", "BOSS WARNING TRIGGERED!");
-        }
-        if (worldManager.shouldShowOrcBossWarning() && !bossWarningScreen.isActive()) {
-            bossWarningScreen.show("ORC_BOSS");
-            gamePaused = true;
-            Gdx.app.log("BoneChild", "ORC BOSS WARNING TRIGGERED!");
-        }
+        // Check if current wave is a boss wave and show banner (only once per wave)
+        int currentWave = worldManager.getCurrentWave();
+        if (worldManager.isCurrentWaveBossWave() &&
+            !bossWarningScreen.isActive() &&
+            worldManager.getMobCount() > 0 &&
+            lastBossWarningWave != currentWave) {
 
-        // Game running: handle input, update world, then render
+            String bossWaveName = "WAVE " + currentWave + " - BOSS FIGHT";
+            bossWarningScreen.show(bossWaveName);
+            gamePaused = true;
+            lastBossWarningWave = currentWave;  // Mark this wave as shown
+            Gdx.app.log("BoneChild", "🚨 BOSS WAVE! " + bossWaveName);
+        }
+        
+                // Game running: handle input, update world, then render
         handleInput();
         if (!gamePaused) {
             update(delta);
@@ -468,21 +569,12 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
-        // Boss warning screen active: SPACE dismisses and spawns boss, ignore others
+        // Boss warning screen active: SPACE dismisses it
         if (bossWarningScreen != null && bossWarningScreen.isActive()) {
             if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
-                String bossType = bossWarningScreen.getBossType();
                 bossWarningScreen.dismiss();
-                if ("ORC_BOSS".equals(bossType)) {
-                    worldManager.acknowledgeOrcBossWarning();
-                    spawnOrcBossAtCenter();
-                    Gdx.app.log("BoneChild", "Orc Boss warning dismissed! Orc Boss spawning!");
-                } else {
-                    worldManager.acknowledgeBossWarning();
-                    spawnBossAtCenter();
-                    Gdx.app.log("BoneChild", "Boss warning dismissed! Boss spawning!");
-                }
                 gamePaused = false;
+                Gdx.app.log("BoneChild", "Boss warning dismissed!");
             }
             return;
         }
@@ -506,52 +598,27 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
             return;
         }
         
-        // Finally, update player controls
-        playerInput.update();
+        // Finally, update player controls (only if game is not paused)
+        if (!gamePaused) {
+            playerInput.update();
+        }
     }
     
     private void update(float delta) {
         // Update world (player, enemies, spawning)
         worldManager.update(delta);
         
-        // Update UI
-        gameUI.update(delta);
-    }
-    
-    /**
-     * Spawn the boss at the center top of the VIRTUAL world (not physical screen)
-     */
-    private void spawnBossAtCenter() {
-        // Use VIRTUAL coordinates (1280x720), not physical screen size
-        float bossX = VIRTUAL_WIDTH / 2f - 100f; // Center the 200px wide boss
-        float bossY = VIRTUAL_HEIGHT + 100f; // Spawn above the virtual screen
-        
-        // Manually add the boss to the world
-        com.bonechild.world.Boss08B boss = new com.bonechild.world.Boss08B(
-            bossX, 
-            bossY, 
-            worldManager.getPlayer(), 
-            assets
+        // Process collisions (projectile hits, mob contact damage, pickup collection)
+        collisionSystem.process(
+            delta,
+            worldManager.getPlayer(),
+            worldManager.getMobs(),
+            worldManager.getProjectiles(),
+            worldManager.getPickups()
         );
         
-        worldManager.getMobs().add(boss);
-        
-        Gdx.app.log("BoneChild", "👹 BOSS SPAWNED at virtual center-top (" + bossX + ", " + bossY + ")");
-    }
-    
-    /**
-     * Spawn the Orc boss at the center top of the VIRTUAL world (not physical screen)
-     */
-    private void spawnOrcBossAtCenter() {
-        // Use VIRTUAL coordinates (1280x720), not physical screen size
-        // Orc sprite is 157x195 at 80% scale = ~125x156
-        float bossX = VIRTUAL_WIDTH / 2f - 62.5f; // Center the ~125px wide orc (half of 125)
-        float bossY = VIRTUAL_HEIGHT + 100f; // Spawn above the virtual screen
-        
-        // Manually call the WorldManager's spawn method which creates the boss Orc
-        worldManager.spawnOrcBossWave();
-        
-        Gdx.app.log("BoneChild", "⚔️👹 ORC BOSS SPAWNED at virtual center-top!");
+        // Update UI
+        gameUI.update(delta);
     }
     
     @Override

@@ -1,13 +1,27 @@
 package com.bonechild.playablecharacters;
 
 import com.badlogic.gdx.Gdx;
-import com.bonechild.world.Projectile;
 import com.bonechild.monsters.api.MobEntity;
 
 /**
  * Player character
  */
 public class Player extends LivingEntity {
+    
+    /**
+     * Callback interface for spawning projectiles
+     * This allows Player to create projectiles without depending on WorldManager
+     */
+    public interface ProjectileSpawner {
+        void spawnProjectile(Projectile projectile);
+    }
+    
+    // Callback for spawning projectiles
+    private ProjectileSpawner projectileSpawner;
+    
+    // Reference to mobs for auto-targeting (injected by WorldManager)
+    private com.badlogic.gdx.utils.Array<MobEntity> targetableMobs;
+    
     // Player stats
     private int level;
     private float experience;
@@ -114,6 +128,28 @@ public class Player extends LivingEntity {
         
         // Update attack cooldown
         timeSinceLastAttack += delta;
+        
+        // Auto-attack: shoot at nearest mob if off cooldown
+        if (canAttack() && !isDead() && projectileSpawner != null && targetableMobs != null) {
+            MobEntity target = getClosestMob(targetableMobs);
+            if (target != null) {
+                Projectile projectile = castFireball(target);
+                if (projectile != null) {
+                    projectileSpawner.spawnProjectile(projectile);
+                }
+            }
+        } else {
+            // Debug: Log why auto-attack isn't firing
+            if (!canAttack()) {
+                // Cooldown active - don't log every frame
+            } else if (isDead()) {
+                Gdx.app.log("Player", "Can't attack - player is dead");
+            } else if (projectileSpawner == null) {
+                Gdx.app.log("Player", "Can't attack - projectileSpawner is null!");
+            } else if (targetableMobs == null) {
+                Gdx.app.log("Player", "Can't attack - targetableMobs is null!");
+            }
+        }
         
         // Update kill streak timer
         if (killStreak > 0) {
@@ -376,7 +412,8 @@ public class Player extends LivingEntity {
             targetHitboxCenterX,
             targetHitboxCenterY,
             finalDamage,
-            isCrit
+            isCrit,
+            "fireball"
         );
         
         if (isCrit) {
@@ -387,6 +424,20 @@ public class Player extends LivingEntity {
         return projectile;
     }
     
+    /**
+     * Set the projectile spawner callback
+     */
+    public void setProjectileSpawner(ProjectileSpawner spawner) {
+        this.projectileSpawner = spawner;
+    }
+
+    /**
+     * Set the targetable mobs array (injected by WorldManager each frame)
+     */
+    public void setTargetableMobs(com.badlogic.gdx.utils.Array<MobEntity> mobs) {
+        this.targetableMobs = mobs;
+    }
+
     /**
      * Check if player can attack
      */
@@ -644,5 +695,31 @@ public class Player extends LivingEntity {
      */
     public boolean didLevelUpThisFrame() {
         return hasLeveledUpThisFrame();
+    }
+
+    // Setters for save state loading
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setExperience(float experience) {
+        this.experience = experience;
+    }
+
+    public void setExperienceToNextLevel(float experienceToNextLevel) {
+        this.experienceToNextLevel = experienceToNextLevel;
+    }
+
+    public void setGold(int gold) {
+        this.gold = gold;
+    }
+
+    public void setCurrentHealth(float health) {
+        this.currentHealth = health;
+    }
+
+    public void setMaxHealth(float maxHealth) {
+        this.maxHealth = maxHealth;
     }
 }

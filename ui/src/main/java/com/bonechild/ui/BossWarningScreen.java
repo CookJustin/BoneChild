@@ -83,7 +83,13 @@ public class BossWarningScreen {
         // Calculate banner position (center of screen)
         float bannerY = (screenHeight - BANNER_HEIGHT) / 2f;
         
-        // Draw black background banner with its own ShapeRenderer
+        // End the batch if it's active before using ShapeRenderer
+        boolean batchWasActive = batch.isDrawing();
+        if (batchWasActive) {
+            batch.end();
+        }
+
+        // Draw black background banner with ShapeRenderer
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.BLACK);
         shapeRenderer.rect(0, bannerY, screenWidth, BANNER_HEIGHT);
@@ -92,7 +98,10 @@ public class BossWarningScreen {
         shapeRenderer.rect(0, bannerY + BANNER_HEIGHT - 4, screenWidth, 4); // Bottom border
         shapeRenderer.end();
         
-        // Assume batch is already begun by caller; just draw text
+        // Always begin the batch for text rendering
+        batch.begin();
+
+        // Draw scrolling text
         float textY = bannerY + BANNER_HEIGHT / 2f + 15f; // Center text vertically
         int numCopies = (int) Math.ceil(screenWidth / repeatWidth) + 3;
         float baseX = screenWidth - (scrollOffset % repeatWidth);
@@ -121,6 +130,14 @@ public class BossWarningScreen {
                          (screenWidth - instructWidth) / 2f,
                          bannerY - 30f);
         warningFont.getData().setScale(3.0f); // Reset scale
+        
+        // End the batch (we started it for text rendering)
+        batch.end();
+        
+        // Restore original batch state
+        if (batchWasActive) {
+            batch.begin();
+        }
     }
     
     public void dismiss() {

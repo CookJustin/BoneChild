@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.bonechild.rendering.Assets;
-import com.bonechild.world.Player;
+import com.bonechild.playablecharacters.Player;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

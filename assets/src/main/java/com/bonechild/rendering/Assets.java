@@ -1,7 +1,9 @@
 package com.bonechild.rendering;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.bonechild.assets.AssetLoader;
 import com.bonechild.assets.AssetRegistry;
 
@@ -14,6 +16,9 @@ import com.bonechild.assets.AssetRegistry;
 public class Assets {
     private final AssetRegistry registry;
     private boolean loaded = false;
+
+    // Legacy cached font (optional)
+    private BitmapFont font;
 
     public Assets() {
         this.registry = new AssetRegistry();
@@ -49,6 +54,11 @@ public class Assets {
         if (!loaded) return;
         registry.dispose();
         loaded = false;
+
+        if (font != null) {
+            font.dispose();
+            font = null;
+        }
     }
 
     public boolean isLoaded() {
@@ -72,5 +82,58 @@ public class Assets {
     public Animation getAnimation(String id) {
         return registry.getAnimation(id);
     }
-}
 
+    // ---------------------------------------------------------------------
+    // Legacy API (UI / old engine code expects these)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Legacy UI font.
+     * NOTE: Prefer a dedicated UI asset id later.
+     */
+    @Deprecated
+    public BitmapFont getFont() {
+        if (font == null) {
+            font = new BitmapFont();
+        }
+        return font;
+    }
+
+    /**
+     * Legacy background music handle.
+     * In the new system, music should be loaded/managed via an Audio module.
+     */
+    @Deprecated
+    public Music getBackgroundMusic() {
+        return null;
+    }
+
+    // Legacy UI textures (best-effort ID mapping; returns null if not present)
+    @Deprecated public Texture getExitScreenMenuBg() { return tryTexture("ui_menu_bg", "ui_exit_screen_menu_bg", "exit_screen_menu_bg", "menu_bg"); }
+    @Deprecated public Texture getPlayButton() { return tryTexture("ui_play_button", "play_button"); }
+    @Deprecated public Texture getSettingsButton() { return tryTexture("ui_settings_button", "settings_button"); }
+    @Deprecated public Texture getExitButton() { return tryTexture("ui_exit_button", "exit_button"); }
+
+    // Legacy pickup animations
+    @Deprecated public Animation getCoinAnimation() { return tryAnimation("coin", "coin_spin", "pickup_coin"); }
+    @Deprecated public Animation getHealthOrbAnimation() { return tryAnimation("health_orb", "health_flask", "pickup_health"); }
+
+    private Texture tryTexture(String... ids) {
+        for (String id : ids) {
+            if (id != null && registry.hasTexture(id)) {
+                return registry.getTexture(id);
+            }
+        }
+        return null;
+    }
+
+    private Animation tryAnimation(String... ids) {
+        for (String id : ids) {
+            if (id != null) {
+                Animation anim = registry.getAnimation(id);
+                if (anim != null) return anim;
+            }
+        }
+        return null;
+    }
+}

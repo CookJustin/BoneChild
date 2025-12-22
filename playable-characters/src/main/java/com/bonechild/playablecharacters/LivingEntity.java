@@ -1,10 +1,12 @@
 package com.bonechild.playablecharacters;
 
+import com.bonechild.playablecharacters.api.Damageable;
+
 
 /**
  * Living entity with health and damage capabilities
  */
-public abstract class LivingEntity extends Entity {
+public abstract class LivingEntity extends Entity implements Damageable {
     protected float maxHealth;
     protected float currentHealth;
     protected float speed;
@@ -21,6 +23,7 @@ public abstract class LivingEntity extends Entity {
     /**
      * Take damage and check if dead
      */
+    @Override
     public void takeDamage(float damage) {
         currentHealth -= damage;
         if (currentHealth <= 0) {
@@ -52,4 +55,3 @@ public abstract class LivingEntity extends Entity {
         return currentHealth / maxHealth;
     }
 }
-
