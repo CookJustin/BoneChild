@@ -1,26 +1,43 @@
 package com.bonechild.saves;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Json;
+
+import java.io.File;
+
 public class SaveStateManager {
-    private static final String SAVE_FILE = "bonechild_save.json";
-    private Json json;
+    private final Json json;
+
     public SaveStateManager() {
         this.json = new Json();
     }
+
+    private FileHandle saveFileHandle() {
+        File saveFile = SavePaths.getSaveFile();
+        File parent = saveFile.getParentFile();
+        if (parent != null && !parent.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            parent.mkdirs();
+        }
+        // Use absolute path to avoid backend-dependent local storage locations
+        return new FileHandle(saveFile);
+    }
+
     public void saveGame(SaveState state) {
         try {
-            FileHandle file = Gdx.files.local(SAVE_FILE);
+            FileHandle file = saveFileHandle();
             String jsonData = json.prettyPrint(state);
             file.writeString(jsonData, false);
-            Gdx.app.log("SaveStateManager", "Game saved!");
+            Gdx.app.log("SaveStateManager", "Game saved: " + file.file().getAbsolutePath());
         } catch (Exception e) {
             Gdx.app.error("SaveStateManager", "Save failed: " + e.getMessage());
         }
     }
+
     public SaveState loadGame() {
         try {
-            FileHandle file = Gdx.files.local(SAVE_FILE);
+            FileHandle file = saveFileHandle();
             if (!file.exists()) return null;
             String jsonData = file.readString();
             return json.fromJson(SaveState.class, jsonData);
@@ -29,12 +46,18 @@ public class SaveStateManager {
             return null;
         }
     }
+
     public boolean hasSaveFile() {
-        return Gdx.files.local(SAVE_FILE).exists();
+        try {
+            return saveFileHandle().exists();
+        } catch (Exception e) {
+            return false;
+        }
     }
+
     public void deleteSave() {
         try {
-            FileHandle file = Gdx.files.local(SAVE_FILE);
+            FileHandle file = saveFileHandle();
             if (file.exists()) file.delete();
         } catch (Exception e) {
             Gdx.app.error("SaveStateManager", "Delete failed: " + e.getMessage());

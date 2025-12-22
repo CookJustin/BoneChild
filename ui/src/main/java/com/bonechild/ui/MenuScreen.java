@@ -66,7 +66,8 @@ public class MenuScreen {
 
         // Load background texture
         try {
-            this.backgroundTexture = new Texture(Gdx.files.internal("assets/backgrounds/TitleScreen.png"));
+            // Assets module stores backgrounds under asset/backgrounds (not assets/backgrounds)
+            this.backgroundTexture = new Texture(Gdx.files.internal("asset/backgrounds/TitleScreen.png"));
             this.backgroundTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
             System.out.println("[MenuScreen] Background texture loaded: " + backgroundTexture.getWidth() + "x" + backgroundTexture.getHeight());
             
@@ -83,8 +84,24 @@ public class MenuScreen {
             System.out.println("[MenuScreen] Scaled background width: " + scaledBackgroundWidth);
             System.out.println("[MenuScreen] Initial positions: x1=" + backgroundX1 + ", x2=" + backgroundX2 + ", x3=" + backgroundX3);
         } catch (Exception e) {
-            System.out.println("[MenuScreen] Background texture not found: " + e.getMessage());
-            this.backgroundTexture = null;
+            System.out.println("[MenuScreen] Background texture not found at asset/backgrounds/TitleScreen.png: " + e.getMessage());
+
+            // Fallback to an existing UI background so menu is never blank
+            try {
+                this.backgroundTexture = new Texture(Gdx.files.internal("asset/ui/ExitScreenMenu.png"));
+                this.backgroundTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+                System.out.println("[MenuScreen] Fallback background loaded: asset/ui/ExitScreenMenu.png");
+
+                float bgHeight = backgroundTexture.getHeight();
+                float scale = VIRTUAL_HEIGHT / bgHeight;
+                this.scaledBackgroundWidth = backgroundTexture.getWidth() * scale;
+                this.backgroundX1 = 0;
+                this.backgroundX2 = -this.scaledBackgroundWidth;
+                this.backgroundX3 = -this.scaledBackgroundWidth * 2;
+            } catch (Exception e2) {
+                System.out.println("[MenuScreen] Fallback background also missing: " + e2.getMessage());
+                this.backgroundTexture = null;
+            }
         }
         
         // Create title font (larger)

@@ -21,6 +21,7 @@ import com.bonechild.ui.BossWarningScreen; // NEW: Boss warning screen
 import com.bonechild.world.WorldManager;
 import com.bonechild.ui.CharacterStatsScreen;
 import com.bonechild.ui.InventoryUI;
+import com.bonechild.saves.SavePaths;
 
 /**
  * Main game class for BoneChild Game
@@ -90,11 +91,9 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
      */
     @Override
     public boolean hasSaveFile() {
-        // Directly check if the save file exists using LibGDX
         try {
-            com.badlogic.gdx.files.FileHandle saveFile = Gdx.files.local("bonechild_save.json");
-            boolean exists = saveFile.exists();
-            Gdx.app.log("BoneChild", "Save file check: " + exists);
+            boolean exists = SavePaths.getSaveFile().exists();
+            Gdx.app.log("BoneChild", "Save file check: " + exists + " @ " + SavePaths.getSaveFile().getAbsolutePath());
             return exists;
         } catch (Exception e) {
             Gdx.app.error("BoneChild", "Error checking save file: " + e.getMessage());
@@ -503,7 +502,6 @@ public class BoneChildGame extends ApplicationAdapter implements MenuScreen.Menu
 
             String bossWaveName = "WAVE " + currentWave + " - BOSS FIGHT";
             bossWarningScreen.show(bossWaveName);
-            gamePaused = true;
             lastBossWarningWave = currentWave;  // Mark this wave as shown
             Gdx.app.log("BoneChild", "🚨 BOSS WAVE! " + bossWaveName);
         }
