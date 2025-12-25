@@ -168,18 +168,18 @@ public class WorldManager {
         // All mobs dead and spawning complete? Advance wave
         if (mobs.size == 0 && !stageSpawner.isWaveActive()) {
             if (!stageSpawner.isStageComplete()) {
-                Gdx.app.log("WorldManager", "✅ Wave cleared! Advancing...");
+                Gdx.app.log("WorldManager", "Wave cleared! Advancing...");
                 stageSpawner.nextWave();
             } else {
-                Gdx.app.log("WorldManager", "🎉 STAGE COMPLETE!");
+                Gdx.app.log("WorldManager", "STAGE COMPLETE!");
                 // Advance to next stage if available
                 if (currentStageIndex + 1 < STAGE_FILES.length) {
                     currentStageIndex++;
                     loadCurrentStage();
                     startWave();
-                    Gdx.app.log("WorldManager", "➡️ Proceeding to next stage: " + stageSpawner.getStageName());
+                    Gdx.app.log("WorldManager", "-> Proceeding to next stage: " + stageSpawner.getStageName());
                 } else {
-                    Gdx.app.log("WorldManager", "🏆 All stages complete! Game over or victory screen here.");
+                    Gdx.app.log("WorldManager", "All stages complete! Game over or victory screen here.");
                 }
             }
         }
